@@ -1,0 +1,7 @@
+/__pycache__/
+/help/
+/i18n/
+/scripts/
+/test/
+~*
+*.bak

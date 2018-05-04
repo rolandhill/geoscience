@@ -1,0 +1,654 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>drillSetup_dialog</class>
+ <widget class="QDialog" name="drillSetup_dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>773</width>
+    <height>667</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Drilling Setup</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupCollar">
+     <property name="title">
+      <string>Collar</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Collar Layer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QgsMapLayerComboBox" name="lbCollarLayer">
+          <property name="showCrs">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Minimum</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>50</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0,0,0,0,0,0,0">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item row="2" column="1">
+         <widget class="QgsFieldComboBox" name="fbCollarAz">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="allowEmptyFieldName">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QgsFieldComboBox" name="fbCollarNorth">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Northing</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QLabel" name="label_16">
+          <property name="text">
+           <string>Dip</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QgsFieldComboBox" name="fbCollarEast"/>
+        </item>
+        <item row="1" column="4">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Elevation</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QgsFieldComboBox" name="fbCollarId">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="allowEmptyFieldName">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_15">
+          <property name="text">
+           <string>Azimuth</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>HoleID</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Easting</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
+         <widget class="QgsFieldComboBox" name="fbCollarElev">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QgsFieldComboBox" name="fbCollarDip">
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="allowEmptyFieldName">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupSurvey">
+     <property name="title">
+      <string>Survey</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Survey Layer (Optional)</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QgsMapLayerComboBox" name="lbSurveyLayer">
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="allowEmptyLayer">
+           <bool>true</bool>
+          </property>
+          <property name="showCrs">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Minimum</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="1">
+         <widget class="QgsFieldComboBox" name="fbSurveyId">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_11">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>HoleID</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QgsFieldComboBox" name="fbSurveyDepth">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>Depth</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="4">
+         <widget class="QLabel" name="label_12">
+          <property name="text">
+           <string>Dip</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>Azimuth</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QgsFieldComboBox" name="fbSurveyAz">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
+         <widget class="QgsFieldComboBox" name="fbSurveyDip">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupDownhole">
+     <property name="title">
+      <string>Downole Data</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Layer</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>HoleID</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>From/Depth</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>To</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QgsMapLayerComboBox" name="lbDataLayer0">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyLayer">
+         <bool>true</bool>
+        </property>
+        <property name="showCrs">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QgsFieldComboBox" name="fbHoleID0"/>
+      </item>
+      <item row="1" column="2">
+       <widget class="QgsFieldComboBox" name="fbFrom0"/>
+      </item>
+      <item row="1" column="3">
+       <widget class="QgsFieldComboBox" name="fbTo0">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyFieldName">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QgsMapLayerComboBox" name="lbDataLayer1">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyLayer">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QgsFieldComboBox" name="fbHoleID1"/>
+      </item>
+      <item row="2" column="2">
+       <widget class="QgsFieldComboBox" name="fbFrom1"/>
+      </item>
+      <item row="2" column="3">
+       <widget class="QgsFieldComboBox" name="fbTo1">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyFieldName">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QgsMapLayerComboBox" name="lbDataLayer2">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyLayer">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QgsFieldComboBox" name="fbHoleID2"/>
+      </item>
+      <item row="3" column="2">
+       <widget class="QgsFieldComboBox" name="fbFrom2"/>
+      </item>
+      <item row="3" column="3">
+       <widget class="QgsFieldComboBox" name="fbTo2">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyFieldName">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QgsMapLayerComboBox" name="lbDataLayer3">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyLayer">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QgsFieldComboBox" name="fbHoleID3"/>
+      </item>
+      <item row="4" column="2">
+       <widget class="QgsFieldComboBox" name="fbFrom3"/>
+      </item>
+      <item row="4" column="3">
+       <widget class="QgsFieldComboBox" name="fbTo3">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+        <property name="allowEmptyFieldName">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupOptions">
+     <property name="title">
+      <string>Options</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_19">
+        <property name="text">
+         <string>Default section width</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_17">
+        <property name="text">
+         <string>Desurvey length</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="spinLength">
+        <property name="suffix">
+         <string>m</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>5</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="checkDownNegative">
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_18">
+        <property name="text">
+         <string>Down dip is negative</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLineEdit" name="lineEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="placeholderText">
+         <string>Section width (m)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_20">
+        <property name="text">
+         <string>Default section step</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLineEdit" name="lineEdit_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="placeholderText">
+         <string>Section step (m)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Desurvey Now</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsFieldComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgis.gui</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgis.gui</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>drillSetup_dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>drillSetup_dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
