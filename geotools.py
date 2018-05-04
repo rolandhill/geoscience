@@ -21,8 +21,6 @@ from qgis.gui import *
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-# Import the code for the dialog
-from .geotools_dialog import GeoToolsDialog
 #from .drillsetup_dialog import Ui_drillSetup_dialog
 from .drillsetup_dialog import DrillSetupDialog
 
@@ -175,13 +173,3 @@ class GeoTools:
 
     def run(self):
         pass
-#        """Run method that performs all the real work"""
-        # show the dialog
-#        self.dlg.show()
-        # Run the dialog event loop
- #       result = self.dlg.exec_()
-        # See if OK was pressed
- #       if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
- #           pass
