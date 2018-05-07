@@ -28,12 +28,41 @@ import os.path
 
 class DrillManager:
     def __init__(self):
-        pass
+        self.defaultSectionWidth = 50
+        self.defaultSectionStep = 50
+        self.downDipNegative = True
+        self.desurveyLength = 1
+        self.collarLayer = QgsVectorLayer()
+        self.surveyLayer = QgsVectorLayer()
+        self.dataLayer0 = QgsVectorLayer()
+        self.dataLayer1 = QgsVectorLayer()
+        self.dataLayer2 = QgsVectorLayer()
+        self.dataLayer3 = QgsVectorLayer()
+        self.collarId = QgsField()
+        self.collarEast = QgsField()
+        self.collarNorth = QgsField()
+        self.collarElev = QgsField()
+        self.collarAz = QgsField()
+        self.collarDip = QgsField()
+        self.surveyId = QgsField()
+        self.surveyDepth = QgsField()
+        self.surveyAz = QgsField()
+        self.surveyDip = QgsField()
+        self.dataId0 = QgsField()
+        self.dataFrom0 = QgsField()
+        self.dataTo0 = QgsField()
+        self.dataId1 = QgsField()
+        self.dataFrom1 = QgsField()
+        self.dataTo1 = QgsField()
+        self.dataId2 = QgsField()
+        self.dataFrom2 = QgsField()
+        self.dataTo2 = QgsField()
+        self.dataId3 = QgsField()
+        self.dataFrom3 = QgsField()
+        self.dataTo3 = QgsField()
     
     def onDrillSetup(self):
-#        dlg = QDialog()
-        dlg = DrillSetupDialog()
-#        ui.setupUi(dlg)
+        dlg = DrillSetupDialog(self)
         dlg.show()
         result = dlg.exec_()
 
@@ -43,10 +72,9 @@ class DrillManager:
     def onDrillCreateSection(self):
         pass
 
-    
-class GeoTools:
-    """QGIS Plugin Implementation."""
 
+""" Main Class"""    
+class GeoTools:
     def __init__(self, iface):
         # Save reference to the QGIS interface
         self.iface = iface
@@ -68,6 +96,8 @@ class GeoTools:
 
         self.drillManager = DrillManager()
 
+        self.readProjectData()
+        
         # Declare instance attributes
         self.actions = []
         #self.menu = self.tr(u'&GeoTools')
@@ -164,6 +194,12 @@ class GeoTools:
         	raster_transparency.setTransparentThreeValuePixelList(tr_list)
         	layer.triggerRepaint()
 
+    def readProjectData(self):
+        pass
+    
+    def writeProjectData(self):
+        pass
+    
     def unload(self):
         self.iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
         del self.menu

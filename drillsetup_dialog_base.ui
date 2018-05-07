@@ -61,7 +61,7 @@
        </layout>
       </item>
       <item>
-       <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0,0,0,0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,0,0,0,0,0">
         <property name="topMargin">
          <number>0</number>
         </property>
@@ -394,13 +394,13 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QgsFieldComboBox" name="fbHoleID0"/>
+       <widget class="QgsFieldComboBox" name="fbDataId0"/>
       </item>
       <item row="1" column="2">
-       <widget class="QgsFieldComboBox" name="fbFrom0"/>
+       <widget class="QgsFieldComboBox" name="fbDataFrom0"/>
       </item>
       <item row="1" column="3">
-       <widget class="QgsFieldComboBox" name="fbTo0">
+       <widget class="QgsFieldComboBox" name="fbDataTo0">
         <property name="currentIndex">
          <number>-1</number>
         </property>
@@ -420,13 +420,13 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QgsFieldComboBox" name="fbHoleID1"/>
+       <widget class="QgsFieldComboBox" name="fbDataId1"/>
       </item>
       <item row="2" column="2">
-       <widget class="QgsFieldComboBox" name="fbFrom1"/>
+       <widget class="QgsFieldComboBox" name="fbDataFrom1"/>
       </item>
       <item row="2" column="3">
-       <widget class="QgsFieldComboBox" name="fbTo1">
+       <widget class="QgsFieldComboBox" name="fbDataTo1">
         <property name="currentIndex">
          <number>-1</number>
         </property>
@@ -446,13 +446,13 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QgsFieldComboBox" name="fbHoleID2"/>
+       <widget class="QgsFieldComboBox" name="fbDataId2"/>
       </item>
       <item row="3" column="2">
-       <widget class="QgsFieldComboBox" name="fbFrom2"/>
+       <widget class="QgsFieldComboBox" name="fbDataFrom2"/>
       </item>
       <item row="3" column="3">
-       <widget class="QgsFieldComboBox" name="fbTo2">
+       <widget class="QgsFieldComboBox" name="fbDataTo2">
         <property name="currentIndex">
          <number>-1</number>
         </property>
@@ -472,13 +472,13 @@
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QgsFieldComboBox" name="fbHoleID3"/>
+       <widget class="QgsFieldComboBox" name="fbDataId3"/>
       </item>
       <item row="4" column="2">
-       <widget class="QgsFieldComboBox" name="fbFrom3"/>
+       <widget class="QgsFieldComboBox" name="fbDataFrom3"/>
       </item>
       <item row="4" column="3">
-       <widget class="QgsFieldComboBox" name="fbTo3">
+       <widget class="QgsFieldComboBox" name="fbDataTo3">
         <property name="currentIndex">
          <number>-1</number>
         </property>
@@ -514,7 +514,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QSpinBox" name="spinLength">
+       <widget class="QSpinBox" name="desurveyLength">
         <property name="suffix">
          <string>m</string>
         </property>
@@ -550,7 +550,7 @@
        </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QLineEdit" name="lineEdit">
+       <widget class="QLineEdit" name="defaultSectionWidth">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -570,7 +570,7 @@
        </widget>
       </item>
       <item row="2" column="3">
-       <widget class="QLineEdit" name="lineEdit_2">
+       <widget class="QLineEdit" name="defaultSectionStep">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
