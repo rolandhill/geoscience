@@ -514,7 +514,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QSpinBox" name="desurveyLength">
+       <widget class="QSpinBox" name="sbDesurveyLength">
         <property name="suffix">
          <string>m</string>
         </property>
@@ -527,7 +527,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QCheckBox" name="checkDownNegative">
+       <widget class="QCheckBox" name="checkDownDipNegative">
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
         </property>
@@ -550,7 +550,7 @@
        </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QLineEdit" name="defaultSectionWidth">
+       <widget class="QLineEdit" name="teDefaultSectionWidth">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -570,7 +570,7 @@
        </widget>
       </item>
       <item row="2" column="3">
-       <widget class="QLineEdit" name="defaultSectionStep">
+       <widget class="QLineEdit" name="teDefaultSectionStep">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -616,6 +616,41 @@
    <header>qgis.gui</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>lbCollarLayer</tabstop>
+  <tabstop>fbCollarId</tabstop>
+  <tabstop>fbCollarEast</tabstop>
+  <tabstop>fbCollarNorth</tabstop>
+  <tabstop>fbCollarElev</tabstop>
+  <tabstop>fbCollarAz</tabstop>
+  <tabstop>fbCollarDip</tabstop>
+  <tabstop>lbSurveyLayer</tabstop>
+  <tabstop>fbSurveyId</tabstop>
+  <tabstop>fbSurveyDepth</tabstop>
+  <tabstop>fbSurveyAz</tabstop>
+  <tabstop>fbSurveyDip</tabstop>
+  <tabstop>lbDataLayer0</tabstop>
+  <tabstop>fbDataId0</tabstop>
+  <tabstop>fbDataFrom0</tabstop>
+  <tabstop>fbDataTo0</tabstop>
+  <tabstop>lbDataLayer1</tabstop>
+  <tabstop>fbDataId1</tabstop>
+  <tabstop>fbDataFrom1</tabstop>
+  <tabstop>fbDataTo1</tabstop>
+  <tabstop>lbDataLayer2</tabstop>
+  <tabstop>fbDataId2</tabstop>
+  <tabstop>fbDataFrom2</tabstop>
+  <tabstop>fbDataTo2</tabstop>
+  <tabstop>lbDataLayer3</tabstop>
+  <tabstop>fbDataId3</tabstop>
+  <tabstop>fbDataFrom3</tabstop>
+  <tabstop>fbDataTo3</tabstop>
+  <tabstop>checkDownDipNegative</tabstop>
+  <tabstop>sbDesurveyLength</tabstop>
+  <tabstop>teDefaultSectionWidth</tabstop>
+  <tabstop>teDefaultSectionStep</tabstop>
+  <tabstop>pushButton</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

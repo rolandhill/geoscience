@@ -34,10 +34,10 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lbDataLayer3.setFilters(QgsMapLayerProxyModel.NoGeometry)
 
         # Initialise local variables and ComboBoxes
-        self.checkDownNegative.setChecked(self.drillManager.downDipNegative)
-        self.defaultSectionWidth.setText(str(self.drillManager.defaultSectionWidth))
-        self.defaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
-        self.desurveyLength.setValue(self.drillManager.desurveyLength)
+        self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
+        self.teDefaultSectionWidth.setText(str(self.drillManager.defaultSectionWidth))
+        self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
+        self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
         self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
         self.initLayer(self.drillManager.dataLayer0, self.lbDataLayer0, ["lith", "geol"])

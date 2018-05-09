@@ -80,6 +80,9 @@ def readProjectBool(entry, default):
         return val
     else:
         return default
+
+def writeProjectData(entry, val):
+    QgsProject.instance().writeEntry("GeoTools", entry, val)
     
 class DrillManager:
     def __init__(self):
@@ -124,6 +127,10 @@ class DrillManager:
         dlg.show()
         result = dlg.exec_()
         if result:
+            self.downDipNegative = dlg.checkDownDipNegative.isChecked()
+            self.desurveyLength = dlg.sbDesurveyLength.value()
+            self.defaultSectionWidth = dlg.teDefaultSectionWidth.text()
+            self.defaultSectionStep = dlg.teDefaultSectionStep.text()
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
             self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
             self.dataLayer0 = dlg.lbDataLayer0.currentLayer()
@@ -198,6 +205,10 @@ class DrillManager:
         self.dataTo3 = readProjectField(self.dataLayer3, "DataTo3")
 
     def writeProjectData(self):
+        writeProjectData("DefaultSectionWidth", self.defaultSectionWidth)
+        writeProjectData("DefaultSectionStep", self.defaultSectionStep)
+        writeProjectData("DesurveyLength", self.desurveyLength)
+        writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("CollarLayer", self.collarLayer)
         writeProjectLayer("SurveyLayer", self.surveyLayer)
         writeProjectLayer("DataLayer0", self.dataLayer0)
