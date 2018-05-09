@@ -61,16 +61,17 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
 
     
     def initLayer(self, inLayer, cb, guessList):
-        if inLayer.isValid():
-            cb.setLayer(layer)
-        else:
-            self.guessName(cb, guessList)
+        if inLayer is not None:
+            if inLayer.isValid():
+                cb.setLayer(inLayer)
+            else:
+                self.guessName(cb, guessList)
         
     def initField(self, inField, cb, guessList):
         index = -1
-        if inField.name():
+        if inField:
 #            iface.messageBar().pushMessage("Debug", "InField name: " + inField.name(), level=Qgis.Info)
-            index = cb.findText(inField.name(), QtCore.Qt.MatchContains)
+            index = cb.findText(inField, QtCore.Qt.MatchContains)
             
         if index > -1:
             cb.setCurrentIndex(index)
@@ -113,7 +114,7 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
             self.initField(self.drillManager.surveyDip, self.fbSurveyDip, ["dip", "incl"])
         else:
             self.fbSurveyId.setCurrentIndex(-1)
-            self.fbSurveyElev.setCurrentIndex(-1)
+            self.fbSurveyDepth.setCurrentIndex(-1)
             self.fbSurveyAz.setCurrentIndex(-1)
             self.fbSurveyDip.setCurrentIndex(-1)
         
