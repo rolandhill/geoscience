@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>773</width>
-    <height>667</height>
+    <width>679</width>
+    <height>618</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -42,22 +42,6 @@
           </property>
          </widget>
         </item>
-        <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Minimum</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>50</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
       </item>
       <item>
@@ -65,6 +49,16 @@
         <property name="topMargin">
          <number>0</number>
         </property>
+        <item row="0" column="2">
+         <widget class="QLabel" name="label_21">
+          <property name="text">
+           <string>Hole Depth</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
         <item row="2" column="1">
          <widget class="QgsFieldComboBox" name="fbCollarAz">
           <property name="minimumSize">
@@ -192,6 +186,9 @@
            <bool>true</bool>
           </property>
          </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QgsFieldComboBox" name="fbCollarDepth"/>
         </item>
        </layout>
       </item>
@@ -582,13 +579,6 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QPushButton" name="pushButton">
-        <property name="text">
-         <string>Desurvey Now</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -649,7 +639,6 @@
   <tabstop>sbDesurveyLength</tabstop>
   <tabstop>teDefaultSectionWidth</tabstop>
   <tabstop>teDefaultSectionStep</tabstop>
-  <tabstop>pushButton</tabstop>
  </tabstops>
  <resources/>
  <connections>

@@ -19,10 +19,12 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
+#from scipy import interpolate
+
 # Initialize Qt resources from file resources.py
 from .resources import *
-#from .drillsetup_dialog import Ui_drillSetup_dialog
 from .drillsetup_dialog import DrillSetupDialog
+from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 
 import os.path
 
@@ -83,43 +85,9 @@ def readProjectBool(entry, default):
 
 def writeProjectData(entry, val):
     QgsProject.instance().writeEntry("GeoTools", entry, val)
-    
+
 class DrillManager:
     def __init__(self):
-        
-        self.defaultSectionWidth = 50
-        self.defaultSectionStep = 50
-        self.downDipNegative = True
-        self.desurveyLength = 1
-#        self.collarLayer = QgsVectorLayer()
-#        self.surveyLayer = QgsVectorLayer()
-#        self.dataLayer0 = QgsVectorLayer()
-#        self.dataLayer1 = QgsVectorLayer()
-#        self.dataLayer2 = QgsVectorLayer()
-#        self.dataLayer3 = QgsVectorLayer()
-#        self.collarId = str
-#        self.collarEast = str
-#        self.collarNorth = str
-#        self.collarElev = str
-#        self.collarAz = str
-#        self.collarDip = str
-#        self.surveyId = str
-#        self.surveyDepth = str
-#        self.surveyAz = str
-#        self.surveyDip = str
-#        self.dataId0 = str
-#        self.dataFrom0 = str
-#        self.dataTo0 = str
-#        self.dataId1 = str
-#        self.dataFrom1 = str
-#        self.dataTo1 = str
-#        self.dataId2 = str
-#        self.dataFrom2 = str
-#        self.dataTo2 = str
-#        self.dataId3 = str
-#        self.dataFrom3 = str
-#        self.dataTo3 = str
-
         self.readProjectData()
     
     def onDrillSetup(self):
@@ -138,6 +106,7 @@ class DrillManager:
             self.dataLayer2 = dlg.lbDataLayer2.currentLayer()
             self.dataLayer3 = dlg.lbDataLayer3.currentLayer()
             self.collarId = dlg.fbCollarId.currentField()
+            self.collarDepth = dlg.fbCollarDepth.currentField()
             self.collarEast = dlg.fbCollarEast.currentField()
             self.collarNorth = dlg.fbCollarNorth.currentField()
             self.collarElev = dlg.fbCollarElev.currentField()
@@ -162,14 +131,40 @@ class DrillManager:
             
             self.writeProjectData()
         dlg.close()
-#        del dlg
 
     def onDrillDisplayTraces(self):
         pass
 
+    def onDesurveyData(self):
+        self.desurveyData()
+
     def onDrillCreateSection(self):
         pass
 
+    def desurveyData(self):
+        # Build Collar array (Id, east, north, elev, eoh, az, dip)
+        count = self.collarLayer.featureCount()
+        self.arrCollarId = [str] * count
+        self.arrCollarEast = [float] * count
+        self.arrCollarNorth = [float] * count
+        self.arrCollarElev = [float] * count
+        self.arrCollarDepth = [float] * count
+        self.arrCollarAz = [float] * count
+        self.arrCollarDip = [float] * count
+        
+        # Build Survey array (Id, depth, az, dip)
+        
+        # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 1 attribute (Id)
+        
+        #Loop through collars
+            #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
+            
+            #Calculate the azimuth and dip splines
+            
+            #Build drill trace every desurveyLength to EOH
+        
+        pass
+    
     def readProjectData(self):
         self.defaultSectionWidth = readProjectNum("DefaultSectionWidth", 50)
         self.defaultSectionStep= readProjectNum("DefaultSectionStep", 50)
@@ -182,6 +177,7 @@ class DrillManager:
         self.dataLayer2 = readProjectLayer("DataLayer2")
         self.dataLayer3 = readProjectLayer("DataLayer3")
         self.collarId = readProjectField(self.collarLayer, "CollarID")
+        self.collarDepth = readProjectField(self.collarLayer, "CollarDepth")
         self.collarEast = readProjectField(self.collarLayer, "CollarEast")
         self.collarNorth = readProjectField(self.collarLayer, "CollarNorth")
         self.collarElev = readProjectField(self.collarLayer, "CollarElev")
@@ -216,6 +212,7 @@ class DrillManager:
         writeProjectLayer("DataLayer2", self.dataLayer2)
         writeProjectLayer("DataLayer3", self.dataLayer3)
         writeProjectField("CollarID", self.collarId)
+        writeProjectField("CollarDepth", self.collarDepth)
         writeProjectField("CollarEast", self.collarEast)
         writeProjectField("CollarNorth", self.collarNorth)
         writeProjectField("CollarElev", self.collarElev)
@@ -304,6 +301,11 @@ class GeoTools:
         action.setEnabled(True)
         self.actions.append(action)
 
+        action = self.menuDrill.addAction("Desurvey Data")
+        action.triggered.connect(self.drillManager.onDesurveyData)
+        action.setEnabled(True)
+        self.actions.append(action)
+
         action = self.menuDrill.addAction("Display Traces")
         action.triggered.connect(self.drillManager.onDrillDisplayTraces)
         action.setEnabled(True)
@@ -315,15 +317,23 @@ class GeoTools:
         self.actions.append(action)
         
         """Create Raster menu."""
-        self.menuDrill = self.menu.addMenu("Raster")
+        self.menuRaster = self.menu.addMenu("Raster")
 
-        action = self.menuDrill.addAction("Transparent White")
+        action = self.menuRaster.addAction("Transparent White")
         action.triggered.connect(self.onRasterTransparentWhite)
         action.setEnabled(True)
         self.actions.append(action)
         
-        action = self.menuDrill.addAction("Transparent Black")
+        action = self.menuRaster.addAction("Transparent Black")
         action.triggered.connect(self.onRasterTransparentBlack)
+        action.setEnabled(True)
+        self.actions.append(action)
+        
+        """Create Project menu."""
+        self.menuProject = self.menu.addMenu("Project")
+
+        action = self.menuProject.addAction("Change drive letter")
+        action.triggered.connect(self.onProjectChangeDriveLetter)
         action.setEnabled(True)
         self.actions.append(action)
         
@@ -336,6 +346,28 @@ class GeoTools:
 #            callback=self.run,
 #            parent=self.iface.mainWindow())
 
+    def onProjectChangeDriveLetter(self):
+        dlg = ChangeDriveLetterDialog(self)
+        dlg.show()
+        result = dlg.exec_()
+        if result:
+            pf = dlg.cbProject.filePath()
+            oldDrive = dlg.leOriginalDrive.text()
+            newDrive = dlg.leNewDrive.text()
+            data = str
+            
+            if len(oldDrive) > 0 and len(newDrive) > 0:
+                with open(pf, 'r') as pfile:
+                    data = pfile.read()
+                    
+                #data = data.replace("D:", "G:")
+                #iface.messageBar().pushMessage("Debug", "Data: " + data, level=Qgis.Info)
+                data = data.replace("file:///"+oldDrive[0]+":/", "file:///"+newDrive[0]+":/")
+                with open(pf, 'w') as pfile:
+                    pfile.write(data)
+                
+        dlg.close()
+        
     def onRasterTransparentWhite(self):
         self.rasterTransparent(255, 255, 255)
 

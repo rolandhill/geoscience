@@ -83,6 +83,8 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
         if layer is not None and layer.isValid():
             self.fbCollarId.setLayer(layer)
             self.initField(self.drillManager.collarId, self.fbCollarId, ["holeid", "bhid", "id", "hole", "name"])
+            self.fbCollarDepth.setLayer(layer)
+            self.initField(self.drillManager.collarDepth, self.fbCollarDepth, ["eoh", "e.o.h", "totaldepth", "depth", "length"])
             self.fbCollarEast.setLayer(layer)
             self.initField(self.drillManager.collarEast, self.fbCollarEast, ["east", "x"])
             self.fbCollarNorth.setLayer(layer)
