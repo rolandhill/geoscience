@@ -39,6 +39,7 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
         self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
         self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
+        iface.messageBar().pushMessage("Debug", "SurveyLayer: " + self.drillManager.surveyLayer.name(), level=Qgis.Info)
         self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
         self.initLayer(self.drillManager.dataLayer0, self.lbDataLayer0, ["lith", "geol"])
         self.initLayer(self.drillManager.dataLayer1, self.lbDataLayer1, ["assay"])

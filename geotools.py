@@ -88,7 +88,8 @@ def writeProjectData(entry, val):
 
 class DrillManager:
     def __init__(self):
-        self.readProjectData()
+#        self.readProjectData()
+        pass
     
     def onDrillSetup(self):
         dlg = DrillSetupDialog(self)
@@ -172,6 +173,7 @@ class DrillManager:
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.collarLayer = readProjectLayer("CollarLayer")
         self.surveyLayer = readProjectLayer("SurveyLayer")
+#        iface.messageBar().pushMessage("Debug", "SurveyLayer (read): " + self.surveyLayer.name(), level=Qgis.Info)
         self.dataLayer0 = readProjectLayer("DataLayer0")
         self.dataLayer1 = readProjectLayer("DataLayer1")
         self.dataLayer2 = readProjectLayer("DataLayer2")
@@ -285,6 +287,8 @@ class GeoTools:
 
 
     def initGui(self):
+        QgsProject.instance().readProject.connect(self.onReadProject)
+
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         actions = self.iface.mainWindow().menuBar().actions()
@@ -346,6 +350,9 @@ class GeoTools:
 #            callback=self.run,
 #            parent=self.iface.mainWindow())
 
+    def onReadProject(self):
+        self.drillManager.readProjectData()
+        
     def onProjectChangeDriveLetter(self):
         dlg = ChangeDriveLetterDialog(self)
         dlg.show()
@@ -360,8 +367,6 @@ class GeoTools:
                 with open(pf, 'r') as pfile:
                     data = pfile.read()
                     
-                #data = data.replace("D:", "G:")
-                #iface.messageBar().pushMessage("Debug", "Data: " + data, level=Qgis.Info)
                 data = data.replace("file:///"+oldDrive[0]+":/", "file:///"+newDrive[0]+":/")
                 with open(pf, 'w') as pfile:
                     pfile.write(data)
