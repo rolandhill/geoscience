@@ -1,64 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu May 03 16:41:00 2018
-
-@author: hillr
-"""
-
-
-Writing and Reading Python Plugin Settings to/from QGIS Project File
-For some plugins it’s necessary to save the settings inside the QGIS project file. Saving is done with this simple one-liner:
-
-1
-QgsProject.instance().writeEntry(pluginName, setting, value)
-Then you just need to save the project.
-
-Reading is performed with one of the following functions:
-
-QgsProject.instance().readEntry (pluginName, setting) # for strings
-QgsProject.instance().readNumEntry (pluginName, setting)
-QgsProject.instance().readDoubleEntry (pluginName, setting)
-QgsProject.instance().readBoolEntry (pluginName, setting)
-QgsProject.instance().readListEntry (pluginName, setting)
-You’ll find the corresponding API documentation at: http://doc.qgis.org/stable/classQgsProject.html. As you can see, you can only read/write simple data types. To allow the plugin developer to save more complex plugin settings, I filed an enhancement request.
-
-To handle all those different read functions in a convenient way, I created the following functions:
-
-
-def readSetting(self,func,setting):
-    """read a plugin setting from QgsProject instance"""
-    value,ok = func('pluginName',setting)
-    if ok:
-        return value
-    else:
-        return None
-             
-def readSettings(self,setting,value):
-    """read plugin settings from QgsProject instance"""
-    # map data types to function names
-    prj = QgsProject.instance()
-    functions = { 'str' : prj.readEntry,
-                  'int' : prj.readNumEntry,
-                  'float' : prj.readDoubleEntry,
-                  'bool' : prj.readBoolEntry,
-                  'pyqtWrapperType' : prj.readListEntry # QStringList
-                }
-         
-    dataType = type(value).__name__
-    return = self.readSetting(functions[dataType],setting)
-readSettings() has to be supplied with the name of the setting and an example or default value for the setting (from which we can determine the data type of the setting). Of course this can be done in many different ways. In Time Manager plugin, readSettings() receives a dictionary of all settings that have to be read. The function then loops through the dictionary and reads the available settings.
-
-
-
-
-
-# -*- coding: utf-8 -*-
-"""
-Created on Thu May 03 16:43:53 2018
-
-@author: hillr
-"""
-
 from scipy import interpolate
 
 def f(x):
@@ -69,3 +8,84 @@ def f(x):
     return interpolate.splev(x, tck)
 
 print f(1.25)
+
+
+
+
+def cubic_spline(x, y):
+  """
+  Parameters
+  ----------
+  x  : list of floats
+  y  : list of floats
+
+  Returns
+  -------  
+  list of list of floats
+  """
+  n = len(x) - 1
+  h = [x[i+1]-x[i] for i in range(n)]
+  al = [3*((y[i+1]-y[i])/h[i] - (y[i]-y[i-1])/h[i-1]) for i in range(1,n)]
+  al.insert(0,0)
+  
+  l = [1] * (n+1)
+  u = [0] * (n+1)
+  z = [0] * (n+1)
+  for i in range(1, n):
+    l[i] = 2*(x[i+1]-x[i-1]) - h[i-1]*u[i-1]
+    u[i] = h[i]/l[i]
+    z[i] = (al[i] - h[i-1]*z[i-1])/l[i]
+
+  b = [0] * (n+1)
+  c = [0] * (n+1)
+  d = [0] * (n+1)
+  for i in range(n-1, -1, -1):    #for i in reversed(range(n)):
+    c[i] = z[i] - u[i]*c[i+1]
+    b[i] = (y[i+1]-y[i])/h[i] - h[i]*(c[i+1] + 2*c[i])/3
+    d[i] = (c[i+1]-c[i])/(3*h[i])
+  return [y, b, c, d]
+  
+if __name__ == '__main__':
+  import math  
+  import matplotlib.pyplot as plt
+  import numpy as np
+
+  # the function to be interpolated
+  def f(x):
+    return math.e ** x
+    
+  # input
+  interval = 3
+  x = [i for i in range(interval + 1)]
+  y = [f(i) for i in range(interval + 1)]
+
+  # process
+  a = cubic_spline(x, y)
+
+  # prepare data for plotting the splines
+  points_per_interval = 5
+  xs = []
+  ys = []
+  for i in range(3):
+    xs.append(np.linspace(i, i+1, points_per_interval))
+    ys.append([a[0][i] + 
+               a[1][i]*(xs[i][k]-i) + 
+               a[2][i]*(xs[i][k]-i)**2 + 
+               a[3][i]*(xs[i][k]-i)**3   
+               for k in range(points_per_interval)])
+  
+  # prepare data for plotting the given function
+  x = np.linspace(0, 3, interval * points_per_interval - (interval - 1))
+  y = [f(x[i]) for i in range(len(x))]
+
+  plt.plot(x, y, 'k.-', xs[0], ys[0], 'r.--', xs[1], ys[1], 'g.--', xs[2], ys[2], 'b.--')
+
+  plt.title('Cubic Spline')
+  plt.xlabel('x')
+  plt.ylabel('e^x')
+  plt.show()
+  
+# cubic spline interpolation
+# author : worasait suwannik
+# date   : apr 2015
+
