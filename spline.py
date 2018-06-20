@@ -13,8 +13,6 @@ def spline(x, y, xs):
     numOrg = len(x)
     numReq = len(xs)
      
-#    int count
-#    int count2
     h = [float] * numOrg
     d = [float] * numOrg
     d2y = [float] * numOrg
@@ -24,9 +22,7 @@ def spline(x, y, xs):
     b = [float] * numOrg
     c = [float] * numOrg
     s = [float] * numOrg
-#    float dv
-#    float diff
-    ys = [float] * numReq
+    ys = []
     
     #Intervals and slopes
     for count in range(1, numOrg):
@@ -89,9 +85,9 @@ def spline(x, y, xs):
 #        logFile.write("Count/2: %d %d\n" % (count, count2))
 #        logFile.flush()
         if diff == 0.0:
-            ys[count] = y[count2]
+            ys.append(y[count2])
         else:
-            ys[count]=y[count2]+diff*(c[count2]+diff*(b[count2]+diff*a[count2]))
+            ys.append(y[count2]+diff*(c[count2]+diff*(b[count2]+diff*a[count2])))
     
     return ys
 

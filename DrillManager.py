@@ -26,6 +26,7 @@ from .drillsetup_dialog import DrillSetupDialog
 from .spline import spline
 
 import os.path
+import copy
 
 class Collar:
     id = ''
@@ -163,6 +164,8 @@ class DrillManager:
         pass
 
     def desurveyData(self):
+        logFile = open("D:\hillr\Data\DrillTest\log.txt",'w')
+        
         dp = self.collarLayer.dataProvider()
         idxCollarId = dp.fieldNameIndex(self.collarId)
         idxCollarEast = dp.fieldNameIndex(self.collarEast)
@@ -177,27 +180,32 @@ class DrillManager:
         
         # Build Collar array (Id, east, north, elev, eoh, az, dip)
         numCollars = self.collarLayer.featureCount()
-        arrCollar = [Collar] * numCollars
+        arrCollar = []
 
-        index = 0        
-        for feature in self.collarLayer.getFeatures():        
+        for feature in self.collarLayer.getFeatures():
             # get the feature's attributes
             attrs = feature.attributes()
-            # Check all the data is valid
             c = Collar()
-            arrCollar[index].id = attrs[idxCollarId]
-            arrCollar[index].east = attrs[idxCollarEast]
-            arrCollar[index].north = attrs[idxCollarNorth]
-            arrCollar[index].elev = attrs[idxCollarElev]
-            arrCollar[index].depth = attrs[idxCollarDepth]
+            # Check all the data is valid
+            c.id = attrs[idxCollarId].strip()
+            c.east = attrs[idxCollarEast]
+            c.north = attrs[idxCollarNorth]
+            c.elev = attrs[idxCollarElev]
+            c.depth = attrs[idxCollarDepth]
+            if (not c.id) or (not c.east) or (not c.north) or (not c.elev) or (not c.depth):
+                continue
             if useCollarAzDip:
-                arrCollar[index].az = attrs[idxCollarAz]
-                arrCollar[index].dip = attrs[idxCollarDip]
-            index += 1
+                c.az = attrs[idxCollarAz]
+                if not c.az:
+                    c.az = 0.0
+                c.dip = attrs[idxCollarDip]
+                if not c.dip:
+                    c.dip = -90 if self.downDipNegative else 90
+            arrCollar.append(c)
             
         # Build Survey array (Id, depth, az, dip)
         numSurveys = self.surveyLayer.featureCount()
-        arrSurvey = [Survey] * numSurveys
+        arrSurvey = []
 
         dp = self.surveyLayer.dataProvider()
         idxSurveyId = dp.fieldNameIndex(self.surveyId)
@@ -205,40 +213,50 @@ class DrillManager:
         idxSurveyAz = dp.fieldNameIndex(self.surveyAz)
         idxSurveyDip = dp.fieldNameIndex(self.surveyDip)
         
-        index = 0        
-        for feature in self.surveyLayer.getFeatures():        
+        for feature in self.surveyLayer.getFeatures():
             # get the feature's attributes
             attrs = feature.attributes()
-            arrSurvey[index].id = attrs[idxSurveyId]
-            arrSurvey[index].depth = attrs[idxSurveyDepth]
-            arrSurvey[index].az = attrs[idxSurveyAz]
-            arrSurvey[index].dip = attrs[idxSurveyDip]
-            index += 1
+            s = Survey()
+            s.id = attrs[idxSurveyId].strip()
+            s.depth = attrs[idxSurveyDepth]
+            s.az = attrs[idxSurveyAz]
+            s.dip = attrs[idxSurveyDip]
+            arrSurvey.append(s)
             
         # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 1 attribute (Id)
         self.createDesurveyLayer()
 #        
         #Loop through collars
-        for collar in range(0, numCollars):
+        for collar in arrCollar:
+            if not collar.id:
+                continue
 #        for collar in range(0, 1):
+#            logFile.write("Count/2: %d %d\n" % (count, count2))
+#            logFile.write("%s \n" % (arrCollar[collar].id))
             #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
             surveys = []
-            # If the az and dip from the collar are to be used, then insert them at depth 0.0
-            if useCollarAzDip:
-                s = Surveys()
-                s.depth = 0.0
-                s.az = arrCollar[collar].az
-                s.dip = arrCollar[collar].dip
-                surveys.append(s)
-            
-            for j in range(0, numSurveys):
-                if arrSurvey[j].id == arrCollar[collar].id:
+            for survey in arrSurvey:
+                if survey.id == collar.id:
                     s = Surveys()
-                    s.depth = arrSurvey[j].depth
-                    s.az = arrSurvey[j].az
-                    s.dip = arrSurvey[j].dip
+                    s.depth = survey.depth
+                    s.az = survey.az
+                    s.dip = survey.dip
                     surveys.append(s)
 
+#            if collar.id == "DR351":
+#                logFile.write("Hole number DR351 ***********\n")
+#                for s in surveys:
+#                    logFile.write("%f\n" % (s.depth))
+#                logFile.flush()
+#                
+            # If the az and dip from the collar are to be used, then insert them at depth 0.0
+            if len(surveys) == 0 and useCollarAzDip:
+                s = Surveys()
+                s.depth = 0.0
+                s.az = collar.az
+                s.dip = collar.dip
+                surveys.append(s)
+            
             # If there are no surveys, then the hole is vertical
             if len(surveys) == 0:
                 s = Surveys()
@@ -251,13 +269,15 @@ class DrillManager:
             surveys.sort(key = lambda x: x.depth)                        
             
             # If surveys exist, then we shouldn't use the az & dip from the collar file, so overwrite them with the first survey.                    
-            if len(surveys) > 1:
-                surveys[0] = surveys[1]
+            if not surveys[0].depth == 0.0:
+                s = surveys[0]
+                s.depth = 0.0
+                surveys.insert(0, s)
                 
             # If the last survey isn't at the end of hole, then repeat the last one at eoh
-            if len(surveys) > 0 and surveys[-1].depth < arrCollar[collar].depth:
+            if len(surveys) > 0 and surveys[-1].depth < collar.depth:
                 s = Surveys()
-                s.depth = arrCollar[collar].depth
+                s.depth = collar.depth
                 s.az = surveys[-1].az
                 s.dip = surveys[-1].dip
                 surveys.append(s)
@@ -265,48 +285,51 @@ class DrillManager:
             # If there are only 2 surveys, then we add a third in the middle as an average.
             # This way we can use the spline.
             if len(surveys) == 2:
-                surveys.append(surveys[1])
                 s = Surveys()
-                s.depth = arrCollar[collar].depth * 0.5
-                s.az = (surveys[0].az + surveys[2].az) * 0.5
-                s.dip = (surveys[0].dip + surveys[2].dip) * 0.5
-                surveys[1] = s
+                s.depth = collar.depth * 0.5
+                s.az = (surveys[0].az + surveys[1].az) * 0.5
+                s.dip = (surveys[0].dip + surveys[1].dip) * 0.5
+                surveys.insert(1, s)
                 
             #Build drill trace every desurveyLength to EOH
-            sz = int(arrCollar[collar].depth / self.desurveyLength) + 1
-            if arrCollar[collar].depth % self.desurveyLength > 0.0:
+#            success = False
+            logFile.write("%s \n" % (collar.id))
+            logFile.flush()
+
+            sz = int(collar.depth / self.desurveyLength) + 1
+            if collar.depth % self.desurveyLength > 0.0:
                 sz += 1
-            xs = [float] * sz
-            count = 0
+            xs = []
             depth = 0.0
             for d in range(0, sz):
-                xs[count] = depth
+                xs.append(depth)
                 depth += self.desurveyLength
-                count += 1
-            if xs[sz-1] > arrCollar[collar].depth:
-                xs[sz-1] = arrCollar[collar].depth
+            if xs[-1] > collar.depth:
+                xs[-1] = collar.depth
                 
             #Calculate the azimuth and dip splines
-            x = [float] * len(surveys)
-            az = [float] * len(surveys)
-            dip = [float] * len(surveys)
-            count = 0
-#            sz = len(surveys)
-            for d in range(0, len(surveys), 1):
-                x[count] = surveys[count].depth
-                az[count] = surveys[count].az
-                dip[count] = surveys[count].dip
-                count += 1
-            
-            azs = spline(x, az, xs)
-            dips = spline(x, dip, xs)
-                
-                
+            x = []
+            az = []
+            dip = []
+            for s in surveys:
+                x.append(s.depth)
+                az.append(s.az)
+                dip.append(s.dip)
+
+            try:            
+                azs = spline(x, az, xs)
+                dips = spline(x, dip, xs)
+            except:                
+                pass
+                for val in x:
+                    logFile.write("%f\n" % (val))
+                logFile.flush()
+                    
+                    
             # Create linestring
             feature = QgsFeature()
             pointList = []
-#            pointList = [QgsPoint] * len(xs)
-            pointList.append(QgsPoint(arrCollar[collar].east, arrCollar[collar].north, arrCollar[collar].elev))
+            pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
             count = 1
             for i in range(0, len(xs)):
                 dip = dips[count] if self.downDipNegative else (-1.0 * dips[count])
@@ -316,7 +339,7 @@ class DrillManager:
                 pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
                 count =+ 1
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
-            feature.setAttributes([arrCollar[collar].id, self.desurveyLength])
+            feature.setAttributes([collar.id, self.desurveyLength])
             self.traceLayer.startEditing()
             self.traceLayer.addFeature(feature)
                 
