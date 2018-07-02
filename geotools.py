@@ -104,6 +104,15 @@ class GeoTools:
         action.setEnabled(True)
         self.actions.append(action)
         
+        """Create Vector menu."""
+        self.menuVector = self.menu.addMenu("Vector")
+
+        action = self.menuVector.addAction(QIcon(":/plugins/geotools/ReverseLine.png"), "Reverse Line Direction")
+        action.triggered.connect(self.onReverseLine)
+        action.setEnabled(True)
+        self.iface.addToolBarIcon(action)
+        self.actions.append(action)
+        
         """Create Raster menu."""
         self.menuRaster = self.menu.addMenu("Raster")
 
@@ -156,6 +165,16 @@ class GeoTools:
                     pfile.write(data)
                 
         dlg.close()
+        
+    def onReverseLine(self):
+        layer = self.iface.mapCanvas().currentLayer()
+        for feature in layer.selectedFeatures():
+            geom = feature.geometry()
+            nodes = geom.asPolyline()
+            nodes.reverse() 
+            newgeom = QgsGeometry.fromPolylineXY(nodes)
+            layer.changeGeometry(feature.id(),newgeom)
+            layer.triggerRepaint()
         
     def onRasterTransparentWhite(self):
         self.rasterTransparent(255, 255, 255)

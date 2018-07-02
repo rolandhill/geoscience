@@ -39,7 +39,7 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
         self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
         self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
-        iface.messageBar().pushMessage("Debug", "SurveyLayer: " + self.drillManager.surveyLayer.name(), level=Qgis.Info)
+#        iface.messageBar().pushMessage("Debug", "SurveyLayer: " + self.drillManager.surveyLayer.name(), level=Qgis.Info)
         self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
         self.initLayer(self.drillManager.dataLayer0, self.lbDataLayer0, ["lith", "geol"])
         self.initLayer(self.drillManager.dataLayer1, self.lbDataLayer1, ["assay"])
@@ -63,10 +63,13 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
     
     def initLayer(self, inLayer, cb, guessList):
         if inLayer is not None:
-            if inLayer.isValid():
-                cb.setLayer(inLayer)
-            else:
+            try:
+                if inLayer.isValid():
+                    cb.setLayer(inLayer)
+            except:
                 self.guessName(cb, guessList)
+        else:
+            self.guessName(cb, guessList)
         
     def initField(self, inField, cb, guessList):
         index = -1
