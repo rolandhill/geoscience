@@ -11,7 +11,7 @@
 """
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog
+from PyQt5.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, qApp
 
 from qgis.core import *
 from qgis.utils import *
@@ -155,7 +155,14 @@ class DrillManager:
         dlg.close()
 
     def onDrillDisplayTraces(self):
-        pass
+        dlg = DrillTraceDialog(self)
+        dlg.show()
+        result = dlg.exec_()
+        if result:
+            pass
+            
+            self.writeProjectData()
+        dlg.close()
 
     def onDesurveyData(self):
         self.desurveyData()
@@ -244,6 +251,7 @@ class DrillManager:
         pd.setValue(0)
         for index, collar in enumerate(arrCollar):
             pd.setValue(index)
+            qApp.processEvents()
                 
             if not collar.id:
                 continue
@@ -429,7 +437,7 @@ class DrillManager:
             fileName = fileName[8:]
 
         #Save memory layer to shapefile
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", crs, "ESRI Shapefile")
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", crs, "GPKG")
             
         #Load the newly created layer from disk
         label = os.path.splitext(os.path.basename(fileName))[0]
