@@ -53,6 +53,7 @@ class GeoTools:
         self.actions = []
         self.toolbar = self.iface.addToolBar(u'GeoTools')
         self.toolbar.setObjectName(u'GeoTools')
+        
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -107,10 +108,10 @@ class GeoTools:
         """Create Vector menu."""
         self.menuVector = self.menu.addMenu("Vector")
 
-        action = self.menuVector.addAction(QIcon(":/plugins/geotools/ReverseLine.png"), "Reverse Line Direction")
+        action = self.menuVector.addAction(QIcon(os.path.join(os.path.dirname(__file__), "ReverseLine.png")), "Reverse Line Direction")
         action.triggered.connect(self.onReverseLine)
         action.setEnabled(True)
-        self.iface.addToolBarIcon(action)
+        self.toolbar.addAction(action)
         self.actions.append(action)
         
         """Create Raster menu."""
