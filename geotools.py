@@ -135,15 +135,6 @@ class GeoTools:
         action.setEnabled(True)
         self.actions.append(action)
         
-        
-
-#        icon_path = ':/plugins/geotools/icon.png'
-#        self.add_action(
-#            icon_path,
-#            text=self.tr(u'GeoTools'),
-#            callback=self.run,
-#            parent=self.iface.mainWindow())
-
     def onReadProject(self):
         self.drillManager.readProjectData()
         
