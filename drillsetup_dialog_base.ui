@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>679</width>
-    <height>618</height>
+    <height>439</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -344,150 +344,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupDownhole">
-     <property name="title">
-      <string>Downole Data</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Layer</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>HoleID</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>From/Depth</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>To</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QgsMapLayerComboBox" name="lbDataLayer0">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyLayer">
-         <bool>true</bool>
-        </property>
-        <property name="showCrs">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QgsFieldComboBox" name="fbDataId0"/>
-      </item>
-      <item row="1" column="2">
-       <widget class="QgsFieldComboBox" name="fbDataFrom0"/>
-      </item>
-      <item row="1" column="3">
-       <widget class="QgsFieldComboBox" name="fbDataTo0">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyFieldName">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QgsMapLayerComboBox" name="lbDataLayer1">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyLayer">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QgsFieldComboBox" name="fbDataId1"/>
-      </item>
-      <item row="2" column="2">
-       <widget class="QgsFieldComboBox" name="fbDataFrom1"/>
-      </item>
-      <item row="2" column="3">
-       <widget class="QgsFieldComboBox" name="fbDataTo1">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyFieldName">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QgsMapLayerComboBox" name="lbDataLayer2">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyLayer">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QgsFieldComboBox" name="fbDataId2"/>
-      </item>
-      <item row="3" column="2">
-       <widget class="QgsFieldComboBox" name="fbDataFrom2"/>
-      </item>
-      <item row="3" column="3">
-       <widget class="QgsFieldComboBox" name="fbDataTo2">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyFieldName">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QgsMapLayerComboBox" name="lbDataLayer3">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyLayer">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QgsFieldComboBox" name="fbDataId3"/>
-      </item>
-      <item row="4" column="2">
-       <widget class="QgsFieldComboBox" name="fbDataFrom3"/>
-      </item>
-      <item row="4" column="3">
-       <widget class="QgsFieldComboBox" name="fbDataTo3">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-        <property name="allowEmptyFieldName">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <widget class="QGroupBox" name="groupOptions">
      <property name="title">
       <string>Options</string>
@@ -598,12 +454,12 @@
   <customwidget>
    <class>QgsFieldComboBox</class>
    <extends>QComboBox</extends>
-   <header>qgis.gui</header>
+   <header>qgsfieldcombobox.h</header>
   </customwidget>
   <customwidget>
    <class>QgsMapLayerComboBox</class>
    <extends>QComboBox</extends>
-   <header>qgis.gui</header>
+   <header>qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -619,22 +475,6 @@
   <tabstop>fbSurveyDepth</tabstop>
   <tabstop>fbSurveyAz</tabstop>
   <tabstop>fbSurveyDip</tabstop>
-  <tabstop>lbDataLayer0</tabstop>
-  <tabstop>fbDataId0</tabstop>
-  <tabstop>fbDataFrom0</tabstop>
-  <tabstop>fbDataTo0</tabstop>
-  <tabstop>lbDataLayer1</tabstop>
-  <tabstop>fbDataId1</tabstop>
-  <tabstop>fbDataFrom1</tabstop>
-  <tabstop>fbDataTo1</tabstop>
-  <tabstop>lbDataLayer2</tabstop>
-  <tabstop>fbDataId2</tabstop>
-  <tabstop>fbDataFrom2</tabstop>
-  <tabstop>fbDataTo2</tabstop>
-  <tabstop>lbDataLayer3</tabstop>
-  <tabstop>fbDataId3</tabstop>
-  <tabstop>fbDataFrom3</tabstop>
-  <tabstop>fbDataTo3</tabstop>
   <tabstop>checkDownDipNegative</tabstop>
   <tabstop>sbDesurveyLength</tabstop>
   <tabstop>teDefaultSectionWidth</tabstop>
