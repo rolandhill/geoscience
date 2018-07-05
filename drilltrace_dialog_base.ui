@@ -23,7 +23,7 @@
       <item>
        <layout class="QGridLayout" name="gridLayout">
         <property name="topMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <item row="0" column="2">
          <widget class="QLabel" name="label_5">
@@ -79,6 +79,27 @@
           </property>
           <property name="allowEmptyFieldName">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Filename suffix</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="teSuffix">
+          <property name="placeholderText">
+           <string>eg. Litho, Assay, MagSusc</string>
           </property>
          </widget>
         </item>

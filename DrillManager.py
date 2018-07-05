@@ -124,10 +124,6 @@ class DrillManager:
             self.defaultSectionStep = dlg.teDefaultSectionStep.text()
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
             self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
-#            self.dataLayer0 = dlg.lbDataLayer0.currentLayer()
-#            self.dataLayer1 = dlg.lbDataLayer1.currentLayer()
-#            self.dataLayer2 = dlg.lbDataLayer2.currentLayer()
-#            self.dataLayer3 = dlg.lbDataLayer3.currentLayer()
             self.collarId = dlg.fbCollarId.currentField()
             self.collarDepth = dlg.fbCollarDepth.currentField()
             self.collarEast = dlg.fbCollarEast.currentField()
@@ -139,18 +135,6 @@ class DrillManager:
             self.surveyDepth = dlg.fbSurveyDepth.currentField()
             self.surveyAz = dlg.fbSurveyAz.currentField()
             self.surveyDip = dlg.fbSurveyDip.currentField()
-#            self.dataId0 = dlg.fbDataId0.currentField()
-#            self.dataFrom0 = dlg.fbDataFrom0.currentField()
-#            self.dataTo0 = dlg.fbDataTo0.currentField()
-#            self.dataId1 = dlg.fbDataId1.currentField()
-#            self.dataFrom1 = dlg.fbDataFrom1.currentField()
-#            self.dataTo1 = dlg.fbDataTo1.currentField()
-#            self.dataId2 = dlg.fbDataId2.currentField()
-#            self.dataFrom2 = dlg.fbDataFrom2.currentField()
-#            self.dataTo2 = dlg.fbDataTo2.currentField()
-#            self.dataId3 = dlg.fbDataId3.currentField()
-#            self.dataFrom3 = dlg.fbDataFrom3.currentField()
-#            self.dataTo3 = dlg.fbDataTo3.currentField()
             
             self.writeProjectData()
         dlg.close()
@@ -160,15 +144,38 @@ class DrillManager:
         dlg.show()
         result = dlg.exec_()
         if result:
+            self.dataLayer = dlg.lbDataLayer.currentLayer()
+            self.dataId = dlg.fbDataId.currentField()
+            self.dataFrom = dlg.fbDataFrom.currentField()
+            self.dataTo = dlg.fbDataTo.currentField()
+            self.dataSuffix = dlg.teSuffix.text()
+            self.dataFields = []
+            for item in self.listFields.items():
+                if item.checkState():
+                    self.dataFields.append(item.text())
+                    
             self.writeProjectData()
         dlg.close()
-
+        
+        self.createDownholeTrace()
+        
     def onDesurveyData(self):
         self.desurveyData()
 
     def onDrillCreateSection(self):
         pass
 
+    def createDownholeTrace(self):
+        # Check that desurvey layer is available
+        if not self.traceLayer.iValid():
+            break
+        
+        # Create memory layer
+        
+        #Loop through downhole layer features
+        
+        
+        
     def desurveyData(self):
         logFile = open("D:\hillr\Data\DrillTest\GeoTools_Desurvey_log.txt",'w')
         pd = QProgressDialog()
@@ -431,6 +438,38 @@ class DrillManager:
         # Build the new filename
         base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
         fileName = base + "_Trace"
+        if fileName.startswith("file:///"):
+            fileName = fileName[8:]
+
+        #Save memory layer to shapefile
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", crs, "ESRI Shapefile")
+            
+        #Load the newly created layer from disk
+        label = os.path.splitext(os.path.basename(fileName))[0]
+        # Remove trace layer from project if it already exists
+        layer = getLayerByName(label)
+        QgsProject.instance().removeMapLayer(layer)
+        self.traceLayer = QgsVectorLayer(fileName+".shp", label, "ogr")
+        QgsProject.instance().addMapLayer(self.traceLayer)
+    
+    def createDownholeLayer(self):
+        #Find CRS of collar layer
+        crs = self.traceLayer.sourceCrs()
+        
+        #Create a new memory layer
+        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "gt_Trace", "memory")
+        layer.setCrs(crs)
+        atts = []
+        for index, field in enumerate(self.dataLayer.fields()):
+            if self.dataFields.index(field.name()) > -1:
+                atts.append(field)
+        dp = layer.dataProvider()
+        dp.addAttributes(atts)
+        layer.updateFields() # tell the vector layer to fetch changes from the provider
+
+        # Build the new filename
+        base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())
+        fileName = base + "_%s" % (self.dataSuffix)
         if fileName.startswith("file:///"):
             fileName = fileName[8:]
 
