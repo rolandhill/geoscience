@@ -7,11 +7,13 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
+from .QgisDialogBase import QgisDialogBase
+
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'drillsetup_dialog_base.ui'))
 
 
-class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
+class DrillSetupDialog(QtWidgets.QDialog, QgisDialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
         super(DrillSetupDialog, self).__init__(parent)
@@ -28,10 +30,6 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
         # Setup ComboBox filters
         self.lbCollarLayer.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.lbSurveyLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
-        self.lbDataLayer0.setFilters(QgsMapLayerProxyModel.NoGeometry)
-        self.lbDataLayer1.setFilters(QgsMapLayerProxyModel.NoGeometry)
-        self.lbDataLayer2.setFilters(QgsMapLayerProxyModel.NoGeometry)
-        self.lbDataLayer3.setFilters(QgsMapLayerProxyModel.NoGeometry)
 
         # Initialise local variables and ComboBoxes
         self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
@@ -39,49 +37,14 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
         self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
         self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
-#        iface.messageBar().pushMessage("Debug", "SurveyLayer: " + self.drillManager.surveyLayer.name(), level=Qgis.Info)
         self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
-        self.initLayer(self.drillManager.dataLayer0, self.lbDataLayer0, ["lith", "geol"])
-        self.initLayer(self.drillManager.dataLayer1, self.lbDataLayer1, ["assay"])
-        self.initLayer(self.drillManager.dataLayer2, self.lbDataLayer2, ["susc"])
-        self.initLayer(self.drillManager.dataLayer3, self.lbDataLayer3, ["dens"])
     
         self.lbCollarLayer.layerChanged.connect(self.onCollarLayerChanged)
         self.lbSurveyLayer.layerChanged.connect(self.onSurveyLayerChanged)
-        self.lbDataLayer0.layerChanged.connect(self.onDataLayer0Changed)
-        self.lbDataLayer1.layerChanged.connect(self.onDataLayer1Changed)
-        self.lbDataLayer2.layerChanged.connect(self.onDataLayer2Changed)
-        self.lbDataLayer3.layerChanged.connect(self.onDataLayer3Changed)
 
         self.onCollarLayerChanged()
         self.onSurveyLayerChanged()
-        self.onDataLayer0Changed()
-        self.onDataLayer1Changed()
-        self.onDataLayer2Changed()
-        self.onDataLayer3Changed()
 
-    
-    def initLayer(self, inLayer, cb, guessList):
-        if inLayer is not None:
-            try:
-                if inLayer.isValid():
-                    cb.setLayer(inLayer)
-            except:
-                self.guessName(cb, guessList)
-        else:
-            self.guessName(cb, guessList)
-        
-    def initField(self, inField, cb, guessList):
-        index = -1
-        if inField:
-#            iface.messageBar().pushMessage("Debug", "InField name: " + inField.name(), level=Qgis.Info)
-            index = cb.findText(inField, QtCore.Qt.MatchContains)
-            
-        if index > -1:
-            cb.setCurrentIndex(index)
-        else:
-            self.guessName(cb, guessList)
-            
     def onCollarLayerChanged(self):
         layer = self.lbCollarLayer.currentLayer()
         if layer is not None and layer.isValid():
@@ -124,70 +87,3 @@ class DrillSetupDialog(QtWidgets.QDialog, FORM_CLASS):
             self.fbSurveyAz.setCurrentIndex(-1)
             self.fbSurveyDip.setCurrentIndex(-1)
         
-    def onDataLayer0Changed(self):
-        layer = self.lbDataLayer0.currentLayer()
-        if layer is not None and layer.isValid():
-            self.fbDataId0.setLayer(layer)
-            self.initField(self.drillManager.dataId0, self.fbDataId0, ["holeid", "id", "hole", "name"])
-            self.fbDataFrom0.setLayer(layer)
-            self.initField(self.drillManager.dataFrom0, self.fbDataFrom0, ["from", "start", "depth"])
-            self.fbDataTo0.setLayer(layer)
-            self.initField(self.drillManager.dataTo0, self.fbDataTo0, ["to","end"])
-        else:
-            self.fbDataId0.setCurrentIndex(-1)
-            self.fbDataFrom0.setCurrentIndex(-1)
-            self.fbDataTo0.setCurrentIndex(-1)
-        
-    def onDataLayer1Changed(self):
-        layer = self.lbDataLayer1.currentLayer()
-        if layer is not None and layer.isValid():
-            self.fbDataId1.setLayer(layer)
-            self.initField(self.drillManager.dataId1, self.fbDataId1, ["holeid", "id", "hole", "name"])
-            self.fbDataFrom1.setLayer(layer)
-            self.initField(self.drillManager.dataFrom1, self.fbDataFrom1, ["from", "start", "depth"])
-            self.fbDataTo1.setLayer(layer)
-            self.initField(self.drillManager.dataTo1, self.fbDataTo1, ["to","end"])
-        else:
-            self.fbDataId1.setCurrentIndex(-1)
-            self.fbDataFrom1.setCurrentIndex(-1)
-            self.fbDataTo1.setCurrentIndex(-1)
-        
-    def onDataLayer2Changed(self):
-        layer = self.lbDataLayer2.currentLayer()
-        if layer is not None and layer.isValid():
-            self.fbDataId2.setLayer(layer)
-            self.initField(self.drillManager.dataId2, self.fbDataId2, ["holeid", "id", "hole", "name"])
-            self.fbDataFrom2.setLayer(layer)
-            self.initField(self.drillManager.dataFrom2, self.fbDataFrom2, ["from", "start", "depth"])
-            self.fbDataTo2.setLayer(layer)
-            self.initField(self.drillManager.dataTo2, self.fbDataTo2, ["to","end"])
-        else:
-            self.fbDataId2.setCurrentIndex(-1)
-            self.fbDataFrom2.setCurrentIndex(-1)
-            self.fbDataTo2.setCurrentIndex(-1)
-        
-    def onDataLayer3Changed(self):
-        layer = self.lbDataLayer3.currentLayer()
-        if layer is not None and layer.isValid():
-            self.fbDataId3.setLayer(layer)
-            self.initField(self.drillManager.dataId3, self.fbDataId3, ["holeid", "id", "hole", "name"])
-            self.fbDataFrom3.setLayer(layer)
-            self.initField(self.drillManager.dataFrom3, self.fbDataFrom3, ["from", "start", "depth"])
-            self.fbDataTo3.setLayer(layer)
-            self.initField(self.drillManager.dataTo3, self.fbDataTo3, ["to","end"])
-        else:
-            self.fbDataId3.setCurrentIndex(-1)
-            self.fbDataFrom3.setCurrentIndex(-1)
-            self.fbDataTo3.setCurrentIndex(-1)
-        
-    def guessName(self, cb, list):
-        cb.setCurrentIndex(-1)
-        for str in list:
-            index = cb.findText(str, QtCore.Qt.MatchContains)
-            if index > -1:
-                cb.setCurrentIndex(index)
-                break
-            
-        
-    
-

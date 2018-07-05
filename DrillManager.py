@@ -23,6 +23,7 @@ from .rotation_matrix_3d import rotation_from_angles
 # Initialize Qt resources from file resources.py
 from .resources import *
 from .drillsetup_dialog import DrillSetupDialog
+from .drilltrace_dialog import DrillTraceDialog
 from .spline import spline
 
 import os.path
@@ -123,10 +124,6 @@ class DrillManager:
             self.defaultSectionStep = dlg.teDefaultSectionStep.text()
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
             self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
-            self.dataLayer0 = dlg.lbDataLayer0.currentLayer()
-            self.dataLayer1 = dlg.lbDataLayer1.currentLayer()
-            self.dataLayer2 = dlg.lbDataLayer2.currentLayer()
-            self.dataLayer3 = dlg.lbDataLayer3.currentLayer()
             self.collarId = dlg.fbCollarId.currentField()
             self.collarDepth = dlg.fbCollarDepth.currentField()
             self.collarEast = dlg.fbCollarEast.currentField()
@@ -138,18 +135,6 @@ class DrillManager:
             self.surveyDepth = dlg.fbSurveyDepth.currentField()
             self.surveyAz = dlg.fbSurveyAz.currentField()
             self.surveyDip = dlg.fbSurveyDip.currentField()
-            self.dataId0 = dlg.fbDataId0.currentField()
-            self.dataFrom0 = dlg.fbDataFrom0.currentField()
-            self.dataTo0 = dlg.fbDataTo0.currentField()
-            self.dataId1 = dlg.fbDataId1.currentField()
-            self.dataFrom1 = dlg.fbDataFrom1.currentField()
-            self.dataTo1 = dlg.fbDataTo1.currentField()
-            self.dataId2 = dlg.fbDataId2.currentField()
-            self.dataFrom2 = dlg.fbDataFrom2.currentField()
-            self.dataTo2 = dlg.fbDataTo2.currentField()
-            self.dataId3 = dlg.fbDataId3.currentField()
-            self.dataFrom3 = dlg.fbDataFrom3.currentField()
-            self.dataTo3 = dlg.fbDataTo3.currentField()
             
             self.writeProjectData()
         dlg.close()
@@ -159,17 +144,38 @@ class DrillManager:
         dlg.show()
         result = dlg.exec_()
         if result:
-            pass
-            
+            self.dataLayer = dlg.lbDataLayer.currentLayer()
+            self.dataId = dlg.fbDataId.currentField()
+            self.dataFrom = dlg.fbDataFrom.currentField()
+            self.dataTo = dlg.fbDataTo.currentField()
+            self.dataSuffix = dlg.teSuffix.text()
+            self.dataFields = []
+            for item in self.listFields.items():
+                if item.checkState():
+                    self.dataFields.append(item.text())
+                    
             self.writeProjectData()
         dlg.close()
-
+        
+        self.createDownholeTrace()
+        
     def onDesurveyData(self):
         self.desurveyData()
 
     def onDrillCreateSection(self):
         pass
 
+    def createDownholeTrace(self):
+        # Check that desurvey layer is available
+        if not self.traceLayer.iValid():
+            break
+        
+        # Create memory layer
+        
+        #Loop through downhole layer features
+        
+        
+        
     def desurveyData(self):
         logFile = open("D:\hillr\Data\DrillTest\GeoTools_Desurvey_log.txt",'w')
         pd = QProgressDialog()
@@ -413,6 +419,38 @@ class DrillManager:
         layer.updateFields() # tell the vector layer to fetch changes from the provider
         self.traceLayer = layer
     
+    def createDownholeLayer(self):
+        #Find CRS of collar layer
+        crs = self.traceLayer.sourceCrs()
+        
+        #Create a new memory layer
+        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "gt_Trace", "memory")
+        layer.setCrs(crs)
+        atts = []
+        for index, field in enumerate(self.dataLayer.fields()):
+            if self.dataFields.index(field.name()) > -1:
+                atts.append(field)
+        dp = layer.dataProvider()
+        dp.addAttributes(atts)
+        layer.updateFields() # tell the vector layer to fetch changes from the provider
+
+        # Build the new filename
+        base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())
+        fileName = base + "_%s" % (self.dataSuffix)
+        if fileName.startswith("file:///"):
+            fileName = fileName[8:]
+
+        #Save memory layer to shapefile
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", crs, "ESRI Shapefile")
+            
+        #Load the newly created layer from disk
+        label = os.path.splitext(os.path.basename(fileName))[0]
+        # Remove trace layer from project if it already exists
+        layer = getLayerByName(label)
+        QgsProject.instance().removeMapLayer(layer)
+        self.traceLayer = QgsVectorLayer(fileName+".shp", label, "ogr")
+        QgsProject.instance().addMapLayer(self.traceLayer)
+    
     def readProjectData(self):
         self.defaultSectionWidth = readProjectNum("DefaultSectionWidth", 50)
         self.defaultSectionStep= readProjectNum("DefaultSectionStep", 50)
@@ -420,10 +458,7 @@ class DrillManager:
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.collarLayer = readProjectLayer("CollarLayer")
         self.surveyLayer = readProjectLayer("SurveyLayer")
-        self.dataLayer0 = readProjectLayer("DataLayer0")
-        self.dataLayer1 = readProjectLayer("DataLayer1")
-        self.dataLayer2 = readProjectLayer("DataLayer2")
-        self.dataLayer3 = readProjectLayer("DataLayer3")
+        self.dataLayer = readProjectLayer("DataLayer")
         self.collarId = readProjectField(self.collarLayer, "CollarID")
         self.collarDepth = readProjectField(self.collarLayer, "CollarDepth")
         self.collarEast = readProjectField(self.collarLayer, "CollarEast")
@@ -435,18 +470,9 @@ class DrillManager:
         self.surveyDepth = readProjectField(self.surveyLayer, "SurveyDepth")
         self.surveyAz = readProjectField(self.surveyLayer, "SurveyAz")
         self.surveyDip = readProjectField(self.surveyLayer, "SurveyDip")
-        self.dataId0 = readProjectField(self.dataLayer0, "DataID0")
-        self.dataFrom0 = readProjectField(self.dataLayer0, "DataFrom0")
-        self.dataTo0 = readProjectField(self.dataLayer0, "DataTo0")
-        self.dataId1 = readProjectField(self.dataLayer1, "DataID1")
-        self.dataFrom1 = readProjectField(self.dataLayer1, "DataFrom1")
-        self.dataTo1 = readProjectField(self.dataLayer1, "DataTo1")
-        self.dataId2 = readProjectField(self.dataLayer2, "DataID2")
-        self.dataFrom2 = readProjectField(self.dataLayer2, "DataFrom2")
-        self.dataTo2 = readProjectField(self.dataLayer2, "DataTo2")
-        self.dataId3 = readProjectField(self.dataLayer3, "DataID3")
-        self.dataFrom3 = readProjectField(self.dataLayer3, "DataFrom3")
-        self.dataTo3 = readProjectField(self.dataLayer3, "DataTo3")
+        self.dataId = readProjectField(self.dataLayer, "DataID")
+        self.dataFrom = readProjectField(self.dataLayer, "DataFrom")
+        self.dataTo = readProjectField(self.dataLayer, "DataTo")
 
     def writeProjectData(self):
         writeProjectData("DefaultSectionWidth", self.defaultSectionWidth)
@@ -455,10 +481,7 @@ class DrillManager:
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("CollarLayer", self.collarLayer)
         writeProjectLayer("SurveyLayer", self.surveyLayer)
-        writeProjectLayer("DataLayer0", self.dataLayer0)
-        writeProjectLayer("DataLayer1", self.dataLayer1)
-        writeProjectLayer("DataLayer2", self.dataLayer2)
-        writeProjectLayer("DataLayer3", self.dataLayer3)
+        writeProjectLayer("DataLayer", self.dataLayer)
         writeProjectField("CollarID", self.collarId)
         writeProjectField("CollarDepth", self.collarDepth)
         writeProjectField("CollarEast", self.collarEast)
@@ -470,17 +493,7 @@ class DrillManager:
         writeProjectField("SurveyDepth", self.surveyDepth)
         writeProjectField("SurveyAz", self.surveyAz)
         writeProjectField("SurveyDip", self.surveyDip)
-        writeProjectField("DataID0", self.dataId0)
-        writeProjectField("DataFrom0", self.dataFrom0)
-        writeProjectField("DataTo0", self.dataTo0)
-        writeProjectField("DataID1", self.dataId1)
-        writeProjectField("DataFrom1", self.dataFrom1)
-        writeProjectField("DataTo1", self.dataTo1)
-        writeProjectField("DataID2", self.dataId2)
-        writeProjectField("DataFrom2", self.dataFrom2)
-        writeProjectField("DataTo2", self.dataTo2)
-        writeProjectField("DataID3", self.dataId3)
-        writeProjectField("DataFrom3", self.dataFrom3)
-        writeProjectField("DataTo3", self.dataTo3)
-
+        writeProjectField("DataID", self.dataId)
+        writeProjectField("DataFrom", self.dataFrom)
+        writeProjectField("DataTo", self.dataTo)
     
