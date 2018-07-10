@@ -81,7 +81,7 @@ def writeProjectLayer(entry, layer):
     if layer is not None:
         try:
             QgsProject.instance().writeEntry("GeoTools", entry, layer.name())
-        else:
+        except:
             QgsProject.instance().writeEntry("GeoTools", entry, "None")
     else:
         QgsProject.instance().writeEntry("GeoTools", entry, "None")
@@ -242,12 +242,6 @@ class DrillManager:
             if (not dataId) or (not dataFrom) or (not dataTo):
                 continue
             
-            # Create a list of the attributes to be included in new file
-            attList = []
-            for idx in idxAttList:
-                attList.append(attrs[idx])
-            feature.setAttributes(attList)
-
             # Get the desurvey drill trace relevant to this collar
             if not currentTraceCollar == dataId:
                 # Get the correct trace feature via a query
@@ -277,7 +271,7 @@ class DrillManager:
     #                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
                     pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
                 else:
-                    pointList.append(QgsPoint(p0))
+                    pointList.append(QgsPoint(p0.x(), p0.y(), 0.0))
             except:
                 self.logFile.write("! Error calculating 'From' index. Id: %s, From: %f\n" % (dataId, dataFrom))
                 self.logFile.flush()
@@ -296,13 +290,27 @@ class DrillManager:
     #                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
                     pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
                 else:
-                    pointList.append(QgsPoint(p0))
+                    pointList.append(QgsPoint(p0.x(), p0.y(), 0.0))
             except:
                 self.logFile.write("! Error calculating 'To' index. Id: %s, To: %f\n" % (dataId, dataTo))
                 self.logFile.flush()
                 continue
             
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+
+            # Create a list of the attributes to be included in new file
+            attList = []
+            for idx in idxAttList:
+                attList.append(attrs[idx])
+
+            attList.append(pointList[0].x())
+            attList.append(pointList[0].y())
+            attList.append(pointList[0].z())
+            attList.append(pointList[1].x())
+            attList.append(pointList[1].y())
+            attList.append(pointList[1].z())
+
+            feature.setAttributes(attList)
 
             layer.startEditing()
             layer.addFeature(feature)
@@ -582,6 +590,13 @@ class DrillManager:
         for field in self.dataLayer.fields():
             if field.name() in self.dataFields:
                 atts.append(field)
+        atts.append(QgsField("_From_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_From_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_From_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_To_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_To_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_To_z",  QVariant.Double, "double", 12, 3))
+        
         dp = layer.dataProvider()
         dp.addAttributes(atts)
         layer.updateFields() # tell the vector layer to fetch changes from the provider

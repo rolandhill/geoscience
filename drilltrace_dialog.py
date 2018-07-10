@@ -8,13 +8,13 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
-from .QgisDialogBase import QgisDialogBase
+from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'drilltrace_dialog_base.ui'))
 
 
-class DrillTraceDialog(QtWidgets.QDialog, QgisDialogBase, FORM_CLASS):
+class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
         super(DrillTraceDialog, self).__init__(parent)

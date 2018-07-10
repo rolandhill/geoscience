@@ -7,7 +7,7 @@ Created on Thu Jul 05 07:55:31 2018
 from PyQt5 import QtCore
 from qgis.gui import QgsFieldComboBox
 
-class QgisDialogBase():
+class dialogBase():
     def initLayer(self, inLayer, cb, guessList):
         if inLayer is not None:
             try:
