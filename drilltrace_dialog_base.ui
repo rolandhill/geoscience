@@ -99,7 +99,7 @@
         <item>
          <widget class="QLineEdit" name="teSuffix">
           <property name="placeholderText">
-           <string>eg. Litho, Assay, MagSusc</string>
+           <string>eg. Lith, Assay, MagSusc</string>
           </property>
          </widget>
         </item>

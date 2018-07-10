@@ -79,7 +79,10 @@ def readProjectLayer(entry):
 
 def writeProjectLayer(entry, layer):
     if layer is not None:
-        QgsProject.instance().writeEntry("GeoTools", entry, layer.name())
+        try:
+            QgsProject.instance().writeEntry("GeoTools", entry, layer.name())
+        else:
+            QgsProject.instance().writeEntry("GeoTools", entry, "None")
     else:
         QgsProject.instance().writeEntry("GeoTools", entry, "None")
         
@@ -112,7 +115,23 @@ class DrillManager:
         # Project data is normally read in response to a readProject signal.
         # We also do it here for when the plugin is loaded other than at startup
         self.readProjectData()
-    
+        
+        self.openLogFile()
+
+    def openLogFile(self):
+        # Maintain a log file in case of data errors
+#        base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
+        if self.collarLayer and self.collarLayer.isValid():
+            fileName = self.collarLayer.dataProvider().dataSourceUri()
+            if fileName.startswith("file:///"):
+                fileName = fileName[8:]
+            self.logFile = open(os.path.join(os.path.dirname(fileName), "GeoTools_DrillManager_log.txt"),'w')
+            self.logFile.write("GeoTools - DrillManager log file\n")
+            self.logFile.write("  Note: This file is overwritten each time you run GeoTools.\n")
+            self.logFile.write("  Make a copy if you want to keep the results.\n")
+            self.logFile.flush()
+
+        
     def onDrillSetup(self):
         dlg = DrillSetupDialog(self)
         dlg.show()
@@ -139,6 +158,8 @@ class DrillManager:
             self.writeProjectData()
         dlg.close()
 
+        self.openLogFile()
+
     def onDrillDisplayTraces(self):
         dlg = DrillTraceDialog(self)
         dlg.show()
@@ -150,9 +171,9 @@ class DrillManager:
             self.dataTo = dlg.fbDataTo.currentField()
             self.dataSuffix = dlg.teSuffix.text()
             self.dataFields = []
-            for item in self.listFields.items():
-                if item.checkState():
-                    self.dataFields.append(item.text())
+            for index in range(dlg.listFields.count()):
+                if dlg.listFields.item(index).checkState():
+                    self.dataFields.append(dlg.listFields.item(index).text())
                     
             self.writeProjectData()
         dlg.close()
@@ -166,18 +187,147 @@ class DrillManager:
         pass
 
     def createDownholeTrace(self):
+        self.logFile.write("\nCreating Trace Layer.\n")
         # Check that desurvey layer is available
-        if not self.traceLayer.iValid():
-            break
+        if not self.traceLayer.isValid() or not self.dataLayer.isValid():
+            return
         
+        pd = QProgressDialog()
+        pd.setAutoReset(False)
+        pd.setWindowTitle("Build Trace Layer")
+        pd.setMinimumWidth(500)
+        pd.setMinimum(0)
+        pd.setMaximum(self.dataLayer.featureCount())
+        pd.setValue(0)
+
         # Create memory layer
+        layer = self.createDownholeLayer()
+
+        # Get the fields from the data layer
+        dp = self.dataLayer.dataProvider()
+        idxId = dp.fieldNameIndex(self.dataId)
+        idxFrom = dp.fieldNameIndex(self.dataFrom)
+        idxTo = dp.fieldNameIndex(self.dataTo)
+        idxAttList = []
+        for name in self.dataFields:
+            idx = dp.fieldNameIndex(name)
+            idxAttList.append(idx)
+        
+        # Get the fields from the desurveyed trace layer
+        tdp = self.traceLayer.dataProvider()
+        idxTraceId = tdp.fieldNameIndex("CollarID")
+        idxTraceSegLength = tdp.fieldNameIndex("SegLength")
+
+        # Store the relevant desurveyed drill trace so that it's persistent between loops
+        # This way we should be able to re-use it instead of re-fetching it.
+        traceFeature = QgsFeature()
+        currentTraceCollar = ""
+        currentTraceSegLength = 1.0
+        currentTracePolyline = None
         
         #Loop through downhole layer features
+        updateInt = int(self.dataLayer.featureCount()/100)
+        for index, df in enumerate(self.dataLayer.getFeatures()):
+            pd.setValue(index)
+            if index%updateInt == 0:
+                qApp.processEvents()
+            feature = QgsFeature()
+
+            # get the feature's attributes
+            attrs = df.attributes()
+            # Check all the data is valid
+            dataId = attrs[idxId].strip()
+            dataFrom = attrs[idxFrom]
+            dataTo = attrs[idxTo]
+            if (not dataId) or (not dataFrom) or (not dataTo):
+                continue
+            
+            # Create a list of the attributes to be included in new file
+            attList = []
+            for idx in idxAttList:
+                attList.append(attrs[idx])
+            feature.setAttributes(attList)
+
+            # Get the desurvey drill trace relevant to this collar
+            if not currentTraceCollar == dataId:
+                # Get the correct trace feature via a query
+                query = '''"CollarID" = '%s' ''' % (dataId)
+                selection = self.traceLayer.getFeatures(QgsFeatureRequest().setFilterExpression(query))
+                if selection.isValid():
+                    selection.nextFeature(traceFeature)
+                    currentTraceCollar = dataId
+                    currentTraceSegLength = traceFeature.attributes()[idxTraceSegLength]
+                    currentTracePolyline = traceFeature.geometry().asPolyline()
+                else:
+                    continue
+                
+            # Create line representing the downhole value using From and To
+            pointList = []
+            # Calculate indices spanning the from and to depths, then linearly interpolate a position
+            i = dataFrom / currentTraceSegLength
+            i0 = int(i)
+            ratio = i - i0
+            try:
+                p0 = currentTracePolyline[i0]
+                if ratio > 0.01:
+                    p1 = currentTracePolyline[i0+1]
+                    dx = (p1.x() - p0.x()) * ratio
+                    dy = (p1.y() - p0.y()) * ratio
+    #                dz = (p1.z() - p0.z()) * ratio
+    #                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
+                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
+                else:
+                    pointList.append(QgsPoint(p0))
+            except:
+                self.logFile.write("! Error calculating 'From' index. Id: %s, From: %f\n" % (dataId, dataFrom))
+                self.logFile.flush()
+                continue
+            
+            i = dataTo / currentTraceSegLength
+            i0 = int(i)
+            ratio = i - i0
+            try:
+                p0 = currentTracePolyline[i0]
+                if ratio > 0.01:
+                    p1 = currentTracePolyline[i0+1]
+                    dx = (p1.x() - p0.x()) * ratio
+                    dy = (p1.y() - p0.y()) * ratio
+    #                dz = (p1.z() - p0.z()) * ratio
+    #                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
+                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
+                else:
+                    pointList.append(QgsPoint(p0))
+            except:
+                self.logFile.write("! Error calculating 'To' index. Id: %s, To: %f\n" % (dataId, dataTo))
+                self.logFile.flush()
+                continue
+            
+            feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+
+            layer.startEditing()
+            layer.addFeature(feature)
+            layer.commitChanges()
         
-        
+        # Build the new filename
+        base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())
+        fileName = base + "_%s" % (self.dataSuffix)
+        if fileName.startswith("file:///"):
+            fileName = fileName[8:]
+
+        #Save memory layer to Geopackage file
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.traceLayer.sourceCrs())
+            
+        #Load the newly created layer from disk
+        label = os.path.splitext(os.path.basename(fileName))[0]
+        # Remove trace layer from project if it already exists
+        oldLayer = getLayerByName(label)
+        QgsProject.instance().removeMapLayer(oldLayer)
+        # Load the one we just saved
+        layer = QgsVectorLayer(fileName+".gpkg", label)
+        QgsProject.instance().addMapLayer(layer)
         
     def desurveyData(self):
-        logFile = open("D:\hillr\Data\DrillTest\GeoTools_Desurvey_log.txt",'w')
+        self.logFile.write("\nDesurveying data.\n")
         pd = QProgressDialog()
         pd.setAutoReset(False)
         pd.setMinimumWidth(500)
@@ -255,9 +405,11 @@ class DrillManager:
         pd.setWindowTitle("Desurvey Progress")
         pd.setMaximum(len(arrCollar))
         pd.setValue(0)
+        updateInt = int(len(arrCollar)/100)
         for index, collar in enumerate(arrCollar):
             pd.setValue(index)
-            qApp.processEvents()
+            if index%updateInt == 0:
+                qApp.processEvents()
                 
             if not collar.id:
                 continue
@@ -357,7 +509,8 @@ class DrillManager:
                 dips = spline(x, dip, xs)
             except:                
                 pass
-                logFile.write("!!!!!!!!!!!! Spline Error in %s\n" % (collar.id))
+                self.logFile.write("! Spline Error in %s\n" % (collar.id))
+                self.logFile.flush()
                     
             # Create linestring
             feature = QgsFeature()
@@ -371,16 +524,18 @@ class DrillManager:
                     p0 = pointList[i]
                     pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
             except:
-                logFile.write("!!!!!!!!!!!! Error in %s\n" % (collar.id))
+                self.logFile.write("! Error in %s\n" % (collar.id))
                 for s in surveys:
-                    logFile.write("%f, %f, %f\n" % (s.depth, s.az, s.dip))
+                    self.logFile.write("  Depth: %f, Az: %f, Dip: %f\n" % (s.depth, s.az, s.dip))
+                self.logFile.flush()
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
             feature.setAttributes([collar.id, self.desurveyLength])
             self.traceLayer.startEditing()
             self.traceLayer.addFeature(feature)
                 
             self.traceLayer.commitChanges()
-            self.traceLayer.triggerRepaint()
+
+        self.traceLayer.triggerRepaint()
 
         fileName = self.createTraceFilename()
         
@@ -420,37 +575,20 @@ class DrillManager:
         self.traceLayer = layer
     
     def createDownholeLayer(self):
-        #Find CRS of collar layer
-        crs = self.traceLayer.sourceCrs()
-        
         #Create a new memory layer
         layer = QgsVectorLayer("LineString?crs=EPSG:4326", "gt_Trace", "memory")
-        layer.setCrs(crs)
+        layer.setCrs(self.traceLayer.sourceCrs())
         atts = []
-        for index, field in enumerate(self.dataLayer.fields()):
-            if self.dataFields.index(field.name()) > -1:
+        for field in self.dataLayer.fields():
+            if field.name() in self.dataFields:
                 atts.append(field)
         dp = layer.dataProvider()
         dp.addAttributes(atts)
         layer.updateFields() # tell the vector layer to fetch changes from the provider
+#        QgsProject.instance().addMapLayer(layer)
 
-        # Build the new filename
-        base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())
-        fileName = base + "_%s" % (self.dataSuffix)
-        if fileName.startswith("file:///"):
-            fileName = fileName[8:]
-
-        #Save memory layer to shapefile
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", crs, "ESRI Shapefile")
-            
-        #Load the newly created layer from disk
-        label = os.path.splitext(os.path.basename(fileName))[0]
-        # Remove trace layer from project if it already exists
-        layer = getLayerByName(label)
-        QgsProject.instance().removeMapLayer(layer)
-        self.traceLayer = QgsVectorLayer(fileName+".shp", label, "ogr")
-        QgsProject.instance().addMapLayer(self.traceLayer)
-    
+        return layer
+        
     def readProjectData(self):
         self.defaultSectionWidth = readProjectNum("DefaultSectionWidth", 50)
         self.defaultSectionStep= readProjectNum("DefaultSectionStep", 50)
@@ -459,6 +597,7 @@ class DrillManager:
         self.collarLayer = readProjectLayer("CollarLayer")
         self.surveyLayer = readProjectLayer("SurveyLayer")
         self.dataLayer = readProjectLayer("DataLayer")
+        self.traceLayer = readProjectLayer("TraceLayer")
         self.collarId = readProjectField(self.collarLayer, "CollarID")
         self.collarDepth = readProjectField(self.collarLayer, "CollarDepth")
         self.collarEast = readProjectField(self.collarLayer, "CollarEast")
@@ -473,6 +612,7 @@ class DrillManager:
         self.dataId = readProjectField(self.dataLayer, "DataID")
         self.dataFrom = readProjectField(self.dataLayer, "DataFrom")
         self.dataTo = readProjectField(self.dataLayer, "DataTo")
+        self.dataSuffix = readProjectField(self.dataLayer, "DataSuffix")
 
     def writeProjectData(self):
         writeProjectData("DefaultSectionWidth", self.defaultSectionWidth)
@@ -482,6 +622,7 @@ class DrillManager:
         writeProjectLayer("CollarLayer", self.collarLayer)
         writeProjectLayer("SurveyLayer", self.surveyLayer)
         writeProjectLayer("DataLayer", self.dataLayer)
+        writeProjectLayer("TraceLayer", self.traceLayer)
         writeProjectField("CollarID", self.collarId)
         writeProjectField("CollarDepth", self.collarDepth)
         writeProjectField("CollarEast", self.collarEast)
@@ -496,4 +637,5 @@ class DrillManager:
         writeProjectField("DataID", self.dataId)
         writeProjectField("DataFrom", self.dataFrom)
         writeProjectField("DataTo", self.dataTo)
+        writeProjectField("DataSuffix", self.dataSuffix)
     

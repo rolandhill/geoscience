@@ -32,6 +32,7 @@ class DrillTraceDialog(QtWidgets.QDialog, QgisDialogBase, FORM_CLASS):
         self.lbDataLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
         self.initLayer(self.drillManager.dataLayer, self.lbDataLayer, ["lith", "geol"])
         self.lbDataLayer.layerChanged.connect(self.onDataLayerChanged)
+        self.teSuffix.setText(self.drillManager.dataSuffix)
 
         self.onDataLayerChanged()
 
