@@ -156,9 +156,9 @@ class DrillManager:
             self.surveyDip = dlg.fbSurveyDip.currentField()
             
             self.writeProjectData()
+            self.openLogFile()
         dlg.close()
 
-        self.openLogFile()
 
     def onDrillDisplayTraces(self):
         dlg = DrillTraceDialog(self)
@@ -251,7 +251,13 @@ class DrillManager:
                     selection.nextFeature(traceFeature)
                     currentTraceCollar = dataId
                     currentTraceSegLength = traceFeature.attributes()[idxTraceSegLength]
-                    currentTracePolyline = traceFeature.geometry().asPolyline()
+                    # The normal asPolyline() function only returns QgsPointXY, yet we need the Z coordinate as well
+                    # We therefore get a vertex iterator for the abstractGeometry and build our own list
+                    vi = traceFeature.geometry().vertices()
+                    currentTracePolyline = []
+                    while vi.hasNext():
+                        currentTracePolyline.append(vi.next())
+#                    currentTracePolyline = traceFeature.geometry().asPolyline()
                 else:
                     continue
                 
@@ -267,11 +273,11 @@ class DrillManager:
                     p1 = currentTracePolyline[i0+1]
                     dx = (p1.x() - p0.x()) * ratio
                     dy = (p1.y() - p0.y()) * ratio
-    #                dz = (p1.z() - p0.z()) * ratio
-    #                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
-                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
+                    dz = (p1.z() - p0.z()) * ratio
+                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
+#                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
                 else:
-                    pointList.append(QgsPoint(p0.x(), p0.y(), 0.0))
+                    pointList.append(QgsPoint(p0.x(), p0.y(), p0.z()))
             except:
                 self.logFile.write("! Error calculating 'From' index. Id: %s, From: %f\n" % (dataId, dataFrom))
                 self.logFile.flush()
@@ -286,11 +292,11 @@ class DrillManager:
                     p1 = currentTracePolyline[i0+1]
                     dx = (p1.x() - p0.x()) * ratio
                     dy = (p1.y() - p0.y()) * ratio
-    #                dz = (p1.z() - p0.z()) * ratio
-    #                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
-                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
+                    dz = (p1.z() - p0.z()) * ratio
+                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
+#                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
                 else:
-                    pointList.append(QgsPoint(p0.x(), p0.y(), 0.0))
+                    pointList.append(QgsPoint(p0.x(), p0.y(), p0.z()))
             except:
                 self.logFile.write("! Error calculating 'To' index. Id: %s, To: %f\n" % (dataId, dataTo))
                 self.logFile.flush()
@@ -323,7 +329,7 @@ class DrillManager:
             fileName = fileName[8:]
 
         #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.traceLayer.sourceCrs())
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.traceLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
             
         #Load the newly created layer from disk
         label = os.path.splitext(os.path.basename(fileName))[0]
@@ -336,6 +342,7 @@ class DrillManager:
         
     def desurveyData(self):
         self.logFile.write("\nDesurveying data.\n")
+        self.logFile.flush()
         pd = QProgressDialog()
         pd.setAutoReset(False)
         pd.setMinimumWidth(500)
@@ -371,49 +378,69 @@ class DrillManager:
             c.north = attrs[idxCollarNorth]
             c.elev = attrs[idxCollarElev]
             c.depth = attrs[idxCollarDepth]
-            if (not c.id) or (not c.east) or (not c.north) or (not c.elev) or (not c.depth):
+            self.logFile.write("\n%s, %f, %f, %f, %f\n" % (c.id, c.east, c.north, c.elev, c.depth))
+            self.logFile.flush()
+            if (c.id==NULL) or (c.east==NULL) or (c.north==NULL) or (c.elev==NULL) or (c.depth==NULL):
+                self.logFile.write("Rejecting collar: %s.\n" % (c.id))
+                self.logFile.flush()
                 continue
             if useCollarAzDip:
                 c.az = attrs[idxCollarAz]
-                if not c.az:
+                if c.az==NULL:
                     c.az = 0.0
                 c.dip = attrs[idxCollarDip]
-                if not c.dip:
+                if c.dip==NULL:
                     c.dip = -90 if self.downDipNegative else 90
+            self.logFile.write("Appending collar: %s.\n" % (c.id))
+            self.logFile.flush()
             arrCollar.append(c)
             
         # Build Survey array (Id, depth, az, dip)
-        numSurveys = self.surveyLayer.featureCount()
         arrSurvey = []
-
-        dp = self.surveyLayer.dataProvider()
-        idxSurveyId = dp.fieldNameIndex(self.surveyId)
-        idxSurveyDepth = dp.fieldNameIndex(self.surveyDepth)
-        idxSurveyAz = dp.fieldNameIndex(self.surveyAz)
-        idxSurveyDip = dp.fieldNameIndex(self.surveyDip)
-        
-        pd.setWindowTitle("Build Survey Array")
-        pd.setMaximum(numSurveys)
-        pd.setValue(0)
-        for index, feature in enumerate(self.surveyLayer.getFeatures()):
-            pd.setValue(index)
-            # get the feature's attributes
-            attrs = feature.attributes()
-            s = Survey()
-            s.id = attrs[idxSurveyId].strip()
-            s.depth = attrs[idxSurveyDepth]
-            s.az = attrs[idxSurveyAz]
-            s.dip = attrs[idxSurveyDip]
-            arrSurvey.append(s)
+        if self.surveyLayer is not None and self.surveyLayer.isValid():
+            numSurveys = self.surveyLayer.featureCount()
+    
+            dp = self.surveyLayer.dataProvider()
+            idxSurveyId = dp.fieldNameIndex(self.surveyId)
+            idxSurveyDepth = dp.fieldNameIndex(self.surveyDepth)
+            idxSurveyAz = dp.fieldNameIndex(self.surveyAz)
+            idxSurveyDip = dp.fieldNameIndex(self.surveyDip)
             
+            pd.setWindowTitle("Build Survey Array")
+            pd.setMaximum(numSurveys)
+            pd.setValue(0)
+            for index, feature in enumerate(self.surveyLayer.getFeatures()):
+                pd.setValue(index)
+                # get the feature's attributes
+                attrs = feature.attributes()
+                s = Survey()
+                s.id = attrs[idxSurveyId].strip()
+                s.depth = attrs[idxSurveyDepth]
+                s.az = attrs[idxSurveyAz]
+                s.dip = attrs[idxSurveyDip]
+                arrSurvey.append(s)
+            
+        self.logFile.write("\nCreating layer.\n")
+        self.logFile.flush()
+
         # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 1 attribute (Id)
         self.createDesurveyLayer()
         
+        self.logFile.write("\nLooping through collars.\n")
+        self.logFile.flush()
+
+        self.logFile.write("\nnu collars %d\n" % (len(arrCollar)))
+        self.logFile.flush()
+
         #Loop through collars
         pd.setWindowTitle("Desurvey Progress")
         pd.setMaximum(len(arrCollar))
         pd.setValue(0)
-        updateInt = int(len(arrCollar)/100)
+        updateInt = max(len(arrCollar), int(len(arrCollar)/100))
+        
+        self.logFile.write("\nUpdateInt %d\n" % (updateInt))
+        self.logFile.flush()
+
         for index, collar in enumerate(arrCollar):
             pd.setValue(index)
             if index%updateInt == 0:
@@ -423,13 +450,20 @@ class DrillManager:
                 continue
             #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
             surveys = []
-            for survey in arrSurvey:
-                if survey.id == collar.id:
-                    s = Surveys()
-                    s.depth = survey.depth
-                    s.az = survey.az
-                    s.dip = survey.dip
-                    surveys.append(s)
+            self.logFile.write("\nAdding Survey file.\n")
+            self.logFile.flush()
+
+            if len(arrSurvey) > 0:
+                for survey in arrSurvey:
+                    if survey.id == collar.id:
+                        s = Surveys()
+                        s.depth = survey.depth
+                        s.az = survey.az
+                        s.dip = survey.dip
+                        surveys.append(s)
+
+            self.logFile.write("\nSurvey file added.\n")
+            self.logFile.flush()
 
             # If the az and dip from the collar are to be used, then insert them at depth 0.0
             if len(surveys) == 0 and useCollarAzDip:
@@ -450,7 +484,7 @@ class DrillManager:
             # Sort the surveys array by depth
             surveys.sort(key = lambda x: x.depth)                        
             
-            # If surveys exist, then we shouldn't use the az & dip from the collar file, so overwrite them with the first survey.                    
+            # If surveys exist, but there isn't one at 0.0, then replicate first survey at 0.0
             if not surveys[0].depth == 0.0:
                 s = Surveys()
                 surveys.insert(0, s)
@@ -474,11 +508,16 @@ class DrillManager:
                 s.az = (surveys[0].az + surveys[1].az) * 0.5
                 s.dip = (surveys[0].dip + surveys[1].dip) * 0.5
                 surveys.insert(1, s)
+
+            self.logFile.write("\n%s\n" % (collar.id))
+            for s in surveys:
+                self.logFile.write("%f, %f, %f \n" % (s.depth, s.az, s.dip))
+            self.logFile.flush()
                 
             #Build drill trace every desurveyLength to EOH
             sz = int(collar.depth / self.desurveyLength) + 1
-            if collar.depth % self.desurveyLength > 0.0:
-                sz += 1
+#            if collar.depth / self.desurveyLength > 0.0:
+#                sz += 1
             xs = []
             depth = 0.0
             for d in range(0, sz):
@@ -486,6 +525,14 @@ class DrillManager:
                 depth += self.desurveyLength
             if xs[-1] > collar.depth:
                 xs[-1] = collar.depth
+            if xs[-1] < collar.depth:
+                xs.append(collar.depth)
+                
+                
+            self.logFile.write("\nxs:\n")
+            for val in xs:
+                self.logFile.write("%f\n" % (val))
+            self.logFile.flush()
                 
             # We don't want to flip between azimuths greater than 0 and less than 360
             # Use the first azimuth to determine if we will use -ve azimuth or >360 azimuths
@@ -493,24 +540,30 @@ class DrillManager:
             x = []
             az = []
             dip = []
-            for s in surveys:
+            for index, s in enumerate(surveys):
                 x.append(s.depth)
-                # We need to allow for azimuths that vary each side of 0/360
-                if s.az - surveys[0].az < -270:
-                    s.az = 360.0 + s.az
-                elif s.az - surveys[0].az > 270:
-                    s.az = 360.0 - s.az
-                #Check if the azimuth has flipped to the opposite direction,
-                #  indicating that the dip has passed under 90deg.
-                elif 180.0 - abs(s.az - surveys[0].az) < 20:
-                    # Are we operating in with azimuths potentially <0 or >360?
-                    if surveys[0].az < 180.0:
-                        s.az = s.az - 180.0
-                    else:
-                        s.az = s.az + 180.0
-                    s.dip = -90.0 - (-90.0 - s.dip) if s.dip < 0.0 else 90.0 + (90.0 - s.dip)
+                if index > 0:
+                    # We need to allow for azimuths that vary each side of 0/360
+                    if s.az - surveys[0].az < -270:
+                        s.az = 360.0 + s.az
+                    elif s.az - surveys[0].az > 270:
+                        s.az = 0.0 - (360.0 - s.az)
+                    #Check if the azimuth has flipped to the opposite direction,
+                    #  indicating that the dip has passed under 90deg.
+                    elif 180.0 - abs(s.az - surveys[0].az) < 20:
+                        # Are we operating in with azimuths potentially <0 or >360?
+                        if surveys[0].az < 180.0:
+                            s.az = s.az - 180.0
+                        else:
+                            s.az = s.az + 180.0
+                        s.dip = -90.0 + (-90.0 - s.dip) if s.dip < 0.0 else 90.0 + (90.0 - s.dip)
                 az.append(s.az)
                 dip.append(s.dip)
+
+            self.logFile.write("\nTo Spline:\n")
+            for k in range(0,len(x)):
+                self.logFile.write("%f %f %f\n" % (x[k], az[k], dip[k]))
+            self.logFile.flush()
 
             try:            
                 azs = spline(x, az, xs)
@@ -525,11 +578,12 @@ class DrillManager:
             pointList = []
             pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
             try:
-                for i in range(0, len(xs)):
+                # We already added the location at point0 (the collar) so start from 1
+                for i in range(1, len(xs)):
                     dip = dips[i] if self.downDipNegative else (-1.0 * dips[i])
                     rot = rotation_from_angles([dip/180.0*np.pi, azs[i]/-180.0*np.pi, 0.0], 'XZY')
                     offset = rot.dot(np.array([0.0, self.desurveyLength, 0.0]))
-                    p0 = pointList[i]
+                    p0 = pointList[i-1]
                     pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
             except:
                 self.logFile.write("! Error in %s\n" % (collar.id))
@@ -547,14 +601,15 @@ class DrillManager:
 
         fileName = self.createTraceFilename()
         
-        #Save memory layer to GeoPackage
-        error = QgsVectorFileWriter.writeAsVectorFormat(self.traceLayer, fileName, "CP1250", self.collarLayer.sourceCrs())
 #        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", crs, "ESRI Shapefile")
         path="%s.gpkg" % (fileName)
         label = os.path.splitext(os.path.basename(fileName))[0]
         # Remove trace layer from project if it already exists
         layer = getLayerByName(label)
         QgsProject.instance().removeMapLayer(layer)
+        #Save memory layer to GeoPackage
+        error = QgsVectorFileWriter.writeAsVectorFormat(self.traceLayer, fileName, "CP1250", self.collarLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
+
         self.traceLayer = QgsVectorLayer(path, label)
 ##        self.traceLayer = QgsVectorLayer(fileName+".shp", label, "ogr")
         QgsProject.instance().addMapLayer(self.traceLayer)
@@ -628,6 +683,8 @@ class DrillManager:
         self.dataFrom = readProjectField(self.dataLayer, "DataFrom")
         self.dataTo = readProjectField(self.dataLayer, "DataTo")
         self.dataSuffix = readProjectField(self.dataLayer, "DataSuffix")
+        
+        self.openLogFile()
 
     def writeProjectData(self):
         writeProjectData("DefaultSectionWidth", self.defaultSectionWidth)
