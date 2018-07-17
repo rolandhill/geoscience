@@ -18,13 +18,12 @@ from qgis.utils import *
 from qgis.gui import *
 import numpy as np
 
-from .rotation_matrix_3d import rotation_from_angles
+from .quaternion import Quaternion
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 from .drillsetup_dialog import DrillSetupDialog
 from .drilltrace_dialog import DrillTraceDialog
-from .spline import spline
 
 import os.path
 import copy
@@ -226,7 +225,7 @@ class DrillManager:
         currentTracePolyline = None
         
         #Loop through downhole layer features
-        updateInt = int(self.dataLayer.featureCount()/100)
+        updateInt = max(self.dataLayer.featureCount() ,int(self.dataLayer.featureCount()/100))
         for index, df in enumerate(self.dataLayer.getFeatures()):
             pd.setValue(index)
             if index%updateInt == 0:
@@ -378,11 +377,7 @@ class DrillManager:
             c.north = attrs[idxCollarNorth]
             c.elev = attrs[idxCollarElev]
             c.depth = attrs[idxCollarDepth]
-            self.logFile.write("\n%s, %f, %f, %f, %f\n" % (c.id, c.east, c.north, c.elev, c.depth))
-            self.logFile.flush()
             if (c.id==NULL) or (c.east==NULL) or (c.north==NULL) or (c.elev==NULL) or (c.depth==NULL):
-                self.logFile.write("Rejecting collar: %s.\n" % (c.id))
-                self.logFile.flush()
                 continue
             if useCollarAzDip:
                 c.az = attrs[idxCollarAz]
@@ -391,8 +386,6 @@ class DrillManager:
                 c.dip = attrs[idxCollarDip]
                 if c.dip==NULL:
                     c.dip = -90 if self.downDipNegative else 90
-            self.logFile.write("Appending collar: %s.\n" % (c.id))
-            self.logFile.flush()
             arrCollar.append(c)
             
         # Build Survey array (Id, depth, az, dip)
@@ -420,27 +413,15 @@ class DrillManager:
                 s.dip = attrs[idxSurveyDip]
                 arrSurvey.append(s)
             
-        self.logFile.write("\nCreating layer.\n")
-        self.logFile.flush()
-
         # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 1 attribute (Id)
         self.createDesurveyLayer()
         
-        self.logFile.write("\nLooping through collars.\n")
-        self.logFile.flush()
-
-        self.logFile.write("\nnu collars %d\n" % (len(arrCollar)))
-        self.logFile.flush()
-
         #Loop through collars
         pd.setWindowTitle("Desurvey Progress")
         pd.setMaximum(len(arrCollar))
         pd.setValue(0)
         updateInt = max(len(arrCollar), int(len(arrCollar)/100))
         
-        self.logFile.write("\nUpdateInt %d\n" % (updateInt))
-        self.logFile.flush()
-
         for index, collar in enumerate(arrCollar):
             pd.setValue(index)
             if index%updateInt == 0:
@@ -450,8 +431,6 @@ class DrillManager:
                 continue
             #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
             surveys = []
-            self.logFile.write("\nAdding Survey file.\n")
-            self.logFile.flush()
 
             if len(arrSurvey) > 0:
                 for survey in arrSurvey:
@@ -461,9 +440,6 @@ class DrillManager:
                         s.az = survey.az
                         s.dip = survey.dip
                         surveys.append(s)
-
-            self.logFile.write("\nSurvey file added.\n")
-            self.logFile.flush()
 
             # If the az and dip from the collar are to be used, then insert them at depth 0.0
             if len(surveys) == 0 and useCollarAzDip:
@@ -481,117 +457,89 @@ class DrillManager:
                 s.dip = -90 if self.downDipNegative else 90
                 surveys.append(s)
                 
-            # Sort the surveys array by depth
-            surveys.sort(key = lambda x: x.depth)                        
-            
-            # If surveys exist, but there isn't one at 0.0, then replicate first survey at 0.0
-            if not surveys[0].depth == 0.0:
-                s = Surveys()
-                surveys.insert(0, s)
-                s.depth = 0.0
-                surveys[0].az = surveys[1].az
-                surveys[0].dip = surveys[1].dip
-                
-            # If the last survey isn't at the end of hole, then repeat the last one at eoh
-            if len(surveys) > 0 and surveys[-1].depth < collar.depth:
-                s = Surveys()
-                s.depth = collar.depth
-                s.az = surveys[-1].az
-                s.dip = surveys[-1].dip
-                surveys.append(s)
-                
-            # If there are only 2 surveys, then we add a third in the middle as an average.
-            # This way we can use the spline.
-            if len(surveys) == 2:
-                s = Surveys()
-                s.depth = collar.depth * 0.5
-                s.az = (surveys[0].az + surveys[1].az) * 0.5
-                s.dip = (surveys[0].dip + surveys[1].dip) * 0.5
-                surveys.insert(1, s)
+            holeStraight = False
+            if len(surveys) == 1:
+                holeStraight = True
 
-            self.logFile.write("\n%s\n" % (collar.id))
-            for s in surveys:
-                self.logFile.write("%f, %f, %f \n" % (s.depth, s.az, s.dip))
-            self.logFile.flush()
+            if not holeStraight:
+                # Sort the surveys array by depth
+                surveys.sort(key = lambda x: x.depth)                        
+            
+                # If surveys exist, but there isn't one at 0.0, then replicate first survey at 0.0
+                if not surveys[0].depth == 0.0:
+                    s = Surveys()
+                    surveys.insert(0, s)
+                    s.depth = 0.0
+                    surveys[0].az = surveys[1].az
+                    surveys[0].dip = surveys[1].dip
+                    
+                # If the last survey isn't at the end of hole, then repeat the last one at eoh
+                if len(surveys) > 0 and surveys[-1].depth < collar.depth:
+                    s = Surveys()
+                    s.depth = collar.depth
+                    s.az = surveys[-1].az
+                    s.dip = surveys[-1].dip
+                    surveys.append(s)
+                
+            # Create a quaternion for each survey
+            quat = []
+            for j, s in enumerate(surveys):
+                qdip = Quaternion(axis=[1, 0, 0], degrees=(s.dip  if self.downDipNegative else -s.dip))
+                        
+                qaz = Quaternion(axis=[0, 0, 1], degrees=-s.az)
+                q = qaz * qdip
+                if j > 0:
+                    if np.dot(quat[j-1].elements, q.elements) < 0.0:
+                        q = -q
+                quat.append(q)
                 
             #Build drill trace every desurveyLength to EOH
-            sz = int(collar.depth / self.desurveyLength) + 1
-#            if collar.depth / self.desurveyLength > 0.0:
-#                sz += 1
             xs = []
-            depth = 0.0
-            for d in range(0, sz):
-                xs.append(depth)
-                depth += self.desurveyLength
-            if xs[-1] > collar.depth:
-                xs[-1] = collar.depth
-            if xs[-1] < collar.depth:
-                xs.append(collar.depth)
+            if not holeStraight:
+                sz = int(collar.depth / self.desurveyLength) + 1
+                depth = 0.0
+                for d in range(0, sz):
+                    xs.append(depth)
+                    depth += self.desurveyLength
+                if xs[-1] > collar.depth:
+                    xs[-1] = collar.depth
+                if xs[-1] < collar.depth:
+                    xs.append(collar.depth)
+            else:
+                xs.append(0.0)
                 
-                
-            self.logFile.write("\nxs:\n")
-            for val in xs:
-                self.logFile.write("%f\n" % (val))
-            self.logFile.flush()
-                
-            # We don't want to flip between azimuths greater than 0 and less than 360
-            # Use the first azimuth to determine if we will use -ve azimuth or >360 azimuths
-            #Calculate the azimuth and dip splines
-            x = []
-            az = []
-            dip = []
-            for index, s in enumerate(surveys):
-                x.append(s.depth)
-                if index > 0:
-                    # We need to allow for azimuths that vary each side of 0/360
-                    if s.az - surveys[0].az < -270:
-                        s.az = 360.0 + s.az
-                    elif s.az - surveys[0].az > 270:
-                        s.az = 0.0 - (360.0 - s.az)
-                    #Check if the azimuth has flipped to the opposite direction,
-                    #  indicating that the dip has passed under 90deg.
-                    elif 180.0 - abs(s.az - surveys[0].az) < 20:
-                        # Are we operating in with azimuths potentially <0 or >360?
-                        if surveys[0].az < 180.0:
-                            s.az = s.az - 180.0
-                        else:
-                            s.az = s.az + 180.0
-                        s.dip = -90.0 + (-90.0 - s.dip) if s.dip < 0.0 else 90.0 + (90.0 - s.dip)
-                az.append(s.az)
-                dip.append(s.dip)
-
-            self.logFile.write("\nTo Spline:\n")
-            for k in range(0,len(x)):
-                self.logFile.write("%f %f %f\n" % (x[k], az[k], dip[k]))
-            self.logFile.flush()
-
-            try:            
-                azs = spline(x, az, xs)
-                dips = spline(x, dip, xs)
-            except:                
-                pass
-                self.logFile.write("! Spline Error in %s\n" % (collar.id))
-                self.logFile.flush()
-                    
             # Create linestring
             feature = QgsFeature()
             pointList = []
             pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
-            try:
+            if not holeStraight:
+                idx0 = 0
                 # We already added the location at point0 (the collar) so start from 1
                 for i in range(1, len(xs)):
-                    dip = dips[i] if self.downDipNegative else (-1.0 * dips[i])
-                    rot = rotation_from_angles([dip/180.0*np.pi, azs[i]/-180.0*np.pi, 0.0], 'XZY')
-                    offset = rot.dot(np.array([0.0, self.desurveyLength, 0.0]))
+                    q = Quaternion()
+                    # Find the lowest survey equal or less than xs
+                    for j in range(idx0, len(surveys)):
+                        if surveys[j].depth == xs[i]:
+                            idx0 = j
+                            q = quat[j]
+                            break
+                        if surveys[j].depth < xs[i] and surveys[j+1].depth >= xs[i]:
+                            idx0 = j
+                            ratio = (xs[i] - surveys[j].depth) / (surveys[j+1].depth - surveys[j].depth)
+                            q = Quaternion.slerp(quat[j], quat[j+1], ratio)
+                            break
+
+                    offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self.desurveyLength
                     p0 = pointList[i-1]
                     pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
-            except:
-                self.logFile.write("! Error in %s\n" % (collar.id))
-                for s in surveys:
-                    self.logFile.write("  Depth: %f, Az: %f, Dip: %f\n" % (s.depth, s.az, s.dip))
-                self.logFile.flush()
+            else:
+                offset = quat[0].rotate(np.array([0.0, 1.0, 0.0])) * collar.depth
+                p0 = pointList[0]
+                pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
+                
+
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
-            feature.setAttributes([collar.id, self.desurveyLength])
+            feature.setAttributes([collar.id, collar.depth if holeStraight else self.desurveyLength])
             self.traceLayer.startEditing()
             self.traceLayer.addFeature(feature)
                 
@@ -601,7 +549,6 @@ class DrillManager:
 
         fileName = self.createTraceFilename()
         
-#        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", crs, "ESRI Shapefile")
         path="%s.gpkg" % (fileName)
         label = os.path.splitext(os.path.basename(fileName))[0]
         # Remove trace layer from project if it already exists
@@ -611,7 +558,6 @@ class DrillManager:
         error = QgsVectorFileWriter.writeAsVectorFormat(self.traceLayer, fileName, "CP1250", self.collarLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
 
         self.traceLayer = QgsVectorLayer(path, label)
-##        self.traceLayer = QgsVectorLayer(fileName+".shp", label, "ogr")
         QgsProject.instance().addMapLayer(self.traceLayer)
 
     def createTraceFilename(self):
