@@ -187,6 +187,7 @@ class DrillManager:
 
     def createDownholeTrace(self):
         self.logFile.write("\nCreating Trace Layer.\n")
+        self.logFile.flush()
         # Check that desurvey layer is available
         if not self.traceLayer.isValid() or not self.dataLayer.isValid():
             return
@@ -238,7 +239,7 @@ class DrillManager:
             dataId = attrs[idxId].strip()
             dataFrom = attrs[idxFrom]
             dataTo = attrs[idxTo]
-            if (not dataId) or (not dataFrom) or (not dataTo):
+            if (dataId==NULL) or (dataFrom==NULL) or (dataTo==NULL):
                 continue
             
             # Get the desurvey drill trace relevant to this collar
@@ -252,11 +253,10 @@ class DrillManager:
                     currentTraceSegLength = traceFeature.attributes()[idxTraceSegLength]
                     # The normal asPolyline() function only returns QgsPointXY, yet we need the Z coordinate as well
                     # We therefore get a vertex iterator for the abstractGeometry and build our own list
-                    vi = traceFeature.geometry().vertices()
                     currentTracePolyline = []
+                    vi = traceFeature.geometry().vertices()
                     while vi.hasNext():
                         currentTracePolyline.append(vi.next())
-#                    currentTracePolyline = traceFeature.geometry().asPolyline()
                 else:
                     continue
                 
@@ -266,40 +266,30 @@ class DrillManager:
             i = dataFrom / currentTraceSegLength
             i0 = int(i)
             ratio = i - i0
-            try:
-                p0 = currentTracePolyline[i0]
-                if ratio > 0.01:
-                    p1 = currentTracePolyline[i0+1]
-                    dx = (p1.x() - p0.x()) * ratio
-                    dy = (p1.y() - p0.y()) * ratio
-                    dz = (p1.z() - p0.z()) * ratio
-                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
-#                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
-                else:
-                    pointList.append(QgsPoint(p0.x(), p0.y(), p0.z()))
-            except:
-                self.logFile.write("! Error calculating 'From' index. Id: %s, From: %f\n" % (dataId, dataFrom))
-                self.logFile.flush()
-                continue
+
+            p0 = currentTracePolyline[i0]
+            if ratio > 0.01:
+                p1 = currentTracePolyline[i0+1]
+                dx = (p1.x() - p0.x()) * ratio
+                dy = (p1.y() - p0.y()) * ratio
+                dz = (p1.z() - p0.z()) * ratio
+                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
+            else:
+                pointList.append(p0)
             
             i = dataTo / currentTraceSegLength
             i0 = int(i)
             ratio = i - i0
-            try:
-                p0 = currentTracePolyline[i0]
-                if ratio > 0.01:
-                    p1 = currentTracePolyline[i0+1]
-                    dx = (p1.x() - p0.x()) * ratio
-                    dy = (p1.y() - p0.y()) * ratio
-                    dz = (p1.z() - p0.z()) * ratio
-                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
-#                    pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, 0.0))
-                else:
-                    pointList.append(QgsPoint(p0.x(), p0.y(), p0.z()))
-            except:
-                self.logFile.write("! Error calculating 'To' index. Id: %s, To: %f\n" % (dataId, dataTo))
-                self.logFile.flush()
-                continue
+
+            p0 = currentTracePolyline[i0]
+            if ratio > 0.01:
+                p1 = currentTracePolyline[i0+1]
+                dx = (p1.x() - p0.x()) * ratio
+                dy = (p1.y() - p0.y()) * ratio
+                dz = (p1.z() - p0.z()) * ratio
+                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
+            else:
+                pointList.append(p0)
             
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
 
@@ -327,14 +317,15 @@ class DrillManager:
         if fileName.startswith("file:///"):
             fileName = fileName[8:]
 
-        #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.traceLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
-            
-        #Load the newly created layer from disk
         label = os.path.splitext(os.path.basename(fileName))[0]
+
         # Remove trace layer from project if it already exists
         oldLayer = getLayerByName(label)
         QgsProject.instance().removeMapLayer(oldLayer)
+
+        #Save memory layer to Geopackage file
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.traceLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
+            
         # Load the one we just saved
         layer = QgsVectorLayer(fileName+".gpkg", label)
         QgsProject.instance().addMapLayer(layer)
