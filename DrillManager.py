@@ -27,6 +27,7 @@ from .drilltrace_dialog import DrillTraceDialog
 
 import os.path
 import copy
+import math
 
 class Collar:
     id = ''
@@ -109,6 +110,24 @@ def readProjectBool(entry, default):
 def writeProjectData(entry, val):
     QgsProject.instance().writeEntry("GeoTools", entry, val)
 
+def interpPolyline(depth, segLength, polyline):
+    p = QgsPoint()
+    i = depth / segLength
+    i0 = int(i)
+    ratio = i - i0
+
+    p0 = polyline[i0]
+    if ratio > 0.01:
+        p1 = polyline[i0+1]
+        dx = (p1.x() - p0.x()) * ratio
+        dy = (p1.y() - p0.y()) * ratio
+        dz = (p1.z() - p0.z()) * ratio
+        p = QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz)
+    else:
+        p = p0
+    return p, i
+
+
 class DrillManager:
     def __init__(self):
         # Project data is normally read in response to a readProject signal.
@@ -184,7 +203,7 @@ class DrillManager:
 
     def onDrillCreateSection(self):
         pass
-
+    
     def createDownholeTrace(self):
         self.logFile.write("\nCreating Trace Layer.\n")
         self.logFile.flush()
@@ -263,33 +282,13 @@ class DrillManager:
             # Create line representing the downhole value using From and To
             pointList = []
             # Calculate indices spanning the from and to depths, then linearly interpolate a position
-            i = dataFrom / currentTraceSegLength
-            i0 = int(i)
-            ratio = i - i0
+            pFrom, iFrom = interpPolyline(dataFrom, currentTraceSegLength, currentTracePolyline)
+            pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
 
-            p0 = currentTracePolyline[i0]
-            if ratio > 0.01:
-                p1 = currentTracePolyline[i0+1]
-                dx = (p1.x() - p0.x()) * ratio
-                dy = (p1.y() - p0.y()) * ratio
-                dz = (p1.z() - p0.z()) * ratio
-                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
-            else:
-                pointList.append(p0)
-            
-            i = dataTo / currentTraceSegLength
-            i0 = int(i)
-            ratio = i - i0
-
-            p0 = currentTracePolyline[i0]
-            if ratio > 0.01:
-                p1 = currentTracePolyline[i0+1]
-                dx = (p1.x() - p0.x()) * ratio
-                dy = (p1.y() - p0.y()) * ratio
-                dz = (p1.z() - p0.z()) * ratio
-                pointList.append(QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz))
-            else:
-                pointList.append(p0)
+            pointList.append(pFrom)
+            for i in range(math.ceil(iFrom), math.floor(iTo)):
+                pointList.append(currentTracePolyline[i])
+            pointList.append(pTo)
             
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
 
