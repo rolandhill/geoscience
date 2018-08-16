@@ -26,7 +26,6 @@ from .drillsetup_dialog import DrillSetupDialog
 from .drilltrace_dialog import DrillTraceDialog
 
 import os.path
-import copy
 import math
 
 class Collar:
@@ -65,9 +64,10 @@ def getFieldByName(layer, name):
         if index > -1:
             field = dp.field(index)
     return field
-    
+
+# Retrieve the name of the layer from the QGIS project file with the supplied entry label
 def readProjectLayer(entry):
-    name, ok = QgsProject.instance().readEntry ("GeoTools", entry)
+    name, ok = QgsProject.instance().readEntry ("Geoscience", entry)
     if ok and name != "None":
         layer = getLayerByName(name)
         if layer != None:
@@ -77,39 +77,47 @@ def readProjectLayer(entry):
     else:
         return None
 
+# Write the supplied layer name into the QGIS project file next to the supplied entry label
 def writeProjectLayer(entry, layer):
     if layer is not None:
         try:
-            QgsProject.instance().writeEntry("GeoTools", entry, layer.name())
+            QgsProject.instance().writeEntry("Geoscience", entry, layer.name())
         except:
-            QgsProject.instance().writeEntry("GeoTools", entry, "None")
+            QgsProject.instance().writeEntry("Geoscience", entry, "None")
     else:
-        QgsProject.instance().writeEntry("GeoTools", entry, "None")
+        QgsProject.instance().writeEntry("Geoscience", entry, "None")
         
-def readProjectField(layer, entry):
-    name, ok = QgsProject.instance().readEntry ("GeoTools", entry)
+# Retrieve the name of the field from the QGIS project file with the supplied entry label
+def readProjectField(entry):
+    name, ok = QgsProject.instance().readEntry ("Geoscience", entry)
     return name
 
+# Write the supplied field name into the QGIS project file next to the supplied entry label
 def writeProjectField(entry, field):
-    QgsProject.instance().writeEntry("GeoTools", entry, field)
+    QgsProject.instance().writeEntry("Geoscience", entry, field)
         
+# Retrieve a number from the QGIS project file with the supplied entry label
 def readProjectNum(entry, default):
-    val, ok = QgsProject.instance().readNumEntry ("GeoTools", entry)
+    val, ok = QgsProject.instance().readNumEntry ("Geoscience", entry)
     if ok:
         return val
     else:
         return default
     
+# Retrieve a bool from the QGIS project file with the supplied entry label
 def readProjectBool(entry, default):
-    val, ok = QgsProject.instance().readBoolEntry ("GeoTools", entry)
+    val, ok = QgsProject.instance().readBoolEntry ("Geoscience", entry)
     if ok:
         return val
     else:
         return default
 
+# Write the supplied value (number or bool) into the QGIS project file next to the supplied entry label
 def writeProjectData(entry, val):
-    QgsProject.instance().writeEntry("GeoTools", entry, val)
+    QgsProject.instance().writeEntry("Geoscience", entry, val)
 
+# Calculate an interpolated 3D point at given depth from the supplied polyline.
+# The polyline must have constant sgment lengths given by segLength
 def interpPolyline(depth, segLength, polyline):
     p = QgsPoint()
     i = depth / segLength
@@ -117,43 +125,45 @@ def interpPolyline(depth, segLength, polyline):
     ratio = i - i0
 
     p0 = polyline[i0]
-    if ratio > 0.01:
-        p1 = polyline[i0+1]
-        dx = (p1.x() - p0.x()) * ratio
-        dy = (p1.y() - p0.y()) * ratio
-        dz = (p1.z() - p0.z()) * ratio
-        p = QgsPoint(p0.x() + dx, p0.y() + dy, p0.z() + dz)
+    if ratio > 0.0:
+        p1 = polyline[i0 + 1]
+        dp = (p1 - p0) * ratio
+        p = p0 + dp
     else:
         p = p0
     return p, i
 
 
+# The DrillManager class controls all drill related data and methods 
 class DrillManager:
     def __init__(self):
         # Project data is normally read in response to a readProject signal.
         # We also do it here for when the plugin is loaded other than at startup
         self.readProjectData()
-        
+
+        # Create a log file        
         self.openLogFile()
 
+    # Open a log file in the Collar Layer's directory
     def openLogFile(self):
         # Maintain a log file in case of data errors
-#        base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
         if self.collarLayer and self.collarLayer.isValid():
             fileName = self.collarLayer.dataProvider().dataSourceUri()
             if fileName.startswith("file:///"):
                 fileName = fileName[8:]
-            self.logFile = open(os.path.join(os.path.dirname(fileName), "GeoTools_DrillManager_log.txt"),'w')
-            self.logFile.write("GeoTools - DrillManager log file\n")
-            self.logFile.write("  Note: This file is overwritten each time you run GeoTools.\n")
+            self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
+            self.logFile.write("Geoscience - DrillManager log file\n")
+            self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
             self.logFile.write("  Make a copy if you want to keep the results.\n")
+            # We flush the buffers in case the plugin crashes without writing the message to the file
             self.logFile.flush()
 
-        
+    # Setup and run the Drill Setup dialog        
     def onDrillSetup(self):
         dlg = DrillSetupDialog(self)
         dlg.show()
         result = dlg.exec_()
+        # If OK button clicked then retrieve and update values
         if result:
             self.downDipNegative = dlg.checkDownDipNegative.isChecked()
             self.desurveyLength = dlg.sbDesurveyLength.value()
@@ -172,12 +182,16 @@ class DrillManager:
             self.surveyDepth = dlg.fbSurveyDepth.currentField()
             self.surveyAz = dlg.fbSurveyAz.currentField()
             self.surveyDip = dlg.fbSurveyDip.currentField()
-            
+
+            # Save updated values to QGIS project file            
             self.writeProjectData()
+            
+            # The collar layer might have changed, so re-open log file
             self.openLogFile()
         dlg.close()
 
 
+    # Setup and run the Drill Trace dialog
     def onDrillDisplayTraces(self):
         dlg = DrillTraceDialog(self)
         dlg.show()
@@ -188,29 +202,38 @@ class DrillManager:
             self.dataFrom = dlg.fbDataFrom.currentField()
             self.dataTo = dlg.fbDataTo.currentField()
             self.dataSuffix = dlg.teSuffix.text()
+            # Save the name of each checked attribute field in a list
             self.dataFields = []
             for index in range(dlg.listFields.count()):
                 if dlg.listFields.item(index).checkState():
                     self.dataFields.append(dlg.listFields.item(index).text())
                     
             self.writeProjectData()
+
         dlg.close()
-        
-        self.createDownholeTrace()
-        
+
+        if result:
+            # Create the down hole traces        
+            self.createDownholeTrace()
+
+    # Desurvey the data        
     def onDesurveyData(self):
         self.desurveyData()
 
+    # Create a section
     def onDrillCreateSection(self):
         pass
-    
+
+    # Create the down hole traces    
     def createDownholeTrace(self):
         self.logFile.write("\nCreating Trace Layer.\n")
         self.logFile.flush()
+        
         # Check that desurvey layer is available
         if not self.traceLayer.isValid() or not self.dataLayer.isValid():
             return
         
+        # Set up a progress display
         pd = QProgressDialog()
         pd.setAutoReset(False)
         pd.setWindowTitle("Build Trace Layer")
@@ -227,6 +250,7 @@ class DrillManager:
         idxId = dp.fieldNameIndex(self.dataId)
         idxFrom = dp.fieldNameIndex(self.dataFrom)
         idxTo = dp.fieldNameIndex(self.dataTo)
+        # Create a list of attribute indices from the desired attribute field names
         idxAttList = []
         for name in self.dataFields:
             idx = dp.fieldNameIndex(name)
@@ -244,12 +268,16 @@ class DrillManager:
         currentTraceSegLength = 1.0
         currentTracePolyline = None
         
-        #Loop through downhole layer features
-        updateInt = max(self.dataLayer.featureCount() ,int(self.dataLayer.featureCount()/100))
+    #Loop through downhole layer features
+        # Calculate an optimum update interval for the progress bar (updating gui items is expensive)
+        updateInt = max(100, long(self.dataLayer.featureCount()/100))
         for index, df in enumerate(self.dataLayer.getFeatures()):
-            pd.setValue(index)
+            # Update the Progress bar
             if index%updateInt == 0:
+                pd.setValue(index)
                 qApp.processEvents()
+            
+            # Variable to hold a feature
             feature = QgsFeature()
 
             # get the feature's attributes
@@ -261,21 +289,28 @@ class DrillManager:
             if (dataId==NULL) or (dataFrom==NULL) or (dataTo==NULL):
                 continue
             
-            # Get the desurvey drill trace relevant to this collar
+            # Get the desurvey drill trace relevant to this collar, checking first that we don't already have it
             if not currentTraceCollar == dataId:
                 # Get the correct trace feature via a query
                 query = '''"CollarID" = '%s' ''' % (dataId)
                 selection = self.traceLayer.getFeatures(QgsFeatureRequest().setFilterExpression(query))
+                # We have a selection of features
                 if selection.isValid():
+                    # There should be just 1, so get the first feature
                     selection.nextFeature(traceFeature)
-                    currentTraceCollar = dataId
-                    currentTraceSegLength = traceFeature.attributes()[idxTraceSegLength]
-                    # The normal asPolyline() function only returns QgsPointXY, yet we need the Z coordinate as well
-                    # We therefore get a vertex iterator for the abstractGeometry and build our own list
-                    currentTracePolyline = []
-                    vi = traceFeature.geometry().vertices()
-                    while vi.hasNext():
-                        currentTracePolyline.append(vi.next())
+                    # Is the feature valid?
+                    if traceFeature.isValid():
+                        # Update information for the current feature
+                        currentTraceCollar = dataId
+                        currentTraceSegLength = traceFeature.attributes()[idxTraceSegLength]
+                        # The normal asPolyline() function only returns QgsPointXY, yet we need the Z coordinate as well
+                        # We therefore get a vertex iterator for the abstractGeometry and build our own list
+                        currentTracePolyline = []
+                        vi = traceFeature.geometry().vertices()
+                        while vi.hasNext():
+                            currentTracePolyline.append(vi.next())
+                    else:
+                        continue
                 else:
                     continue
                 
@@ -285,18 +320,25 @@ class DrillManager:
             pFrom, iFrom = interpPolyline(dataFrom, currentTraceSegLength, currentTracePolyline)
             pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
 
+            # Add the first (From) point to the list
             pointList.append(pFrom)
+            # Add all the intermediate points (so a long interval accurately reflects the bend of the hole)
             for i in range(math.ceil(iFrom), math.floor(iTo)):
                 pointList.append(currentTracePolyline[i])
+            # Add the last (To) point
             pointList.append(pTo)
             
+            # Set the geometry for the new downhole feature
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
 
             # Create a list of the attributes to be included in new file
+            # These are just copied from the original down hole layer
+            # according to whether the user selected the check boxes
             attList = []
             for idx in idxAttList:
                 attList.append(attrs[idx])
 
+            # Also append the 3D desurveyed From and To points
             attList.append(pointList[0].x())
             attList.append(pointList[0].y())
             attList.append(pointList[0].z())
@@ -304,18 +346,22 @@ class DrillManager:
             attList.append(pointList[1].y())
             attList.append(pointList[1].z())
 
+            # Set the attributes for the new feature
             feature.setAttributes(attList)
 
+            # Add the new feature to the new Trace_ layer
             layer.startEditing()
             layer.addFeature(feature)
             layer.commitChanges()
         
-        # Build the new filename
+        # Build the new filename for saving to disk. We are using GeoPackages
         base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())
         fileName = base + "_%s" % (self.dataSuffix)
+        # Remove the file:/// prefix from the URI
         if fileName.startswith("file:///"):
             fileName = fileName[8:]
 
+        # Generate a layer label
         label = os.path.splitext(os.path.basename(fileName))[0]
 
         # Remove trace layer from project if it already exists
@@ -325,18 +371,22 @@ class DrillManager:
         #Save memory layer to Geopackage file
         error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.traceLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
             
-        # Load the one we just saved
+        # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
         QgsProject.instance().addMapLayer(layer)
         
     def desurveyData(self):
+        # Write to the log file
         self.logFile.write("\nDesurveying data.\n")
         self.logFile.flush()
+        
+        # Set up a progress bar
         pd = QProgressDialog()
         pd.setAutoReset(False)
         pd.setMinimumWidth(500)
         pd.setMinimum(0)
         
+        # Get the relevant attribute indices
         dp = self.collarLayer.dataProvider()
         idxCollarId = dp.fieldNameIndex(self.collarId)
         idxCollarEast = dp.fieldNameIndex(self.collarEast)
@@ -353,11 +403,16 @@ class DrillManager:
         numCollars = self.collarLayer.featureCount()
         arrCollar = []
 
+        # Update the progress bar
         pd.setWindowTitle("Build Collar Array")
         pd.setMaximum(numCollars)
         pd.setValue(0)
+        
+        # Loop through the collar layer and build list of collars
         for index, feature in enumerate(self.collarLayer.getFeatures()):
+            # Update progress bar
             pd.setValue(index)
+            
             # get the feature's attributes
             attrs = feature.attributes()
             c = Collar()
@@ -383,17 +438,21 @@ class DrillManager:
         if self.surveyLayer is not None and self.surveyLayer.isValid():
             numSurveys = self.surveyLayer.featureCount()
     
+            # Get the attribute indices
             dp = self.surveyLayer.dataProvider()
             idxSurveyId = dp.fieldNameIndex(self.surveyId)
             idxSurveyDepth = dp.fieldNameIndex(self.surveyDepth)
             idxSurveyAz = dp.fieldNameIndex(self.surveyAz)
             idxSurveyDip = dp.fieldNameIndex(self.surveyDip)
             
+            # Update progress bar
             pd.setWindowTitle("Build Survey Array")
             pd.setMaximum(numSurveys)
             pd.setValue(0)
+            #Loop through Survey layer and buils list of surveys
             for index, feature in enumerate(self.surveyLayer.getFeatures()):
                 pd.setValue(index)
+                
                 # get the feature's attributes
                 attrs = feature.attributes()
                 s = Survey()
@@ -403,26 +462,33 @@ class DrillManager:
                 s.dip = attrs[idxSurveyDip]
                 arrSurvey.append(s)
             
-        # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 1 attribute (Id)
+        # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 2 attribute (Id, Segment Length)
         self.createDesurveyLayer()
         
-        #Loop through collars
+        #Loop through collar list and desurvey each one
+        # Update Progress bar
         pd.setWindowTitle("Desurvey Progress")
         pd.setMaximum(len(arrCollar))
         pd.setValue(0)
-        updateInt = max(len(arrCollar), int(len(arrCollar)/100))
+        #Calculate optimum update interval
+        updateInt = max(100, int(len(arrCollar)/100))
         
+        # Enter collar loop
         for index, collar in enumerate(arrCollar):
             pd.setValue(index)
+            # Force update the progress bar visualisation every 1% as it normally only happens in idle time
             if index%updateInt == 0:
                 qApp.processEvents()
-                
+
+            # Check the id exists                
             if not collar.id:
                 continue
+            
             #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
             surveys = []
 
             if len(arrSurvey) > 0:
+                # Harvest surveys for this collar from Survey layer list
                 for survey in arrSurvey:
                     if survey.id == collar.id:
                         s = Surveys()
@@ -432,6 +498,7 @@ class DrillManager:
                         surveys.append(s)
 
             # If the az and dip from the collar are to be used, then insert them at depth 0.0
+            # We only do this if there are no surveys from the Survey layer
             if len(surveys) == 0 and useCollarAzDip:
                 s = Surveys()
                 s.depth = 0.0
@@ -439,7 +506,7 @@ class DrillManager:
                 s.dip = collar.dip
                 surveys.append(s)
             
-            # If there are no surveys, then the hole is vertical
+            # If there are no surveys, then the assume hole is vertical
             if len(surveys) == 0:
                 s = Surveys()
                 s.depth = 0.0
@@ -447,10 +514,12 @@ class DrillManager:
                 s.dip = -90 if self.downDipNegative else 90
                 surveys.append(s)
                 
+            # Is the hole straight? If so, we can take short cuts
             holeStraight = False
             if len(surveys) == 1:
                 holeStraight = True
 
+            # We only replicate survey to the beginning and end if the hole is not straight
             if not holeStraight:
                 # Sort the surveys array by depth
                 surveys.sort(key = lambda x: x.depth)                        
@@ -474,10 +543,19 @@ class DrillManager:
             # Create a quaternion for each survey
             quat = []
             for j, s in enumerate(surveys):
+                # Rotate about positive X axis by dip degrees (depends on downDipNegative flag)
                 qdip = Quaternion(axis=[1, 0, 0], degrees=(s.dip  if self.downDipNegative else -s.dip))
-                        
+
+                # Rotate about positive Z axis by -Az degrees                        
                 qaz = Quaternion(axis=[0, 0, 1], degrees=-s.az)
+                
+                # Combine the dip and azimuth (order is important!)
                 q = qaz * qdip
+                
+                #Ensure the quaternion rotates the shortest way around. This can go wrong when we cross 0/360 deg.
+                # If the dot product of the quats is negative then it's the wrong way,
+                # so we negate the quat.
+                # But, don't do it on the first one
                 if j > 0:
                     if np.dot(quat[j-1].elements, q.elements) < 0.0:
                         q = -q
@@ -498,55 +576,77 @@ class DrillManager:
             else:
                 xs.append(0.0)
                 
-            # Create linestring
+            # Create linestring to record the desurveyed points every Segment Length
+            # This can then be used to interpolate intervening points
             feature = QgsFeature()
+            # We'll create a pointlist to hold all the 3D points
             pointList = []
+            # We start by adding the collar coordinates
             pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
+            # It's easier with a straight hole
             if not holeStraight:
+                # We're going to keep iterating through the survey list looking for the bracketing surveys.
+                # We therefore record the start point of the iteration as it will only go up. Saves time.
                 idx0 = 0
                 # We already added the location at point0 (the collar) so start from 1
                 for i in range(1, len(xs)):
                     q = Quaternion()
                     # Find the lowest survey equal or less than xs
                     for j in range(idx0, len(surveys)):
+                        # Is there a survey exactly at this point?
                         if surveys[j].depth == xs[i]:
+                            # Update the iteration start point
                             idx0 = j
                             q = quat[j]
                             break
+                        # Are there surveys bracketing this depth? If so, interpolate point
                         if surveys[j].depth < xs[i] and surveys[j+1].depth >= xs[i]:
+                            # Update the iteration start point
                             idx0 = j
+                            # How far are we between bracketing surveys?
                             ratio = (xs[i] - surveys[j].depth) / (surveys[j+1].depth - surveys[j].depth)
+                            # Interpolate between bracketing survey rotations
                             q = Quaternion.slerp(quat[j], quat[j+1], ratio)
                             break
 
+                    # Calculate the deviation of this segment of the hole
                     offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self.desurveyLength
+                    # Calculate the new point by adding the offset to the old point
                     p0 = pointList[i-1]
                     pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
             else:
+                # Calculate the offset of the bottom of hole from the top of hole in a single segment
                 offset = quat[0].rotate(np.array([0.0, 1.0, 0.0])) * collar.depth
+                # Add the offset to the collar
                 p0 = pointList[0]
                 pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
                 
-
+            # Create new geometry (Polyline) for the feature
             feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+            # Add in the field attributes
             feature.setAttributes([collar.id, collar.depth if holeStraight else self.desurveyLength])
+            
+            # Add the feature to the layer
             self.traceLayer.startEditing()
             self.traceLayer.addFeature(feature)
-                
             self.traceLayer.commitChanges()
 
-        self.traceLayer.triggerRepaint()
-
         fileName = self.createTraceFilename()
-        
+
+        # Calculate the filename for the on disk file
         path="%s.gpkg" % (fileName)
+        
+        # work out a label for the layer from the file name
         label = os.path.splitext(os.path.basename(fileName))[0]
+        
         # Remove trace layer from project if it already exists
         layer = getLayerByName(label)
         QgsProject.instance().removeMapLayer(layer)
+        
         #Save memory layer to GeoPackage
         error = QgsVectorFileWriter.writeAsVectorFormat(self.traceLayer, fileName, "CP1250", self.collarLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
 
+        # Load the layer we just saved so the user can manipulate a real layer
         self.traceLayer = QgsVectorLayer(path, label)
         QgsProject.instance().addMapLayer(self.traceLayer)
 
@@ -578,9 +678,11 @@ class DrillManager:
         layer = QgsVectorLayer("LineString?crs=EPSG:4326", "gt_Trace", "memory")
         layer.setCrs(self.traceLayer.sourceCrs())
         atts = []
+        # Loop through the list of desired field names that the user checked
         for field in self.dataLayer.fields():
             if field.name() in self.dataFields:
                 atts.append(field)
+        # Also add fields for the desurveyed coordinates
         atts.append(QgsField("_From_x",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_From_y",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_From_z",  QVariant.Double, "double", 12, 3))
@@ -588,13 +690,16 @@ class DrillManager:
         atts.append(QgsField("_To_y",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_To_z",  QVariant.Double, "double", 12, 3))
         
+        # Add all the attributes to the new layer
         dp = layer.dataProvider()
         dp.addAttributes(atts)
-        layer.updateFields() # tell the vector layer to fetch changes from the provider
-#        QgsProject.instance().addMapLayer(layer)
+        
+        # Tell the vector layer to fetch changes from the provider
+        layer.updateFields() 
 
         return layer
-        
+
+    # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
         self.defaultSectionWidth = readProjectNum("DefaultSectionWidth", 50)
         self.defaultSectionStep= readProjectNum("DefaultSectionStep", 50)
@@ -604,24 +709,26 @@ class DrillManager:
         self.surveyLayer = readProjectLayer("SurveyLayer")
         self.dataLayer = readProjectLayer("DataLayer")
         self.traceLayer = readProjectLayer("TraceLayer")
-        self.collarId = readProjectField(self.collarLayer, "CollarID")
-        self.collarDepth = readProjectField(self.collarLayer, "CollarDepth")
-        self.collarEast = readProjectField(self.collarLayer, "CollarEast")
-        self.collarNorth = readProjectField(self.collarLayer, "CollarNorth")
-        self.collarElev = readProjectField(self.collarLayer, "CollarElev")
-        self.collarAz = readProjectField(self.collarLayer, "CollarAz")
-        self.collarDip = readProjectField(self.collarLayer, "CollarDip")
-        self.surveyId = readProjectField(self.surveyLayer, "SurveyID")
-        self.surveyDepth = readProjectField(self.surveyLayer, "SurveyDepth")
-        self.surveyAz = readProjectField(self.surveyLayer, "SurveyAz")
-        self.surveyDip = readProjectField(self.surveyLayer, "SurveyDip")
-        self.dataId = readProjectField(self.dataLayer, "DataID")
-        self.dataFrom = readProjectField(self.dataLayer, "DataFrom")
-        self.dataTo = readProjectField(self.dataLayer, "DataTo")
-        self.dataSuffix = readProjectField(self.dataLayer, "DataSuffix")
+        self.collarId = readProjectField("CollarID")
+        self.collarDepth = readProjectField("CollarDepth")
+        self.collarEast = readProjectField("CollarEast")
+        self.collarNorth = readProjectField("CollarNorth")
+        self.collarElev = readProjectField("CollarElev")
+        self.collarAz = readProjectField("CollarAz")
+        self.collarDip = readProjectField("CollarDip")
+        self.surveyId = readProjectField("SurveyID")
+        self.surveyDepth = readProjectField("SurveyDepth")
+        self.surveyAz = readProjectField("SurveyAz")
+        self.surveyDip = readProjectField("SurveyDip")
+        self.dataId = readProjectField("DataID")
+        self.dataFrom = readProjectField("DataFrom")
+        self.dataTo = readProjectField("DataTo")
+        self.dataSuffix = readProjectField("DataSuffix")
         
+        # Collar layer might have changed, so re-open the log file
         self.openLogFile()
 
+    # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
         writeProjectData("DefaultSectionWidth", self.defaultSectionWidth)
         writeProjectData("DefaultSectionStep", self.defaultSectionStep)

@@ -1,0 +1,94 @@
+<head>
+<style>
+body {
+    font:13.34px helvetica,arial,freesans,clean,sans-serif;
+    color:black;
+    line-height:1.4em;
+    background-color: #F8F8F8;
+    padding: 0.7em;
+}
+pre {
+    margin:1em 0;
+    font-size:12px;
+    background-color:#eee;
+    border:1px solid #ddd;
+    padding:5px;
+    line-height:1.5em;
+    color:#444;
+    overflow:auto;
+    -webkit-box-shadow:rgba(0,0,0,0.07) 0 1px 2px inset;
+    -webkit-border-radius:3px;
+    -moz-border-radius:3px;border-radius:3px;
+}
+pre code {
+    padding:0;
+    font-size:12px;
+    background-color:#eee;
+    border:none;
+}
+code {
+    font-size:12px;
+    background-color:#f8f8ff;
+    color:#444;
+    padding:0 .2em;
+    border:1px solid #dedede;
+}
+</style>
+</head>
+<body>
+<h1 id="qgis-Geoscience-plugin">QGIS Geoscience Plugin</h1>
+<p><strong><em>Geoscience</em></strong> has the following tools available from the Geoscience menu or accessible from the Geoscience toolbar.</p>
+<ul>
+<li><img src="images/shapes.png" /> <strong>Drill Hole Display: </strong> Desurvey holes, project drill hole traces to surface and create surface projects of down hole data. </li>
+<li><img src="icon/ReverseLine.png" /> <strong>Reverse Line Direction: </strong> Reverse the direction of lines. This is needed when using non-symmetric line symbology (eg normal faults). </li>
+<li><img src="images/geodesicDensifier.png" /> <strong>Transparent Rasters: </strong> Transparent black or white pixels for all selected images (great for EM channels, remote sensing channels etc).</li>
+<li><img src="images/measure.png" /> <strong>Change Drive Letter: </strong> Search and replace drive letter in a Project (for when you move to another hard disk).</li>
+</ul>
+<p><strong>Contents</strong></p>
+<ul>
+<li><a href="#drill-tools">Drill Hole Tools</a></li>
+	<ul>
+	<li><a href="#drill-setup">Drill Setup</a></li>
+	<li><a href="#drill-desurvey">Desurvey Data</a></li>
+	<li><a href="#drill-trace">Display Traces</a></li>
+	<li><a href="#drill-section">Create Section</a></li>
+	</ul>
+<li>Vector Tools</li>
+	<ul>
+	<li><a href="#reverse-line">Reverse Line Direction</a></li>
+	</ul>
+<li>Raster Tools</li>
+	<ul>
+	<li><a href="#transparent-white">Make White Transparent</a></li>
+	<li><a href="#transparent-black">Make Black Transparent</a></li>
+	</ul>
+<li>Project Tools</li>
+	<ul>
+	<li><a href="#change-drive">Change Drive Letters</a></li>
+	</ul>
+</ul>
+<h2 id="drill-tools"><a name="drill-tools"></a> <img src="icon/drill-tools.png" /> Drill Tools</h2>
+<div style="text-align:center"><img src="doc/drill-tools.png" alt="Examples"></div>
+
+<p>Tools to display drill holes and down hole data in QGIS. This includes de-surveying the holes using collar azimuth and dip or a survey table if available. Prior to using Drill Tools you need to open the collar, survey (optional) and down hole data (optional) tables in QGIS. You can use any format supported by QGIS including shapefiles, MapInfo Tab files or CSV files. To open data using CSV, use the existing Delimited Text tool <img src="doc/csv.png" />. Drill Tools will only work with projected coordinate systems (ie not latitude and longitude)</p>
+<p>The workflow to display the surface projection of drill traces is:
+<ol>
+<li>Open the <b>Collar</b> layer. If using the Delimited Text tool in QGIS, select <b>Point Geometry</b> and the appropriate columns for Easting and Northing, followed by the Coordinate Reference System.</li>
+<li>(Optional) Open the <b>Survey</b> layer. If using the Delimited Text tool in QGIS, select <b>No Geometry</b> to just import the data columns.</li>
+<li>(Optional) Open the <b>Down hole data</b> layers. You can use multiple layers (eg. lithology and assay) and if you are using the Delimited Text tool in QGIS, select <b>No Geometry</b> to just import the data columns.</li>
+<li>Choose <em>Geoscience -> Drilling -> Drill Setup</em>. Fill in the dialog with the Collar and Survey (if available) layers, then choose the appropriate attribute fields. All will be guessed by Geoscience if sensible names have been used.</li>
+<li>Choose the <b>Desurvey Length</b>. Drill holes will be reconstructed using straight line segments of this length.</li>
+<li>Choose <em>Geoscience -> Drilling -> Desurvey Data</em>. A new layer is created and loaded in QGIS. You can now see the surface projection of drill holes.</li>
+<li>Choose <em>Geoscience -> Drilling -> Display Traces</em>. Choose the source Downhole Data layer and the appropriate attribute fields. Again, these are chosen automatically if sensible names are used. Check all the attribute fields that you want to include in the downhole data layer to be created. <b>You also need to provide a brief descriptive name</b> to be appended to the layer name.</li>
+<li>The downhole trace layer is created and loaded into QGIS with each row containing one line segment for each interval from the source. You then need to Symbolise the new layer to display the attributes as you desire.</li>
+</ol>
+
+<h3>What's Next?</h3>
+<ul>
+    <li>Drill sections
+    <li>Easy dip symbol display
+</ul>
+<p>
+Released under GPL license.
+</p>
+</body>

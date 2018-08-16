@@ -7,14 +7,14 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=GeoTools
-qgisMinimumVersion=3.0
+name=Geoscience
+qgisMinimumVersion=3.2
 description=Tools for Geoscience & Exploration
-version=0.1
+version=0.6
 author=Roland Hill
 email=roland.hill@mmg.com
 
-about=GeoTools: Tools for Geoscience and Exploration. Drill section display. Send ideas & requests to roland.hill@mmg.com
+about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Vector tools</li><li>Raster tools</li></ul> Send ideas & requests to roland.hill@mmg.com
 
 tracker=http://bugs
 repository=http://repo
@@ -26,7 +26,7 @@ repository=http://repo
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=python, geoscience, geology, geophysics, drill, drilling, borehole, well
 
 homepage=http://homepage
 category=Plugins

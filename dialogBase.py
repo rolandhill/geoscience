@@ -7,17 +7,27 @@ Created on Thu Jul 05 07:55:31 2018
 from PyQt5 import QtCore
 from qgis.gui import QgsFieldComboBox
 
+# Dialog functions shared by mutliple dialogs, s oput them in a base class
 class dialogBase():
+    
+    # Select the supplied layer in the supplied comboBox. If the layer is not valid, 
+    # then guess which of the strings in the comboBox is the correct one by matching it 
+    # to one of te supplied list of strings.
     def initLayer(self, inLayer, cb, guessList):
         if inLayer is not None:
             try:
                 if inLayer.isValid():
                     cb.setLayer(inLayer)
             except:
+                # Iterate through list of common strings to guess the correct entry in the comboBox
                 self.guessName(cb, guessList)
         else:
+            # Iterate through list of common strings to guess the correct entry in the comboBox
             self.guessName(cb, guessList)
         
+    # Select the supplied Field Name in the supplied comboBox. If the field name is not valid, 
+    # then guess which of the strings in the comboBox is the correct one by matching it 
+    # to one of te supplied list of strings.
     def initField(self, inField, cb, guessList):
         index = -1
         if inField:
@@ -28,6 +38,7 @@ class dialogBase():
         else:
             self.guessName(cb, guessList)
             
+    # From the list of common strings supplied, guess which comboBox entry is the correct one and select it
     def guessName(self, cb, list):
         cb.setCurrentIndex(-1)
         for str in list:
