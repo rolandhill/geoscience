@@ -16,8 +16,8 @@ email=roland.hill@mmg.com
 
 about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Vector tools</li><li>Raster tools</li></ul> Send ideas & requests to roland.hill@mmg.com
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/rolandhill/geoscience/issues
+repository=https://github.com/rolandhill/geoscience
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +28,7 @@ repository=http://repo
 # Tags are comma separated with spaces allowed
 tags=python, geoscience, geology, geophysics, drill, drilling, borehole, well
 
-homepage=http://homepage
+homepage=https://rolandhill.github.io/geoscience/
 category=Plugins
 icon=icon.png
 # experimental flag
