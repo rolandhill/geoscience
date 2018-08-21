@@ -6,4 +6,5 @@
 ~*
 *.bak
 *.zip
+*.yml
 plugin_upload.py
