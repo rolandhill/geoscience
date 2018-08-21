@@ -5,3 +5,5 @@
 /test/
 ~*
 *.bak
+*.zip
+plugin_upload.py
