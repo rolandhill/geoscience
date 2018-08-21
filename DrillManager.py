@@ -117,7 +117,7 @@ def writeProjectData(entry, val):
     QgsProject.instance().writeEntry("Geoscience", entry, val)
 
 # Calculate an interpolated 3D point at given depth from the supplied polyline.
-# The polyline must have constant sgment lengths given by segLength
+# The polyline must have constant segment lengths given by segLength
 def interpPolyline(depth, segLength, polyline):
     p = QgsPoint()
     i = depth / segLength
@@ -317,8 +317,17 @@ class DrillManager:
             # Create line representing the downhole value using From and To
             pointList = []
             # Calculate indices spanning the from and to depths, then linearly interpolate a position
-            pFrom, iFrom = interpPolyline(dataFrom, currentTraceSegLength, currentTracePolyline)
-            pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
+            try:
+                pFrom, iFrom = interpPolyline(dataFrom, currentTraceSegLength, currentTracePolyline)
+            except:
+                self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataFrom, index))
+                continue
+
+            try:
+                pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
+            except:
+                self.logFile.write("Error interpolating from polyline for hole: %s To: %f in row: %d.\n" % (dataId, dataTo, index))
+                continue
 
             # Add the first (From) point to the list
             pointList.append(pFrom)
@@ -353,6 +362,9 @@ class DrillManager:
             layer.startEditing()
             layer.addFeature(feature)
             layer.commitChanges()
+
+        # Flush the log file in case anything was written
+        self.logFile.flush()
         
         # Build the new filename for saving to disk. We are using GeoPackages
         base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())

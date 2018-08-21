@@ -90,25 +90,31 @@ class Geoscience:
         """Create Drill menu."""
         self.menuDrill = self.menu.addMenu("Drilling")
 
-        action = self.menuDrill.addAction("Drill Setup")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSetup.png"), "Drill Setup")
         action.triggered.connect(self.drillManager.onDrillSetup)
         action.setEnabled(True)
+        self.toolbar.addAction(action)
         self.actions.append(action)
 
-        action = self.menuDrill.addAction("Desurvey Data")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\Desurvey.png"), "Desurvey Data")
         action.triggered.connect(self.drillManager.onDesurveyData)
         action.setEnabled(True)
+        self.toolbar.addAction(action)
         self.actions.append(action)
 
-        action = self.menuDrill.addAction("Display Traces")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillPlan.png"), "Display Traces")
         action.triggered.connect(self.drillManager.onDrillDisplayTraces)
         action.setEnabled(True)
+        self.toolbar.addAction(action)
         self.actions.append(action)
         
-        action = self.menuDrill.addAction("Create Section")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSection.png"), "Create Section")
         action.triggered.connect(self.drillManager.onDrillCreateSection)
         action.setEnabled(False)
+        self.toolbar.addAction(action)
         self.actions.append(action)
+
+        self.toolbar.addSeparator()
         
         """Create Vector menu."""
         self.menuVector = self.menu.addMenu("Vector")
@@ -122,28 +128,28 @@ class Geoscience:
         """Create Raster menu."""
         self.menuRaster = self.menu.addMenu("Raster")
 
-        action = self.menuRaster.addAction("Transparent White")
+        action = self.menuRaster.addAction(QIcon(self.plugin_dir + "\icon\WhiteTransparent.png"), "Transparent White")
         action.triggered.connect(self.onRasterTransparentWhite)
         action.setEnabled(True)
+        self.toolbar.addAction(action)
         self.actions.append(action)
         
-        action = self.menuRaster.addAction("Transparent Black")
+        action = self.menuRaster.addAction(QIcon(self.plugin_dir + "\icon\BlackTransparent.png"), "Transparent Black")
         action.triggered.connect(self.onRasterTransparentBlack)
         action.setEnabled(True)
+        self.toolbar.addAction(action)
         self.actions.append(action)
         
         """Create Project menu."""
         self.menuProject = self.menu.addMenu("Project")
 
-        action = self.menuProject.addAction("Change drive letter")
+        action = self.menuProject.addAction(QIcon(self.plugin_dir + "\icon\ChangeDrive.png"), "Change drive letter")
         action.triggered.connect(self.onProjectChangeDriveLetter)
         action.setEnabled(True)
         self.actions.append(action)
 
         """Create Help menu."""
-        self.menuRaster = self.menu.addMenu("Raster")
-
-        action = self.menu.addAction("Help")
+        action = self.menu.addAction(QIcon(self.plugin_dir + "\icon\Help.png"), "Help")
         action.triggered.connect(self.onHelp)
         action.setEnabled(True)
         self.actions.append(action)

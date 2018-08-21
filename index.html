@@ -37,38 +37,42 @@ code {
 </head>
 <body>
 <h1 id="qgis-Geoscience-plugin">QGIS Geoscience Plugin</h1>
+<em>Roland Hill</em>
+<br>
+<em>Your name here! - Please contribute and make this a better, more comprehensive geoscience tool.</em>
+
 <p><strong><em>Geoscience</em></strong> has the following tools available from the Geoscience menu or accessible from the Geoscience toolbar.</p>
 <ul>
-<li><img src="images/shapes.png" /> <strong>Drill Hole Display: </strong> Desurvey holes, project drill hole traces to surface and create surface projects of down hole data. </li>
+<li><img src="icon/DrillSection.png" /> <strong>Drill Hole Display: </strong> Desurvey holes, project drill hole traces to surface and create surface projects of down hole data. </li>
 <li><img src="icon/ReverseLine.png" /> <strong>Reverse Line Direction: </strong> Reverse the direction of lines. This is needed when using non-symmetric line symbology (eg normal faults). </li>
-<li><img src="images/geodesicDensifier.png" /> <strong>Transparent Rasters: </strong> Transparent black or white pixels for all selected images (great for EM channels, remote sensing channels etc).</li>
-<li><img src="images/measure.png" /> <strong>Change Drive Letter: </strong> Search and replace drive letter in a Project (for when you move to another hard disk).</li>
+<li><img src="icon/BlackTransparent.png" /> <strong>Transparent Rasters: </strong> Transparent black or white pixels for all selected images (great for EM channels, remote sensing channels etc).</li>
+<li><img src="icon/ChangeDrive.png" /> <strong>Change Drive Letter: </strong> Search and replace drive letter in a Project (for when you move to another hard disk).</li>
 </ul>
 <p><strong>Contents</strong></p>
 <ul>
 <li><a href="#drill-tools">Drill Hole Tools</a></li>
 	<ul>
-	<li><a href="#drill-setup">Drill Setup</a></li>
-	<li><a href="#drill-desurvey">Desurvey Data</a></li>
-	<li><a href="#drill-trace">Display Traces</a></li>
-	<li><a href="#drill-section">Create Section</a></li>
+	<li><a href="#drill-setup"><img src="icon/DrillSetup.png"/> Drill Setup</a></li>
+	<li><a href="#drill-desurvey"><img src="icon/Desurvey.png"/>Desurvey Data</a></li>
+	<li><a href="#drill-trace"><img src="icon/DrillPlan.png"/>Display Traces</a></li>
+	<li><a href="#drill-section"><img src="icon/DrillSection.png"/>Create Section</a></li>
 	</ul>
-<li>Vector Tools</li>
+<li><a href="#vector-tools">Vector Tools</a></li>
 	<ul>
-	<li><a href="#reverse-line">Reverse Line Direction</a></li>
+	<li><a href="#reverse-line"><img src="icon/ReverseLine.png"/>Reverse Line Direction</a></li>
 	</ul>
-<li>Raster Tools</li>
+<li><a href="#raster-tools">Raster Tools</a></li>
 	<ul>
-	<li><a href="#transparent-white">Make White Transparent</a></li>
-	<li><a href="#transparent-black">Make Black Transparent</a></li>
+	<li><a href="#transparent-white"><img src="icon/WhiteTransparent.png"/>Make White Transparent</a></li>
+	<li><a href="#transparent-black"><img src="icon/BlackTransparent.png"/>Make Black Transparent</a></li>
 	</ul>
-<li>Project Tools</li>
+<li><a href="#project-tools">Project Tools</a></li>
 	<ul>
-	<li><a href="#change-drive">Change Drive Letters</a></li>
+	<li><a href="#change-drive"><img src="icon/ChangeDrive.png"/>Change Drive Letters</a></li>
 	</ul>
+<li><a href="#whats-next">What's Next?</a></li>
 </ul>
-<h2 id="drill-tools"><a name="drill-tools"></a> <img src="icon/drill-tools.png" /> Drill Tools</h2>
-<div style="text-align:center"><img src="doc/drill-tools.png" alt="Examples"></div>
+<h2 id="drill-tools"><a name="drill-tools"></a> <img src="icon/DrillSection.png" /> Drill Tools</h2>
 
 <p>Tools to display drill holes and down hole data in QGIS. This includes de-surveying the holes using collar azimuth and dip or a survey table if available. Prior to using Drill Tools you need to open the collar, survey (optional) and down hole data (optional) tables in QGIS. You can use any format supported by QGIS including shapefiles, MapInfo Tab files or CSV files. To open data using CSV, use the existing Delimited Text tool <img src="doc/csv.png" />. Drill Tools will only work with projected coordinate systems (ie not latitude and longitude)</p>
 <p>The workflow to display the surface projection of drill traces is:
@@ -83,10 +87,27 @@ code {
 <li>The downhole trace layer is created and loaded into QGIS with each row containing one line segment for each interval from the source. You then need to Symbolise the new layer to display the attributes as you desire.</li>
 </ol>
 
-<h3>What's Next?</h3>
+<h2 id="vector-tools"><a name="vector-tools"></a> <img src="icon/ReverseLine.png" /> Vector Tools</h2>
 <ul>
-    <li>Drill sections
-    <li>Easy dip symbol display
+<li id="reverse-line"><img src="icon/ReverseLine.png"/>Reverses the order of all the nodes in the selected line features, in effect reversing the direction of the line. This is necessary when using asymmetric line styles such as reverse and normal fault symbols. Note that the layer must be editable before using the tool.</li>
+</ul>
+
+<h2 id="raster-tools"><a name="raster-tools"></a> <img src="icon/BlackTransparent.png" /> Raster Tools</h2>
+<ul>
+<li id="transparent-white"><img src="icon/WhiteTransparent.png"/>Sets the transparent colour to <b>white</b> for all the raster images selected in the project tree. To use, first select all the rasters you wish to process using control and shift left clicks, then choose this menu entry or toolbar button. Ideal for image sets such as EM channels or hyperspectral images.</li>
+<li id="transparent-black"><img src="icon/BlackTransparent.png"/>Sets the transparent colour to <b>black</b> for all the raster images selected in the project tree. To use, first select all the rasters you wish to process using control and shift left clicks, then choose this menu entry or toolbar button. Ideal for image sets such as EM channels or hyperspectral images.</li>
+</ul>
+
+<h2 id="project-tools"><a name="project-tools"></a> <img src="icon/ChangeDrive.png" /> Project Tools</h2>
+<li id="change-drive"><img src="icon/ChangeDrive.png"/>This tool does a simple string search and replace in the project file to change the disk drive letter (Windows Only). You would mainly use this when copying you project to another computer or portable drive. Note that the drive letter string is internally expanded to include "file:///" and therefore reduce false matches with other project settings.</li>
+
+<h2 id="whats-next">What's Next?</h2>
+<ul>
+	<li>Better bad data handling & reporting</li>
+    <li>Drill sections</li>
+	<li>Downhole graphs</li>
+	<li>Downhole labels</li>
+    <li>Easy dip symbol display</li>
 </ul>
 <p>
 Released under GPL license.
