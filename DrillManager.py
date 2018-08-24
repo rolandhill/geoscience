@@ -151,6 +151,8 @@ class DrillManager:
             fileName = self.collarLayer.dataProvider().dataSourceUri()
             if fileName.startswith("file:///"):
                 fileName = fileName[8:]
+            fileName = fileName.replace("%20", " ")
+#            fileName = Path(fileName)
             self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
             self.logFile.write("Geoscience - DrillManager log file\n")
             self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
@@ -283,11 +285,12 @@ class DrillManager:
             # get the feature's attributes
             attrs = df.attributes()
             # Check all the data is valid
-            dataId = attrs[idxId].strip()
+            dataId = attrs[idxId]
             dataFrom = attrs[idxFrom]
             dataTo = attrs[idxTo]
             if (dataId==NULL) or (dataFrom==NULL) or (dataTo==NULL):
                 continue
+            dataId = dataId.strip()
             
             # Get the desurvey drill trace relevant to this collar, checking first that we don't already have it
             if not currentTraceCollar == dataId:
@@ -372,6 +375,7 @@ class DrillManager:
         # Remove the file:/// prefix from the URI
         if fileName.startswith("file:///"):
             fileName = fileName[8:]
+        fileName = fileName.replace("%20", " ")
 
         # Generate a layer label
         label = os.path.splitext(os.path.basename(fileName))[0]
@@ -668,6 +672,7 @@ class DrillManager:
         fileName = base + "_Trace"
         if fileName.startswith("file:///"):
             fileName = fileName[8:]
+        fileName = fileName.replace("%20", " ")
         return fileName
     
     def createDesurveyLayer(self):
