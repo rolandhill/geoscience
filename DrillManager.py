@@ -433,13 +433,14 @@ class DrillManager:
             attrs = feature.attributes()
             c = Collar()
             # Check all the data is valid
-            c.id = attrs[idxCollarId].strip()
+            c.id = attrs[idxCollarId]
             c.east = attrs[idxCollarEast]
             c.north = attrs[idxCollarNorth]
             c.elev = attrs[idxCollarElev]
             c.depth = attrs[idxCollarDepth]
             if (c.id==NULL) or (c.east==NULL) or (c.north==NULL) or (c.elev==NULL) or (c.depth==NULL):
                 continue
+            c.id = c.id.strip()
             if useCollarAzDip:
                 c.az = attrs[idxCollarAz]
                 if c.az==NULL:
@@ -472,10 +473,13 @@ class DrillManager:
                 # get the feature's attributes
                 attrs = feature.attributes()
                 s = Survey()
-                s.id = attrs[idxSurveyId].strip()
+                s.id = attrs[idxSurveyId]
                 s.depth = attrs[idxSurveyDepth]
                 s.az = attrs[idxSurveyAz]
                 s.dip = attrs[idxSurveyDip]
+                if (s.id==NULL) or (s.depth==NULL) or (s.az==NULL) or (s.dip==NULL):
+                    continue
+                s.id = s.id.strip()
                 arrSurvey.append(s)
             
         # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 2 attribute (Id, Segment Length)
