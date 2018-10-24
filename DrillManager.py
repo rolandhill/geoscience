@@ -27,6 +27,7 @@ from .drilltrace_dialog import DrillTraceDialog
 
 import os.path
 import math
+import platform
 
 class Collar:
     id = ''
@@ -133,7 +134,17 @@ def interpPolyline(depth, segLength, polyline):
         p = p0
     return p, i
 
-
+# Process the url to provide a valid filename
+def uriToFile(url):
+    fileName = url
+    if fileName.startswith("file:///"):
+        if platform.system() == 'Windows':
+            fileName = fileName[8:]
+        elif platform.system() == 'Linux':
+            fileName = fileName[7:]
+    fileName = fileName.replace("%20", " ")
+    return fileName
+    
 # The DrillManager class controls all drill related data and methods 
 class DrillManager:
     def __init__(self):
@@ -148,12 +159,11 @@ class DrillManager:
     def openLogFile(self):
         # Maintain a log file in case of data errors
         if self.collarLayer and self.collarLayer.isValid():
-            fileName = self.collarLayer.dataProvider().dataSourceUri()
-            if fileName.startswith("file:///"):
-                fileName = fileName[8:]
-            fileName = fileName.replace("%20", " ")
+            fileName = uriToFile(self.collarLayer.dataProvider().dataSourceUri())
 #            fileName = Path(fileName)
             self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
+            if not self.logFile:
+                self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
             self.logFile.write("Geoscience - DrillManager log file\n")
             self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
             self.logFile.write("  Make a copy if you want to keep the results.\n")
@@ -371,11 +381,7 @@ class DrillManager:
         
         # Build the new filename for saving to disk. We are using GeoPackages
         base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())
-        fileName = base + "_%s" % (self.dataSuffix)
-        # Remove the file:/// prefix from the URI
-        if fileName.startswith("file:///"):
-            fileName = fileName[8:]
-        fileName = fileName.replace("%20", " ")
+        fileName = uriToFile(base + "_%s" % (self.dataSuffix))
 
         # Generate a layer label
         label = os.path.splitext(os.path.basename(fileName))[0]
@@ -673,10 +679,7 @@ class DrillManager:
     def createTraceFilename(self):
         # Build the new filename
         base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
-        fileName = base + "_Trace"
-        if fileName.startswith("file:///"):
-            fileName = fileName[8:]
-        fileName = fileName.replace("%20", " ")
+        fileName = uriToFile(base + "_Trace")
         return fileName
     
     def createDesurveyLayer(self):

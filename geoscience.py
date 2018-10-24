@@ -22,7 +22,7 @@ from qgis.gui import *
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
+#from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 from .DrillManager import *
 
 import os.path
@@ -140,14 +140,14 @@ class Geoscience:
         self.toolbar.addAction(action)
         self.actions.append(action)
         
-        """Create Project menu."""
-        self.menuProject = self.menu.addMenu("Project")
-
-        action = self.menuProject.addAction(QIcon(self.plugin_dir + "\icon\ChangeDrive.png"), "Change drive letter")
-        action.triggered.connect(self.onProjectChangeDriveLetter)
-        action.setEnabled(True)
-        self.actions.append(action)
-
+#        """Create Project menu."""
+#        self.menuProject = self.menu.addMenu("Project")
+#
+#        action = self.menuProject.addAction(QIcon(self.plugin_dir + "\icon\ChangeDrive.png"), "Change drive letter")
+#        action.triggered.connect(self.onProjectChangeDriveLetter)
+#        action.setEnabled(True)
+#        self.actions.append(action)
+#
         """Create Help menu."""
         action = self.menu.addAction(QIcon(self.plugin_dir + "\icon\Help.png"), "Help")
         action.triggered.connect(self.onHelp)
@@ -164,31 +164,31 @@ class Geoscience:
         self.drillManager.readProjectData()
         
     # Search and replace the provided drive letters in the the provided QGIS Project file
-    def onProjectChangeDriveLetter(self):
-        dlg = ChangeDriveLetterDialog(self)
-        dlg.show()
-        result = dlg.exec_()
-        if result:
-            pf = dlg.cbProject.filePath()
-            oldDrive = dlg.leOriginalDrive.text()
-            newDrive = dlg.leNewDrive.text()
-            data = str
-            
-            # Check that the user entered something
-            if len(oldDrive) > 0 and len(newDrive) > 0:
-                # Open the file
-                with open(pf, 'r') as pfile:
-                    # If the file opened OK, read the entire file
-                    data = pfile.read()
-                 
-                # Search and replace. Use the file:/// string to avoid false positives
-                data = data.replace("file:///"+oldDrive[0]+":/", "file:///"+newDrive[0]+":/")
-                
-                # Rewrite the new version
-                with open(pf, 'w') as pfile:
-                    pfile.write(data)
-                
-        dlg.close()
+#    def onProjectChangeDriveLetter(self):
+#        dlg = ChangeDriveLetterDialog(self)
+#        dlg.show()
+#        result = dlg.exec_()
+#        if result:
+#            pf = dlg.cbProject.filePath()
+#            oldDrive = dlg.leOriginalDrive.text()
+#            newDrive = dlg.leNewDrive.text()
+#            data = str
+#            
+#            # Check that the user entered something
+#            if len(oldDrive) > 0 and len(newDrive) > 0:
+#                # Open the file
+#                with open(pf, 'r') as pfile:
+#                    # If the file opened OK, read the entire file
+#                    data = pfile.read()
+#                 
+#                # Search and replace. Use the file:/// string to avoid false positives
+#                data = data.replace("file:///"+oldDrive[0]+":/", "file:///"+newDrive[0]+":/")
+#                
+#                # Rewrite the new version
+#                with open(pf, 'w') as pfile:
+#                    pfile.write(data)
+#                
+#        dlg.close()
         
     # Reverse the node sequence in all selected lines on hte current layer
     # Useful if you are using a non-symmetric line style (eg Normal Fault)
