@@ -31,8 +31,11 @@ class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     
         self.lbDataLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
         self.initLayer(self.drillManager.dataLayer, self.lbDataLayer, ["lith", "geol"])
-        self.lbDataLayer.layerChanged.connect(self.onDataLayerChanged)
         self.teSuffix.setText(self.drillManager.dataSuffix)
+        self.checkSelectAll.setChecked(True)
+        
+        self.lbDataLayer.layerChanged.connect(self.onDataLayerChanged)
+        self.checkSelectAll.toggled.connect(self.onSelectAllChecked)
 
         self.onDataLayerChanged()
 
@@ -58,3 +61,15 @@ class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.fbDataFrom.setCurrentIndex(-1)
             self.fbDataTo.setCurrentIndex(-1)
             self.listFields.clear()
+
+    def onSelectAllChecked(self):
+#        qgis.utils.iface.messageBar.pushMessage("SelectAll toggled")
+        if self.checkSelectAll.isChecked() == True:
+#            iface.messageBar().pushMessage("SelectAll")
+            for index in range(self.listFields.count()):
+                self.listFields.item(index).setCheckState(QtCore.Qt.Checked)
+        else:
+#            iface.messageBar().pushMessage("SelectNone")
+            for index in range(self.listFields.count()):
+                self.listFields.item(index).setCheckState(QtCore.Qt.Unchecked)
+            

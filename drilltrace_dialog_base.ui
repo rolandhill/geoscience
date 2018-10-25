@@ -106,6 +106,13 @@
        </layout>
       </item>
       <item>
+       <widget class="QCheckBox" name="checkSelectAll">
+        <property name="text">
+         <string>Select All / None</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QListWidget" name="listFields"/>
       </item>
      </layout>
