@@ -48,6 +48,8 @@ class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.initField(self.drillManager.dataFrom, self.fbDataFrom, ["from", "start", "depth"])
             self.fbDataTo.setLayer(layer)
             self.initField(self.drillManager.dataTo, self.fbDataTo, ["to","end"])
+            #Clear the Suffix text
+            self.teSuffix.clear()
             #Load the list widget
             self.listFields.clear()
             for field in layer.fields():
