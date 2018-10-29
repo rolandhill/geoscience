@@ -143,6 +143,7 @@ def uriToFile(url):
         elif platform.system() == 'Linux':
             fileName = fileName[7:]
     fileName = fileName.replace("%20", " ")
+    fileName = os.path.normpath(fileName)
     return fileName
     
 # The DrillManager class controls all drill related data and methods 
