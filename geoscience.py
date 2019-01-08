@@ -199,6 +199,9 @@ class Geoscience:
         #Loop through all selected features
         for feature in layer.selectedFeatures():
             geom = feature.geometry()
+            wkbType = geom.wkbType()
+            if wkbType == then:
+                
             # Get the geometry as a Polyline. This is 2D only
             # ToDo: Convert to 3D
             nodes = geom.asPolyline()
