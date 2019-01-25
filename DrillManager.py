@@ -260,7 +260,7 @@ class DrillManager:
 
         # Get the fields from the data layer
         dp = self.dataLayer.dataProvider()
-        idxId = dp.fieldNameIndex(self.dataId).toString()
+        idxId = dp.fieldNameIndex(self.dataId)
         idxFrom = dp.fieldNameIndex(self.dataFrom)
         idxTo = dp.fieldNameIndex(self.dataTo)
         # Create a list of attribute indices from the desired attribute field names
@@ -296,7 +296,7 @@ class DrillManager:
             # get the feature's attributes
             attrs = df.attributes()
             # Check all the data is valid
-            dataId = attrs[idxId]
+            dataId = str(attrs[idxId])
             dataFrom = attrs[idxFrom]
             dataTo = attrs[idxTo]
             if (dataId==NULL) or (dataFrom==NULL) or (dataTo==NULL):
@@ -440,7 +440,7 @@ class DrillManager:
             attrs = feature.attributes()
             c = Collar()
             # Check all the data is valid
-            c.id = attrs[idxCollarId].convert(QVariant.QString)
+            c.id = str(attrs[idxCollarId])
             c.east = attrs[idxCollarEast]
             c.north = attrs[idxCollarNorth]
             c.elev = attrs[idxCollarElev]
@@ -480,7 +480,7 @@ class DrillManager:
                 # get the feature's attributes
                 attrs = feature.attributes()
                 s = Survey()
-                s.id = attrs[idxSurveyId].toString()
+                s.id = str(attrs[idxSurveyId])
                 s.depth = attrs[idxSurveyDepth]
                 s.az = attrs[idxSurveyAz]
                 s.dip = attrs[idxSurveyDip]
