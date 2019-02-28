@@ -199,16 +199,19 @@ class Geoscience:
         #Loop through all selected features
         for feature in layer.selectedFeatures():
             geom = feature.geometry()
-#            wkbType = geom.wkbType()
-#            if wkbType == then:
+            wkbType = geom.wkbType()
+            if wkbType == core.MultiLineString:
+                for nodes in geom.asMultiPolygon():
+                    nodes.reverse()
+            else:
                 
-            # Get the geometry as a Polyline. This is 2D only
-            # ToDo: Convert to 3D
-            nodes = geom.asPolyline()
-            nodes.reverse() 
-            newgeom = QgsGeometry.fromPolylineXY(nodes)
-            # Put the new geometry into the feature
-            layer.changeGeometry(feature.id(),newgeom)
+                # Get the geometry as a Polyline. This is 2D only
+                # ToDo: Convert to 3D
+                nodes = geom.asPolyline()
+                nodes.reverse() 
+                newgeom = QgsGeometry.fromPolylineXY(nodes)
+                # Put the new geometry into the feature
+                layer.changeGeometry(feature.id(),newgeom)
             
             # Refresh the screen
             layer.triggerRepaint()
