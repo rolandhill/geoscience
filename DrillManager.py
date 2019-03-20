@@ -284,6 +284,8 @@ class DrillManager:
     #Loop through downhole layer features
         # Calculate an optimum update interval for the progress bar (updating gui items is expensive)
         updateInt = max(100, long(self.dataLayer.featureCount()/100))
+        floatConvError = False
+        nullDataError = False
         for index, df in enumerate(self.dataLayer.getFeatures()):
             # Update the Progress bar
             if index%updateInt == 0:
@@ -297,9 +299,14 @@ class DrillManager:
             attrs = df.attributes()
             # Check all the data is valid
             dataId = str(attrs[idxId])
-            dataFrom = attrs[idxFrom]
-            dataTo = attrs[idxTo]
+            try:
+                dataFrom = float(attrs[idxFrom])
+                dataTo = float(attrs[idxTo])
+            except:
+                floatConvError = True
+                
             if (dataId==NULL) or (dataFrom==NULL) or (dataTo==NULL):
+                nullDataError = True
                 continue
             dataId = dataId.strip()
             
@@ -327,6 +334,11 @@ class DrillManager:
                         continue
                 else:
                     continue
+            if (floatConvError):
+                iface.messageBar().pushMessage("Warning", "Some 'From' or 'To' values are not numbers", level=Qgis.Warning)
+            if (nullDataError):
+                iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'From' or 'To' values are NULL. These have been skipped", level=Qgis.Warning)
+
                 
             # Create line representing the downhole value using From and To
             pointList = []
@@ -431,7 +443,10 @@ class DrillManager:
         pd.setMaximum(numCollars)
         pd.setValue(0)
         
-        # Loop through the collar layer and build list of collars
+        floatConvError = False
+        nullDataError = False
+
+# Loop through the collar layer and build list of collars
         for index, feature in enumerate(self.collarLayer.getFeatures()):
             # Update progress bar
             pd.setValue(index)
@@ -441,11 +456,16 @@ class DrillManager:
             c = Collar()
             # Check all the data is valid
             c.id = str(attrs[idxCollarId])
-            c.east = attrs[idxCollarEast]
-            c.north = attrs[idxCollarNorth]
-            c.elev = attrs[idxCollarElev]
-            c.depth = attrs[idxCollarDepth]
+            try:
+                c.east = float(attrs[idxCollarEast])
+                c.north = float(attrs[idxCollarNorth])
+                c.elev = float(attrs[idxCollarElev])
+                c.depth = float(attrs[idxCollarDepth])
+            except:
+                floatConvError = True
+                
             if (c.id==NULL) or (c.east==NULL) or (c.north==NULL) or (c.elev==NULL) or (c.depth==NULL):
+                nullDataError = True
                 continue
             c.id = c.id.strip()
             if useCollarAzDip:
@@ -456,6 +476,12 @@ class DrillManager:
                 if c.dip==NULL:
                     c.dip = -90 if self.downDipNegative else 90
             arrCollar.append(c)
+            
+        if (floatConvError):
+            iface.messageBar().pushMessage("Warning", "Some 'East', 'North', 'Collar' or 'Depth' values are not numbers", level=Qgis.Warning)
+        if (nullDataError):
+            iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'East', 'North', 'Collar' or 'Depth' values are NULL. These have been skipped", level=Qgis.Warning)
+
             
         # Build Survey array (Id, depth, az, dip)
         arrSurvey = []
@@ -473,6 +499,10 @@ class DrillManager:
             pd.setWindowTitle("Build Survey Array")
             pd.setMaximum(numSurveys)
             pd.setValue(0)
+            
+            floatConvError = False
+            nullDataError = False
+            
             #Loop through Survey layer and buils list of surveys
             for index, feature in enumerate(self.surveyLayer.getFeatures()):
                 pd.setValue(index)
@@ -481,13 +511,23 @@ class DrillManager:
                 attrs = feature.attributes()
                 s = Survey()
                 s.id = str(attrs[idxSurveyId])
-                s.depth = attrs[idxSurveyDepth]
-                s.az = attrs[idxSurveyAz]
-                s.dip = attrs[idxSurveyDip]
+                try:
+                    s.depth = float(attrs[idxSurveyDepth])
+                    s.az = float(attrs[idxSurveyAz])
+                    s.dip = float(attrs[idxSurveyDip])
+                except:
+                    floatConvError = True
+                    
                 if (s.id==NULL) or (s.depth==NULL) or (s.az==NULL) or (s.dip==NULL):
+                    nullDataError = True
                     continue
                 s.id = s.id.strip()
                 arrSurvey.append(s)
+
+            if (floatConvError):
+                iface.messageBar().pushMessage("Warning", "Some survey 'Depth', 'Azimuth' or 'Dip' values are not numbers", level=Qgis.Warning)
+            if (nullDataError):
+                iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'Depth', 'Azimuth' or 'Dip' values are NULL. These have been skipped", level=Qgis.Warning)
             
         # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 2 attribute (Id, Segment Length)
         self.createDesurveyLayer()
