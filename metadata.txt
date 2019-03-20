@@ -10,7 +10,7 @@
 name=Geoscience
 qgisMinimumVersion=3.2
 description=Tools for Geoscience & Exploration
-version=0.62
+version=0.7
 author=Roland Hill
 email=roland.hill@mmg.com
 
@@ -23,7 +23,15 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-# changelog= <ul><li>0.6 Initial Release</li><li>0.62 Fix: <ul><li>Log file path issue on Linux.</li><li>Added Select All/None box to field selector box.</li><li>Remove Drive Change Letter (didn't support qgz files and easy to do in a text editor anyway.</li></ul></li></ul> 
+changelog= 0.7
+    -Ensure drill hole ids are strings and collar coorindates, survey data and downhole distances are numbers.
+	-Add Readme markdown and license file (Thanks KoalaGeo).
+  0.62
+    -Fix log file path issue on Linux.
+	-Added Select All/None box to field selector box.
+	-Remove Drive Change Letter (didn't support qgz files and easy to do in a text editor anyway. 
+  0.6
+    -Initial Release
 
 # Tags are comma separated with spaces allowed
 tags=python, geoscience, geology, geophysics, drill, drillhole, hole, drilling, borehole, well
@@ -32,7 +40,7 @@ homepage=https://rolandhill.github.io/geoscience/
 category=Plugins
 icon=icon/Geoscience.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
