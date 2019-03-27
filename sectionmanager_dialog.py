@@ -11,13 +11,13 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'section_dialog_base.ui'))
+    os.path.dirname(__file__), 'sectionmanager_dialog_base.ui'))
 
 
-class SectionDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(SectionDialog, self).__init__(parent)
+        super(SectionManagerDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager

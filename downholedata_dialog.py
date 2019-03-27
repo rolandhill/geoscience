@@ -11,13 +11,13 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'drilltrace_dialog_base.ui'))
+    os.path.dirname(__file__), 'downholedata_dialog_base.ui'))
 
 
-class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class DownholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(DrillTraceDialog, self).__init__(parent)
+        super(DownholeDataDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager
@@ -29,9 +29,11 @@ class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
     
+        self.lbDesurveyLayer.setFilters(QgsMapLayerProxyModel.LineLayer)
+        self.initLayer(self.drillManager.desurveyLayer, self.lbDesurveyLayer, ["desurvey"])
+
         self.lbDataLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
         self.initLayer(self.drillManager.dataLayer, self.lbDataLayer, ["lith", "geol"])
-        self.teSuffix.setText(self.drillManager.dataSuffix)
         self.checkSelectAll.setChecked(True)
         
         self.lbDataLayer.layerChanged.connect(self.onDataLayerChanged)
@@ -58,6 +60,7 @@ class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
                 item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
                 item.setCheckState(QtCore.Qt.Checked)
                 self.listFields.addItem(item)
+            self.setSuffix()
         else:
             self.fbDataId.setCurrentIndex(-1)
             self.fbDataFrom.setCurrentIndex(-1)
@@ -75,3 +78,10 @@ class DrillTraceDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             for index in range(self.listFields.count()):
                 self.listFields.item(index).setCheckState(QtCore.Qt.Unchecked)
             
+    def setSuffix(self):
+        str = self.lbDataLayer.currentLayer().name()
+        loc = str.find("_")
+        if loc > -1:
+            str = str[loc+1:]
+        self.teSuffix.setText(str)
+        

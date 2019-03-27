@@ -90,27 +90,27 @@ class Geoscience:
         """Create Drill menu."""
         self.menuDrill = self.menu.addMenu("Drilling")
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSetup.png"), "Drill Setup")
-        action.triggered.connect(self.drillManager.onDrillSetup)
+#        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSetup.png"), "Drill Setup")
+#        action.triggered.connect(self.drillManager.onDrillSetup)
+#        action.setEnabled(True)
+#        self.toolbar.addAction(action)
+#        self.actions.append(action)
+#
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\Desurvey.png"), "Desurvey Holes")
+        action.triggered.connect(self.drillManager.onDesurveyHole)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\Desurvey.png"), "Desurvey Data")
-        action.triggered.connect(self.drillManager.onDesurveyData)
-        action.setEnabled(True)
-        self.toolbar.addAction(action)
-        self.actions.append(action)
-
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillPlan.png"), "Display Traces")
-        action.triggered.connect(self.drillManager.onDrillDisplayTraces)
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillPlan.png"), "Downhole Data")
+        action.triggered.connect(self.drillManager.onDownholeData)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
         
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSection.png"), "Create Section")
-        action.triggered.connect(self.drillManager.onDrillCreateSection)
-        action.setEnabled(False)
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSection.png"), "Section Manager")
+        action.triggered.connect(self.drillManager.onDrillSectionManager)
+        action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
 

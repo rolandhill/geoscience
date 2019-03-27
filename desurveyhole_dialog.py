@@ -10,13 +10,13 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'drillsetup_dialog_base.ui'))
+    os.path.dirname(__file__), 'desurveyhole_dialog_base.ui'))
 
 
-class DrillSetupDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(DrillSetupDialog, self).__init__(parent)
+        super(DesurveyHoleDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager
@@ -33,8 +33,8 @@ class DrillSetupDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
 
         # Initialise local variables and ComboBoxes
         self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
-        self.teDefaultSectionWidth.setText(str(self.drillManager.defaultSectionWidth))
-        self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
+#        self.teDefaultSectionWidth.setText(str(self.drillManager.defaultSectionWidth))
+#        self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
         self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
         self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])

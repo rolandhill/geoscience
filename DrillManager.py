@@ -22,8 +22,9 @@ from .quaternion import Quaternion
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-from .drillsetup_dialog import DrillSetupDialog
-from .drilltrace_dialog import DrillTraceDialog
+from .desurveyhole_dialog import DesurveyHoleDialog
+from .downholedata_dialog import DownholeDataDialog
+from .sectionmanager_dialog import SectionManagerDialog
 
 import os.path
 import math
@@ -172,16 +173,16 @@ class DrillManager:
             self.logFile.flush()
 
     # Setup and run the Drill Setup dialog        
-    def onDrillSetup(self):
-        dlg = DrillSetupDialog(self)
+    def onDesurveyHole(self):
+        dlg = DesurveyHoleDialog(self)
         dlg.show()
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
             self.downDipNegative = dlg.checkDownDipNegative.isChecked()
             self.desurveyLength = dlg.sbDesurveyLength.value()
-            self.defaultSectionWidth = dlg.teDefaultSectionWidth.text()
-            self.defaultSectionStep = dlg.teDefaultSectionStep.text()
+#            self.defaultSectionWidth = dlg.teDefaultSectionWidth.text()
+#            self.defaultSectionStep = dlg.teDefaultSectionStep.text()
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
             self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
             self.collarId = dlg.fbCollarId.currentField()
@@ -203,13 +204,17 @@ class DrillManager:
             self.openLogFile()
         dlg.close()
 
+        if result:
+            self.desurveyHole()
+
 
     # Setup and run the Drill Trace dialog
-    def onDrillDisplayTraces(self):
-        dlg = DrillTraceDialog(self)
+    def onDownholeData(self):
+        dlg = DownholeDataDialog(self)
         dlg.show()
         result = dlg.exec_()
         if result:
+            self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
             self.dataLayer = dlg.lbDataLayer.currentLayer()
             self.dataId = dlg.fbDataId.currentField()
             self.dataFrom = dlg.fbDataFrom.currentField()
@@ -227,23 +232,26 @@ class DrillManager:
 
         if result:
             # Create the down hole traces        
-            self.createDownholeTrace()
+            self.createDownholeData()
 
-    # Desurvey the data        
-    def onDesurveyData(self):
-        self.desurveyData()
-
+#    # Desurvey the data        
+#    def onDesurveyHole(self):
+#        self.desurveyData()
+#
     # Create a section
-    def onDrillCreateSection(self):
-        pass
+    def onDrillSectionManager(self):
+        dlg = SectionManagerDialog(self)
+        dlg.show()
+        result = dlg.exec_()
+        dlg.close()
 
     # Create the down hole traces    
-    def createDownholeTrace(self):
-        self.logFile.write("\nCreating Trace Layer.\n")
+    def createDownholeData(self):
+        self.logFile.write("\nCreating Downhole Data Layer.\n")
         self.logFile.flush()
         
         # Check that desurvey layer is available
-        if not self.traceLayer.isValid() or not self.dataLayer.isValid():
+        if not self.desurveyLayer.isValid() or not self.dataLayer.isValid():
             return
         
         # Set up a progress display
@@ -270,7 +278,7 @@ class DrillManager:
             idxAttList.append(idx)
         
         # Get the fields from the desurveyed trace layer
-        tdp = self.traceLayer.dataProvider()
+        tdp = self.desurveyLayer.dataProvider()
         idxTraceId = tdp.fieldNameIndex("CollarID")
         idxTraceSegLength = tdp.fieldNameIndex("SegLength")
 
@@ -314,7 +322,7 @@ class DrillManager:
             if not currentTraceCollar == dataId:
                 # Get the correct trace feature via a query
                 query = '''"CollarID" = '%s' ''' % (dataId)
-                selection = self.traceLayer.getFeatures(QgsFeatureRequest().setFilterExpression(query))
+                selection = self.desurveyLayer.getFeatures(QgsFeatureRequest().setFilterExpression(query))
                 # We have a selection of features
                 if selection.isValid():
                     # There should be just 1, so get the first feature
@@ -393,7 +401,8 @@ class DrillManager:
         self.logFile.flush()
         
         # Build the new filename for saving to disk. We are using GeoPackages
-        base, ext = os.path.splitext(self.traceLayer.dataProvider().dataSourceUri())
+        base, ext = os.path.splitext(self.desurveyLayer.dataProvider().dataSourceUri())
+        base = base.replace("_Desurvey","_Downhole")
         fileName = uriToFile(base + "_%s" % (self.dataSuffix))
 
         # Generate a layer label
@@ -404,13 +413,13 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(oldLayer)
 
         #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.traceLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
         QgsProject.instance().addMapLayer(layer)
         
-    def desurveyData(self):
+    def desurveyHole(self):
         # Write to the log file
         self.logFile.write("\nDesurveying data.\n")
         self.logFile.flush()
@@ -694,11 +703,11 @@ class DrillManager:
             feature.setAttributes([collar.id, collar.depth if holeStraight else self.desurveyLength])
             
             # Add the feature to the layer
-            self.traceLayer.startEditing()
-            self.traceLayer.addFeature(feature)
-            self.traceLayer.commitChanges()
+            self.desurveyLayer.startEditing()
+            self.desurveyLayer.addFeature(feature)
+            self.desurveyLayer.commitChanges()
 
-        fileName = self.createTraceFilename()
+        fileName = self.createDesurveyFilename()
 
         # Calculate the filename for the on disk file
         path="%s.gpkg" % (fileName)
@@ -711,16 +720,16 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(layer)
         
         #Save memory layer to GeoPackage
-        error = QgsVectorFileWriter.writeAsVectorFormat(self.traceLayer, fileName, "CP1250", self.collarLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
+        error = QgsVectorFileWriter.writeAsVectorFormat(self.desurveyLayer, fileName, "CP1250", self.collarLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
 
         # Load the layer we just saved so the user can manipulate a real layer
-        self.traceLayer = QgsVectorLayer(path, label)
-        QgsProject.instance().addMapLayer(self.traceLayer)
+        self.desurveyLayer = QgsVectorLayer(path, label)
+        QgsProject.instance().addMapLayer(self.desurveyLayer)
 
-    def createTraceFilename(self):
+    def createDesurveyFilename(self):
         # Build the new filename
         base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
-        fileName = uriToFile(base + "_Trace")
+        fileName = uriToFile(base + "_Desurvey")
         return fileName
     
     def createDesurveyLayer(self):
@@ -728,7 +737,7 @@ class DrillManager:
         crs = self.collarLayer.sourceCrs()
         
         #Create a new memory layer
-        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "gt_Trace", "memory")
+        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "geoscience_Temp", "memory")
         layer.setCrs(crs)
         dp = layer.dataProvider()
         dp.addAttributes([
@@ -736,12 +745,12 @@ class DrillManager:
             QgsField("SegLength",  QVariant.Double, "double", 5, 2)
             ])
         layer.updateFields() # tell the vector layer to fetch changes from the provider
-        self.traceLayer = layer
+        self.desurveyLayer = layer
     
     def createDownholeLayer(self):
         #Create a new memory layer
-        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "gt_Trace", "memory")
-        layer.setCrs(self.traceLayer.sourceCrs())
+        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "geoscience_Temp", "memory")
+        layer.setCrs(self.desurveyLayer.sourceCrs())
         atts = []
         # Loop through the list of desired field names that the user checked
         for field in self.dataLayer.fields():
@@ -770,10 +779,10 @@ class DrillManager:
         self.defaultSectionStep= readProjectNum("DefaultSectionStep", 50)
         self.desurveyLength = readProjectNum("DesurveyLength", 1)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
+        self.desurveyLayer = readProjectLayer("DesurveyLayer")
         self.collarLayer = readProjectLayer("CollarLayer")
         self.surveyLayer = readProjectLayer("SurveyLayer")
         self.dataLayer = readProjectLayer("DataLayer")
-        self.traceLayer = readProjectLayer("TraceLayer")
         self.collarId = readProjectField("CollarID")
         self.collarDepth = readProjectField("CollarDepth")
         self.collarEast = readProjectField("CollarEast")
@@ -799,10 +808,10 @@ class DrillManager:
         writeProjectData("DefaultSectionStep", self.defaultSectionStep)
         writeProjectData("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
+        writeProjectLayer("DesurveyLayer", self.desurveyLayer)
         writeProjectLayer("CollarLayer", self.collarLayer)
         writeProjectLayer("SurveyLayer", self.surveyLayer)
         writeProjectLayer("DataLayer", self.dataLayer)
-        writeProjectLayer("TraceLayer", self.traceLayer)
         writeProjectField("CollarID", self.collarId)
         writeProjectField("CollarDepth", self.collarDepth)
         writeProjectField("CollarEast", self.collarEast)

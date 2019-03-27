@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>drillTrace_dialog</class>
- <widget class="QDialog" name="drillTrace_dialog">
+ <class>downholeData_dialog</class>
+ <widget class="QDialog" name="downholeData_dialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,9 +11,33 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Display Trace</string>
+   <string>Downhole Data</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="topMargin">
+      <number>8</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Desurveyed Hole Layer</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QgsMapLayerComboBox" name="lbDesurveyLayer">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
    <item>
     <widget class="QGroupBox" name="groupDownhole">
      <property name="title">
@@ -147,7 +171,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>drillTrace_dialog</receiver>
+   <receiver>downholeData_dialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -163,7 +187,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>drillTrace_dialog</receiver>
+   <receiver>downholeData_dialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>drillSetup_dialog</class>
- <widget class="QDialog" name="drillSetup_dialog">
+ <class>desurveyHole_dialog</class>
+ <widget class="QDialog" name="desurveyHole_dialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Drilling Setup</string>
+   <string>Desurvey Hole</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -349,23 +349,6 @@
       <string>Options</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_19">
-        <property name="text">
-         <string>Default section width</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_17">
-        <property name="text">
-         <string>Desurvey length</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="1">
        <widget class="QSpinBox" name="sbDesurveyLength">
         <property name="suffix">
@@ -402,36 +385,13 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="3">
-       <widget class="QLineEdit" name="teDefaultSectionWidth">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="placeholderText">
-         <string>Section width (m)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_20">
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_17">
         <property name="text">
-         <string>Default section step</string>
+         <string>Desurvey length</string>
         </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QLineEdit" name="teDefaultSectionStep">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="placeholderText">
-         <string>Section step (m)</string>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -477,15 +437,13 @@
   <tabstop>fbSurveyDip</tabstop>
   <tabstop>checkDownDipNegative</tabstop>
   <tabstop>sbDesurveyLength</tabstop>
-  <tabstop>teDefaultSectionWidth</tabstop>
-  <tabstop>teDefaultSectionStep</tabstop>
  </tabstops>
  <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>drillSetup_dialog</receiver>
+   <receiver>desurveyHole_dialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -501,7 +459,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>drillSetup_dialog</receiver>
+   <receiver>desurveyHole_dialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
