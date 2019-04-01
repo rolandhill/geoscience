@@ -29,23 +29,23 @@
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="pbMapCanvas">
           <property name="text">
            <string>Map Canvas</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="pbWestEast">
           <property name="text">
-           <string>East-West</string>
+           <string>West-East</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="pbSouthNorth">
           <property name="text">
-           <string>North-South</string>
+           <string>South-North</string>
           </property>
          </widget>
         </item>
@@ -59,7 +59,7 @@
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QPushButton" name="pushButton_4">
+         <widget class="QPushButton" name="pbEditSections">
           <property name="text">
            <string>Edit</string>
           </property>
@@ -88,14 +88,14 @@
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
-         <widget class="QPushButton" name="pushButton_5">
+         <widget class="QPushButton" name="pbDeleteSection">
           <property name="text">
            <string>Delete</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_6">
+         <widget class="QPushButton" name="pbCopySection">
           <property name="text">
            <string>Copy</string>
           </property>

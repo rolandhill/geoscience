@@ -26,6 +26,8 @@ from .desurveyhole_dialog import DesurveyHoleDialog
 from .downholedata_dialog import DownholeDataDialog
 from .sectionmanager_dialog import SectionManagerDialog
 
+from .SectionManager import *
+
 import os.path
 import math
 import platform
@@ -150,6 +152,9 @@ def uriToFile(url):
 # The DrillManager class controls all drill related data and methods 
 class DrillManager:
     def __init__(self):
+        
+        self.sectionManager = SectionManager()
+        
         # Project data is normally read in response to a readProject signal.
         # We also do it here for when the plugin is loaded other than at startup
         self.readProjectData()
@@ -775,8 +780,7 @@ class DrillManager:
 
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
-        self.defaultSectionWidth = readProjectNum("DefaultSectionWidth", 50)
-        self.defaultSectionStep= readProjectNum("DefaultSectionStep", 50)
+#       Desurvey & Downhole Data
         self.desurveyLength = readProjectNum("DesurveyLength", 1)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.desurveyLayer = readProjectLayer("DesurveyLayer")
@@ -798,14 +802,22 @@ class DrillManager:
         self.dataFrom = readProjectField("DataFrom")
         self.dataTo = readProjectField("DataTo")
         self.dataSuffix = readProjectField("DataSuffix")
+#       Section Data
+        self.sectionWidth = readProjectNum("sectionWidth", 20)
+        self.sectionStep = readProjectNum("sectionStep", 50)
+        self.sectionNorth = readProjectNum("SectionNorth", 0)
+        self.sectionEast = readProjectNum("SectionEast", 0)
+        self.sectionLimitWest = readProjectNum("SectionLimitWest", 0)
+        self.sectionLimitEast = readProjectNum("SectionLimitEast", 1)
+        self.sectionLimitSouth = readProjectNum("SectionLimitSouth", 0)
+        self.sectionLimitNorth = readProjectNum("SectionLimitNorth", 1)
         
         # Collar layer might have changed, so re-open the log file
         self.openLogFile()
 
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
-        writeProjectData("DefaultSectionWidth", self.defaultSectionWidth)
-        writeProjectData("DefaultSectionStep", self.defaultSectionStep)
+#       Desurvey & Downhole Data
         writeProjectData("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)
@@ -827,4 +839,12 @@ class DrillManager:
         writeProjectField("DataFrom", self.dataFrom)
         writeProjectField("DataTo", self.dataTo)
         writeProjectField("DataSuffix", self.dataSuffix)
-    
+#       Section Data
+        writeProjectData("SectionWidth", self.sectionWidth)
+        writeProjectData("SectionStep", self.sectionStep)
+        writeProjectData("SectionNorth", self.sectionNorth)
+        writeProjectData("SectionEast", self.sectionEast)
+        writeProjectData("SectionLimitWest", self.sectionLimitWest)
+        writeProjectData("SectionLimitEast", self.sectionLimitEast)
+        writeProjectData("SectionLimitSouth", self.sectionLimitSouth)
+        writeProjectData("SectionLimitNorth", self.sectionLimitNorth)

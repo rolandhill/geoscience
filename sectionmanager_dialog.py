@@ -8,6 +8,7 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
+from .sectionorthogonal_dialog import SectionOrthogonalDialog
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -21,6 +22,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         
         # Keep a reference to the DrillManager
         self.drillManager = manager
+        self.sectionManager = self.drillManager.sectionManager
         
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -28,5 +30,32 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-    
+        
+        self.pbWestEast.pressed.connect(self.onWestEastPressed)
+        self.pbSouthNorth.pressed.connect(self.onSouthNorthPressed)
+        
+    def onWestEastPressed(self):
+        dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
+        dlg.show()
+        result = dlg.exec_()
+        if result:
+            self.drillManager.sectionNorth = float(dlg.leCenter.text())
+            self.drillManager.sectionLimitWest = float(dlg.leLimitMin.text())
+            self.drillManager.sectionLimitEast = float(dlg.leLimitMax.text())
+            self.drillManager.sectionName = dlg.leName.text()
+            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
+            
+        dlg.close()
+        
+        if result:
+            self.sectionManager.createSection(self.drillManager.sectionName, \
+              self.drillManager.sectionLimitWest, self.drillManager.sectionNorth - self.drillManager.sectionWidth, \
+              self.drillManager.sectionLimitEast, self.drillManager.sectionNorth + self.drillManager.sectionWidth)
+        
+    def onSouthNorthPressed(self):
+        dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
+        dlg.show()
+        result = dlg.exec_()
+        dlg.close()
+        
 
