@@ -30,6 +30,7 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
 
         self.leSectionWidth.setText(str(self.drillManager.sectionWidth))
+        self.leName.setText(self.drillManager.sectionName)
         
         if dirWestEast == True:
             self.leCenter.setText(str(self.drillManager.sectionNorth))
@@ -49,6 +50,17 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.leLimitMin.setValidator(QDoubleValidator())
         self.leLimitMax.setValidator(QDoubleValidator())
         self.leSectionWidth.setValidator(QDoubleValidator())
+
+        self.listLayers.clear()
+        layers = QgsProject.instance().mapLayers()
+        for name, layer in layers.items():
+            if layer.name().find("_Desurvey") > -1:
+                item = QtWidgets.QListWidgetItem()
+                item.setText(layer.name())
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                item.setCheckState(QtCore.Qt.Checked)
+                item.setData(QtCore.Qt.UserRole, layer)
+                self.listLayers.addItem(item)
         
         self.leCenter.textChanged.connect(self.onCenterTextChanged)
         

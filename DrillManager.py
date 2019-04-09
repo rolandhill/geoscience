@@ -27,6 +27,7 @@ from .downholedata_dialog import DownholeDataDialog
 from .sectionmanager_dialog import SectionManagerDialog
 
 from .SectionManager import *
+from .Utils import *
 
 import os.path
 import math
@@ -51,103 +52,6 @@ class Surveys:
     depth = 0.0
     az = 0.0
     dip = 0.0
-    
-def getLayerByName(name):
-    layer=None
-    layerList = QgsProject.instance().mapLayersByName(name)
-    if len(layerList) > 0:
-        layer = layerList[0]
-
-    return layer
-
-def getFieldByName(layer, name):
-    field = QgsField()
-    if layer is not None and layer.isValid() and name != "None":
-        dp = layer.dataProvider()
-        index = dp.fieldNameIndex(name)
-        if index > -1:
-            field = dp.field(index)
-    return field
-
-# Retrieve the name of the layer from the QGIS project file with the supplied entry label
-def readProjectLayer(entry):
-    name, ok = QgsProject.instance().readEntry ("Geoscience", entry)
-    if ok and name != "None":
-        layer = getLayerByName(name)
-        if layer != None:
-            return layer
-        else:
-            return None
-    else:
-        return None
-
-# Write the supplied layer name into the QGIS project file next to the supplied entry label
-def writeProjectLayer(entry, layer):
-    if layer is not None:
-        try:
-            QgsProject.instance().writeEntry("Geoscience", entry, layer.name())
-        except:
-            QgsProject.instance().writeEntry("Geoscience", entry, "None")
-    else:
-        QgsProject.instance().writeEntry("Geoscience", entry, "None")
-        
-# Retrieve the name of the field from the QGIS project file with the supplied entry label
-def readProjectField(entry):
-    name, ok = QgsProject.instance().readEntry ("Geoscience", entry)
-    return name
-
-# Write the supplied field name into the QGIS project file next to the supplied entry label
-def writeProjectField(entry, field):
-    QgsProject.instance().writeEntry("Geoscience", entry, field)
-        
-# Retrieve a number from the QGIS project file with the supplied entry label
-def readProjectNum(entry, default):
-    val, ok = QgsProject.instance().readNumEntry ("Geoscience", entry)
-    if ok:
-        return val
-    else:
-        return default
-    
-# Retrieve a bool from the QGIS project file with the supplied entry label
-def readProjectBool(entry, default):
-    val, ok = QgsProject.instance().readBoolEntry ("Geoscience", entry)
-    if ok:
-        return val
-    else:
-        return default
-
-# Write the supplied value (number or bool) into the QGIS project file next to the supplied entry label
-def writeProjectData(entry, val):
-    QgsProject.instance().writeEntry("Geoscience", entry, val)
-
-# Calculate an interpolated 3D point at given depth from the supplied polyline.
-# The polyline must have constant segment lengths given by segLength
-def interpPolyline(depth, segLength, polyline):
-    p = QgsPoint()
-    i = depth / segLength
-    i0 = int(i)
-    ratio = i - i0
-
-    p0 = polyline[i0]
-    if ratio > 0.0:
-        p1 = polyline[i0 + 1]
-        dp = (p1 - p0) * ratio
-        p = p0 + dp
-    else:
-        p = p0
-    return p, i
-
-# Process the url to provide a valid filename
-def uriToFile(url):
-    fileName = url
-    if fileName.startswith("file:///"):
-        if platform.system() == 'Windows':
-            fileName = fileName[8:]
-        elif platform.system() == 'Linux':
-            fileName = fileName[7:]
-    fileName = fileName.replace("%20", " ")
-    fileName = os.path.normpath(fileName)
-    return fileName
     
 # The DrillManager class controls all drill related data and methods 
 class DrillManager:
@@ -742,7 +646,7 @@ class DrillManager:
         crs = self.collarLayer.sourceCrs()
         
         #Create a new memory layer
-        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "geoscience_Temp", "memory")
+        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "geoscience_Temp", "memory")
         layer.setCrs(crs)
         dp = layer.dataProvider()
         dp.addAttributes([
@@ -754,7 +658,7 @@ class DrillManager:
     
     def createDownholeLayer(self):
         #Create a new memory layer
-        layer = QgsVectorLayer("LineString?crs=EPSG:4326", "geoscience_Temp", "memory")
+        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "geoscience_Temp", "memory")
         layer.setCrs(self.desurveyLayer.sourceCrs())
         atts = []
         # Loop through the list of desired field names that the user checked
@@ -803,8 +707,9 @@ class DrillManager:
         self.dataTo = readProjectField("DataTo")
         self.dataSuffix = readProjectField("DataSuffix")
 #       Section Data
-        self.sectionWidth = readProjectNum("sectionWidth", 20)
-        self.sectionStep = readProjectNum("sectionStep", 50)
+        self.sectionName = readProjectText("SectionName", '')
+        self.sectionWidth = readProjectNum("SectionWidth", 20)
+        self.sectionStep = readProjectNum("SectionStep", 50)
         self.sectionNorth = readProjectNum("SectionNorth", 0)
         self.sectionEast = readProjectNum("SectionEast", 0)
         self.sectionLimitWest = readProjectNum("SectionLimitWest", 0)
@@ -840,6 +745,7 @@ class DrillManager:
         writeProjectField("DataTo", self.dataTo)
         writeProjectField("DataSuffix", self.dataSuffix)
 #       Section Data
+        writeProjectData("SectionName", self.sectionName)
         writeProjectData("SectionWidth", self.sectionWidth)
         writeProjectData("SectionStep", self.sectionStep)
         writeProjectData("SectionNorth", self.sectionNorth)
