@@ -16,27 +16,33 @@ from .Utils import *
 def verticalPlane(startx, starty, endx, endy):
     p1 = np.array([startx, starty, 0.0])
     p2 = np.array([endx, endy, 0.0])
-    p3 = np.array([endx, endy, 100])
+    p3 = np.array([startx, starty, -100])
     
-    v1 = p3 - p1
-    v2 = p2 - p1
+    v1 = p2 - p1
+    v2 = p3 - p1
     
-    cp = np.cross(v2, v1)
+    cp = np.cross(v1, v2)
     cp = cp/np.linalg.norm(cp)
     a, b, c = cp
     
-    d = np.dot(cp, p3)
-#    msg = 'plane:  {:f} {:f} {:f} {:f}'.format(a, b, c, d)
-#    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
+    d = -np.dot(cp, p3)
+    msg = 'plane:  {:f} {:f} {:f} {:f}'.format(a, b, c, d)
+    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
     
     return np.array([a, b, c, d])
 
 #def planeNormal(p):
 #    return p[:3]
 
+def qgsToNp(pt):
+    return np.array([pt.x(), pt.y(), pt.z()])
+
+def npToQgs(pt):
+    return QgsPoint(pt[0], pt[1], pt[2])
+
 def distancePointFromPlane(p, plane):
     n = plane[:3]
-    return p.dot(n) - plane[3]
+    return p.dot(n) + plane[3]
 
 def lineVector(p0, p1):
     vec = p1-p0
@@ -44,42 +50,30 @@ def lineVector(p0, p1):
     return vec
 
 def lineIntersectPlane(plane, p0, p1):
-    np0 = np.array([p0.x(), p0.y(), p0.z()])
-    np1 = np.array([p1.x(), p1.y(), p1.z()])
-    msg = 'plane:  {:f} {:f} {:f} {:f} np0: {:f} {:f} {:f}  np1: {:f} {:f} {:f}'.format(plane[0], plane[1], plane[2], plane[3], np0[0], np0[1], np0[2], np1[0], np1[1], np1[2])
-    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
-    td = plane[0]*(np1[0]-np0[0]) + plane[1]*(np1[1]-np0[1]) + plane[2]*(np1[2]-np0[2])
+    td = plane[0]*(p1[0]-p0[0]) + plane[1]*(p1[1]-p0[1]) + plane[2]*(p1[2]-p0[2])
     if td == 0:
         return None
-    t = -(plane[0]*np0[0] + plane[1]*np0[1] + plane[2]*np0[2] - plane[3]) / td
-    pi = np.array([ np0[0]+t*(np1[0]-np0[0]), np0[1]+t*(np1[1]-np0[1]), np0[2]+t*(np1[2]-np0[2])])
-    msg = 'pi: {:f} {:f} {:f}'.format(pi[0], pi[1], pi[2])
-    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
+    t = -(plane[0]*p0[0] + plane[1]*p0[1] + plane[2]*p0[2] + plane[3]) / td
+    pi = np.array([ p0[0]+t*(p1[0]-p0[0]), p0[1]+t*(p1[1]-p0[1]), p0[2]+t*(p1[2]-p0[2])])
+#    msg = 'pi: {:f} {:f} {:f}'.format(pi[0], pi[1], pi[2])
+#    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
     return pi
     
-def lineIntersectPlane2(plane, p0, p1):
-    np0 = np.array([p0.x(), p0.y(), p0.z()])
-    np1 = np.array([p1.x(), p1.y(), p1.z()])
-    u = np1 - np0
-    n = plane[:3]
-    nlen = np.linalg.norm(n)
-#    msg = 'u:  {:f} {:f} {:f}'.format(u[0], u[1], u[2])
-#    msg = 'n:  {:f} {:f} {:f}'.format(n[0], n[1], n[2])
-#    msg = 'u:  {:f} {:f} {:f}   n:  {:f} {:f} {:f}'.format(u[0], u[1], u[2] , n[0], n[1], n[2])
-#    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
-    dot = n.dot(u)
-    if (abs(dot) > 1.0e-6):
-        p_co = n * (-plane[3] / (nlen * nlen))
-        w = np0 - p_co
-        fac = -(n * w) / dot
-        return np0 + (u * fac)
-    else:
-        return None
-
 def lineIntersectOffsetPlane(plane, offset, p0, p1):
-    newPlane = np.array([plane[0], plane[1], plane[2], plane[3] + offset])
+    newPlane = np.array([plane[0], plane[1], plane[2], plane[3] - offset])
     return lineIntersectPlane(newPlane, p0, p1)
     
+def projectPointToPlane(plane, pt):
+#    The projection of a point q = (x, y, z) onto a plane given by a point p = (a, b, c) and a normal n = (d, e, f) is
+#    q_proj = q - dot(q - p, n) * n
+    n = plane[:3]
+    p0 = n * -plane[3]
+    
+    pi = pt - np.dot(pt - p0, n) * n
+#    pi = np.dot(pt - p0, n) * n - pt
+    
+    return pi
+
 class Section:
     def __init__(self, name, startX, startY, endX, endY, width, layerList):
         self.name = name
@@ -88,6 +82,8 @@ class Section:
         self.endX = endX
         self.endY = endY
         self.width = width
+        self.westEast = startY == endY
+        self.southNorth = startX == endX
 
         self.layers = layerList
         
@@ -95,6 +91,9 @@ class Section:
         
         self.window = SectionWindow(self.layers)
         self.window.show()
+        
+    def setLayers(layerList):
+        self.window.setLayers(layerList)
         
     
 # The SectionManager class manipulates and keeps track of all the sections
@@ -130,7 +129,7 @@ class SectionManager:
                 vi = lf.geometry().vertices()
                 while vi.hasNext():
                     p = vi.next()
-                    tracePolyline.append(p)
+                    tracePolyline.append(qgsToNp(p))
 #                    msg = 'vi:  {:f} {:f} {:f}'.format(p.x(), p.y(), p.z())
 #                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
 
@@ -139,8 +138,7 @@ class SectionManager:
                 
                 # Calculate the distance of each point from the plane
                 for pt in tracePolyline:
-                    p = np.array([pt.x(), pt.y(), pt.z()])
-                    d = distancePointFromPlane(p, plane)
+                    d = distancePointFromPlane(pt, plane)
                     distance.append(d)
 #                    msg = 'p:  {:f} {:f} {:f}   plane:  {:f} {:f} {:f} {:f}    d: {:f}'.format(p[0], p[1], p[2] , plane[0], plane[1], plane[2], plane[3], d)
 #                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
@@ -162,10 +160,12 @@ class SectionManager:
                                 p1 = tracePolyline[index + 1]
                                 pi = lineIntersectOffsetPlane(plane, width, p0, p1)
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], pi[1], pi[2]))
+                                    pp = projectPointToPlane(plane, pi)
+                                    pointList.append(pp)
                     elif d >= -width:
                         # The point is within the section, so add it to the list
-                        pointList.append(tracePolyline[index])
+                        pp = projectPointToPlane(plane, tracePolyline[index])
+                        pointList.append(pp)
                         # We still need to check if the following line segment passes out of the section
                         if index < distlen - 1:
                             if distance[index+1] > width:
@@ -174,14 +174,16 @@ class SectionManager:
                                 p1 = tracePolyline[index + 1]
                                 pi = lineIntersectOffsetPlane(plane, width, p0, p1)
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], pi[1], pi[2]))
+                                    pp = projectPointToPlane(plane, pi)
+                                    pointList.append(pp)
                             elif distance[index+1] < -width:
                                 #check that the line segment isn't parallel to the plane
                                 p0 = tracePolyline[index]
                                 p1 = tracePolyline[index + 1]
                                 pi = lineIntersectOffsetPlane(plane, -width, p0, p1)
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], pi[1], pi[2]))
+                                    pp = projectPointToPlane(plane, pi)
+                                    pointList.append(pp)
                     else:
                         # The point is behind the section so check if line segment passes through
                         # Check that we're nopt on the last point
@@ -192,11 +194,27 @@ class SectionManager:
                                 p1 = tracePolyline[index + 1]
                                 pi = lineIntersectOffsetPlane(plane, -width, p0, p1)
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], pi[1], pi[2]))
-
+                                    pp = projectPointToPlane(plane, pi)
+                                    pointList.append(pp)
+                # Translate the projected points into a plane based coordinate system
+                qPointList = []
+                if startY == endY:
+                    for pt in pointList:
+                        qPointList.append(QgsPoint(pt[0], pt[2], pt[1]))
+                elif startX == endX:
+                    for pt in pointList:
+                        qPointList.append(QgsPoint(pt[1], pt[2], pt[0]))
+                else:
+                    x0 = np.array([startX, startY, 0.0])
+                    for pt in pointList:
+                        v0 = pt - x0
+    #                    msg = 'x0:  {:f} {:f} {:f}   pt:  {:f} {:f} {:f}  v0:  {:f} {:f} {:f}'.format(x0[0], x0[1], x0[2] , pt[0], pt[1], pt[2], v0[0], v0[1], v0[2])
+    #                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
+                        qPointList.append(QgsPoint(v0[0], v0[2], v0[1]))
+                    
                 # Set the geometry for the new downhole feature
                 if len(pointList) > 1:
-                    feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+                    feature.setGeometry(QgsGeometry.fromPolyline(qPointList))
     
                     # Set the attributes for the new feature
                     feature.setAttributes(lf.attributes())

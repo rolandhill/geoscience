@@ -16,8 +16,8 @@ class SectionWindow(QMainWindow):
         self.canvas = QgsMapCanvas()
         self.canvas.setCanvasColor(Qt.white)
 
-        self.canvas.setExtent(layers[0].extent())
-        self.canvas.setLayers(layers)
+#        self.canvas.setExtent(layers[0].extent())
+#        self.canvas.setLayers(layers)
 
         self.setCentralWidget(self.canvas)
 
@@ -47,6 +47,10 @@ class SectionWindow(QMainWindow):
         self.toolZoomOut.setAction(self.actionZoomOut)
 
         self.pan()
+        
+    def setLayers(layerList):
+        self.canvas.setLayers(layerList)
+        self.canvas.setExtent(layerList[0].extent())
 
     def zoomIn(self):
         self.canvas.setMapTool(self.toolZoomIn)
