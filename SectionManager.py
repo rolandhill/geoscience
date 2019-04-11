@@ -82,43 +82,32 @@ class Section:
         self.endX = endX
         self.endY = endY
         self.width = width
+        self.sourceLayers = layerList
+        
         self.westEast = startY == endY
         self.southNorth = startX == endX
 
-        self.layers = layerList
-        
         self.group = QgsLayerTreeGroup(self.name)
+
+        # Find equation of the plane and the normal to the plane
+        self.plane = verticalPlane(startX, startY, endX, endY)
+
+        self.sectionLayers = self.sectionThroughLayers(self.sourceLayers)
         
-        self.window = SectionWindow(self.layers)
+        self.window = SectionWindow(self.sectionLayers)
         self.window.show()
         
-    def setLayers(layerList):
-        self.window.setLayers(layerList)
-        
-    
-# The SectionManager class manipulates and keeps track of all the sections
-class SectionManager:
-    def __init__(self):
-        self.sectionReg = []
-        
-    def createSection(self, name, startX, startY, endX, endY, width, layerList):
-        sectionGroup = self.sectionGroup()
-        
-        # Find equation of the plane and the normal to the plane
-        plane = verticalPlane(startX, startY, endX, endY)
-#        n = planeNormal(plane)
-#        msg = 'n: {:f} {:f} {:f}'.format(n[0], n[1], n[2])
-#        iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
-        
+    def sectionThroughLayers(self, layers):
         #Create new layers for the section based on the requested plan layers
         sectionLayers = []
-        for layer in layerList:
+        
+        for layer in layers:
             #Create a new layer
-            sectionLayer = self.createSectionLayer(layer, name)
+            sectionLayer = self.createSectionLayer(layer, self.name)
 
             #Loop through plan layer
-            for index, lf in enumerate(layer.getFeatures()):
-                # !!!! ToDo: Can we check the bounding box to reject entire holes
+            for lf in layer.getFeatures():
+                # !!!! ToDo: Can we check the bounding box to reject entire features
                 
                 # Variable to hold a feature
                 feature = QgsFeature()
@@ -130,15 +119,13 @@ class SectionManager:
                 while vi.hasNext():
                     p = vi.next()
                     tracePolyline.append(qgsToNp(p))
-#                    msg = 'vi:  {:f} {:f} {:f}'.format(p.x(), p.y(), p.z())
-#                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
 
                 # Create an array to hold the distance of each point from the plane
                 distance = []
                 
                 # Calculate the distance of each point from the plane
                 for pt in tracePolyline:
-                    d = distancePointFromPlane(pt, plane)
+                    d = distancePointFromPlane(pt, self.plane)
                     distance.append(d)
 #                    msg = 'p:  {:f} {:f} {:f}   plane:  {:f} {:f} {:f} {:f}    d: {:f}'.format(p[0], p[1], p[2] , plane[0], plane[1], plane[2], plane[3], d)
 #                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
@@ -150,66 +137,55 @@ class SectionManager:
                 # Loop through the distance array and check each point pair
                 distlen = len(distance)
                 for index, d in enumerate(distance):
-                    if d > width:
+                    if d > self.width:
                         # The point is in front of the section so check if the line segment passes through
                         # Check that we're nopt on the last point
                         if index < distlen - 1:
-                            if distance[index+1] < width:
-                                #check that the line segment isn't parallel to the plane
-                                p0 = tracePolyline[index]
-                                p1 = tracePolyline[index + 1]
-                                pi = lineIntersectOffsetPlane(plane, width, p0, p1)
+                            if distance[index+1] < self.width:
+                                # Find intersection of line segment with plane
+                                pi = lineIntersectOffsetPlane(self.plane, self.width, tracePolyline[index], tracePolyline[index + 1])
                                 if pi is not None:
-                                    pp = projectPointToPlane(plane, pi)
-                                    pointList.append(pp)
-                    elif d >= -width:
+                                    pointList.append(projectPointToPlane(self.plane, pi))
+                    elif d >= -self.width:
                         # The point is within the section, so add it to the list
-                        pp = projectPointToPlane(plane, tracePolyline[index])
+                        pp = projectPointToPlane(self.plane, tracePolyline[index])
                         pointList.append(pp)
                         # We still need to check if the following line segment passes out of the section
                         if index < distlen - 1:
-                            if distance[index+1] > width:
-                                #check that the line segment isn't parallel to the plane
-                                p0 = tracePolyline[index]
-                                p1 = tracePolyline[index + 1]
-                                pi = lineIntersectOffsetPlane(plane, width, p0, p1)
+                            if distance[index+1] > self.width:
+                                # Find intersection of line segment with plane
+                                pi = lineIntersectOffsetPlane(self.plane, self.width, tracePolyline[index], tracePolyline[index + 1])
                                 if pi is not None:
-                                    pp = projectPointToPlane(plane, pi)
-                                    pointList.append(pp)
-                            elif distance[index+1] < -width:
-                                #check that the line segment isn't parallel to the plane
-                                p0 = tracePolyline[index]
-                                p1 = tracePolyline[index + 1]
-                                pi = lineIntersectOffsetPlane(plane, -width, p0, p1)
+                                    pointList.append(projectPointToPlane(self.plane, pi))
+                            elif distance[index+1] < -self.width:
+                                # Find intersection of line segment with plane
+                                pi = lineIntersectOffsetPlane(self.plane, -self.width, tracePolyline[index], tracePolyline[index + 1])
                                 if pi is not None:
-                                    pp = projectPointToPlane(plane, pi)
-                                    pointList.append(pp)
+                                    pointList.append(projectPointToPlane(self.plane, pi))
                     else:
                         # The point is behind the section so check if line segment passes through
-                        # Check that we're nopt on the last point
+                        # Check that we're not on the last point
                         if index < distlen - 1:
-                            if distance[index+1] > -width:
-                                #check that the line segment isn't parallel to the plane
-                                p0 = tracePolyline[index]
-                                p1 = tracePolyline[index + 1]
-                                pi = lineIntersectOffsetPlane(plane, -width, p0, p1)
+                            if distance[index+1] > -self.width:
+                                # Find intersection of line segment with plane
+                                pi = lineIntersectOffsetPlane(self.plane, -self.width, tracePolyline[index], tracePolyline[index + 1])
                                 if pi is not None:
-                                    pp = projectPointToPlane(plane, pi)
-                                    pointList.append(pp)
+                                    pointList.append(projectPointToPlane(self.plane, pi))
                 # Translate the projected points into a plane based coordinate system
                 qPointList = []
-                if startY == endY:
+                # Is this a west-east section
+                if self.westEast:
                     for pt in pointList:
                         qPointList.append(QgsPoint(pt[0], pt[2], pt[1]))
-                elif startX == endX:
+                # Or maybe a south-north section
+                elif self.southNorth:
                     for pt in pointList:
                         qPointList.append(QgsPoint(pt[1], pt[2], pt[0]))
+                # Then it must be an oblique section
                 else:
-                    x0 = np.array([startX, startY, 0.0])
+                    x0 = np.array([self.startX, self.startY, 0.0])
                     for pt in pointList:
                         v0 = pt - x0
-    #                    msg = 'x0:  {:f} {:f} {:f}   pt:  {:f} {:f} {:f}  v0:  {:f} {:f} {:f}'.format(x0[0], x0[1], x0[2] , pt[0], pt[1], pt[2], v0[0], v0[1], v0[2])
-    #                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
                         qPointList.append(QgsPoint(v0[0], v0[2], v0[1]))
                     
                 # Set the geometry for the new downhole feature
@@ -225,27 +201,11 @@ class SectionManager:
                     sectionLayer.commitChanges()
     
             sectionLayers.append(sectionLayer)
-            
+
             QgsProject.instance().addMapLayer(sectionLayer)
-        
-        s = Section(name, startX, startY, endX, endY, width, sectionLayers)
-        sectionGroup.addChildNode(s.group)
-
-        self.sectionReg.append(s)
-
-    def sectionGroup(self):
-        group = None
-        root = QgsProject.instance().layerTreeRoot()
-        for child in root.children():
-            if isinstance(child, QgsLayerTreeGroup) and child.name() == "Sections":
-                group = child
-                break
-        
-        if group == None:
-            group = root.insertGroup(0, "Sections")
             
-        return group
-    
+        return sectionLayers
+
     def createSectionLayer(self, baseLayer, sectionName):
         #Create a new memory layer
         layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", baseLayer.name() + "_" + sectionName, "memory")
@@ -264,4 +224,31 @@ class SectionManager:
 
         return layer
 
+    
+# The SectionManager class manipulates and keeps track of all the sections
+class SectionManager:
+    def __init__(self):
+        self.sectionReg = []
+        
+    def createSection(self, name, startX, startY, endX, endY, width, layerList):
+        sectionGroup = self.sectionGroup()
+        
+        s = Section(name, startX, startY, endX, endY, width, layerList)
+        sectionGroup.addChildNode(s.group)
+
+        self.sectionReg.append(s)
+
+    def sectionGroup(self):
+        group = None
+        root = QgsProject.instance().layerTreeRoot()
+        for child in root.children():
+            if isinstance(child, QgsLayerTreeGroup) and child.name() == "Sections":
+                group = child
+                break
+        
+        if group == None:
+            group = root.insertGroup(0, "Sections")
+            
+        return group
+    
     

@@ -16,8 +16,8 @@ class SectionWindow(QMainWindow):
         self.canvas = QgsMapCanvas()
         self.canvas.setCanvasColor(Qt.white)
 
-#        self.canvas.setExtent(layers[0].extent())
-#        self.canvas.setLayers(layers)
+        self.canvas.setExtent(layers[0].extent())
+        self.canvas.setLayers(layers)
 
         self.setCentralWidget(self.canvas)
 
