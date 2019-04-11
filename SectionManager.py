@@ -202,7 +202,8 @@ class Section:
     
             sectionLayers.append(sectionLayer)
 
-            QgsProject.instance().addMapLayer(sectionLayer)
+            QgsProject.instance().addMapLayer(sectionLayer, False)
+            self.group.addLayer(sectionLayer)
             
         return sectionLayers
 
