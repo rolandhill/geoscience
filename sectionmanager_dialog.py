@@ -66,6 +66,27 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
         dlg.show()
         result = dlg.exec_()
+        if result:
+            self.drillManager.sectionEast = float(dlg.leCenter.text())
+            self.drillManager.sectionLimitSouth = float(dlg.leLimitMin.text())
+            self.drillManager.sectionLimitNorth = float(dlg.leLimitMax.text())
+            self.drillManager.sectionName = dlg.leName.text()
+            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
+            
+            # Save the name of each checked attribute field in a list
+            self.drillManager.sectionLayers = []
+            for index in range(dlg.listLayers.count()):
+                if dlg.listLayers.item(index).checkState():
+                    self.drillManager.sectionLayers.append(dlg.listLayers.item(index).data(QtCore.Qt.UserRole))
+
+            self.drillManager.writeProjectData()
+            
         dlg.close()
         
+        if result:
+            self.sectionManager.createSection(self.drillManager.sectionName, \
+              self.drillManager.sectionEast, self.drillManager.sectionLimitSouth, \
+              self.drillManager.sectionEast, self.drillManager.sectionLimitNorth, \
+              self.drillManager.sectionWidth, \
+              self.drillManager.sectionLayers)
 
