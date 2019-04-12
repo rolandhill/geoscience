@@ -26,13 +26,8 @@ def verticalPlane(startx, starty, endx, endy):
     a, b, c = cp
     
     d = -np.dot(cp, p3)
-    msg = 'plane:  {:f} {:f} {:f} {:f}'.format(a, b, c, d)
-    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
     
     return np.array([a, b, c, d])
-
-#def planeNormal(p):
-#    return p[:3]
 
 def qgsToNp(pt):
     return np.array([pt.x(), pt.y(), pt.z()])
@@ -199,6 +194,18 @@ class Section:
                     sectionLayer.startEditing()
                     sectionLayer.addFeature(feature)
                     sectionLayer.commitChanges()
+            
+            styleNames = layer.styleManager().styles()
+            currentStyleName = layer.styleManager().currentStyle()
+            
+            for styleName in styleNames:
+                style = layer.styleManager().style(styleName)
+                renamed = sectionLayer.styleManager().renameStyle(styleName, "temp")
+                sectionLayer.styleManager().addStyle(styleName, style)
+                if renamed:
+                    sectionLayer.styleManager().removeStyle("temp")
+            
+            sectionLayer.styleManager().setCurrentStyle(currentStyleName)
     
             sectionLayers.append(sectionLayer)
 
