@@ -58,6 +58,7 @@ class DrillManager:
     def __init__(self):
         
         self.sectionManager = SectionManager()
+        self.sectionManagerDlg = None
         
         # Project data is normally read in response to a readProject signal.
         # We also do it here for when the plugin is loaded other than at startup
@@ -149,10 +150,18 @@ class DrillManager:
 #
     # Create a section
     def onDrillSectionManager(self):
-        dlg = SectionManagerDialog(self)
-        dlg.show()
-        result = dlg.exec_()
-        dlg.close()
+        try:
+            self.sectionManagerDlg.deiconfy()
+        except:
+#        if self.sectionManagerDlg == None:
+            self.sectionManagerDlg = SectionManagerDialog(self)
+            self.sectionManagerDlg.show()
+            self.sectionManagerDlg.exec_()
+            self.sectionManagerDlg.close()
+            self.sectionManagerDlg = None
+#        else:
+#            self.sectionManagerDlg.show()
+            
 
     # Create the down hole traces    
     def createDownholeData(self):

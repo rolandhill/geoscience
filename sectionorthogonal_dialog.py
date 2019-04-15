@@ -54,13 +54,14 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.listLayers.clear()
         layers = QgsProject.instance().mapLayers()
         for name, layer in layers.items():
-            if layer.name().find("_Desurvey") > -1 or layer.name().find("_Downhole_") > -1:
-                item = QtWidgets.QListWidgetItem()
-                item.setText(layer.name())
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                item.setCheckState(QtCore.Qt.Checked)
-                item.setData(QtCore.Qt.UserRole, layer)
-                self.listLayers.addItem(item)
+            if layer.name()[:2] != "S_":
+                if layer.name().find("_Desurvey") > -1 or layer.name().find("_Downhole_") > -1:
+                    item = QtWidgets.QListWidgetItem()
+                    item.setText(layer.name())
+                    item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                    item.setCheckState(QtCore.Qt.Checked)
+                    item.setData(QtCore.Qt.UserRole, layer)
+                    self.listLayers.addItem(item)
         
         self.leCenter.textChanged.connect(self.onCenterTextChanged)
         

@@ -31,8 +31,21 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         
+        self.fillSectionList()
+        
         self.pbWestEast.pressed.connect(self.onWestEastPressed)
         self.pbSouthNorth.pressed.connect(self.onSouthNorthPressed)
+
+    def fillSectionList(self)        :
+        self.listSection.clear()
+        self.sectionManager.sectionReg.sort(key = lambda x: x.name)                        
+        for s in self.sectionManager.sectionReg:
+            item = QtWidgets.QListWidgetItem()
+            item.setText(s.name)
+#            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+#            item.setCheckState(QtCore.Qt.Checked)
+            item.setData(QtCore.Qt.UserRole, s)
+            self.listSection.addItem(item)
         
     def onWestEastPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
@@ -61,6 +74,8 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
               self.drillManager.sectionLimitEast, self.drillManager.sectionNorth, \
               self.drillManager.sectionWidth, \
               self.drillManager.sectionLayers)
+            
+            self.fillSectionList()
         
     def onSouthNorthPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
@@ -90,3 +105,4 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
               self.drillManager.sectionWidth, \
               self.drillManager.sectionLayers)
 
+            self.fillSectionList()

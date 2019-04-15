@@ -216,7 +216,8 @@ class Section:
 
     def createSectionLayer(self, baseLayer, sectionName):
         #Create a new memory layer
-        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", baseLayer.name() + "_" + sectionName, "memory")
+        secName = "S_" + sectionName + "_" + baseLayer.name()[baseLayer.name().rfind("_"):]
+        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", secName, "memory")
         layer.setCrs(baseLayer.sourceCrs())
         atts = []
         # Loop through the list of desired field names that the user checked
