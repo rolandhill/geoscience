@@ -16,12 +16,12 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
-    def __init__(self, manager, parent=None):
+    def __init__(self, drillManager, parent=None):
         """Constructor."""
         super(SectionManagerDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
-        self.drillManager = manager
+        self.drillManager = drillManager
         self.sectionManager = self.drillManager.sectionManager
         
         # Set up the user interface from Designer.
@@ -35,6 +35,9 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         
         self.pbWestEast.pressed.connect(self.onWestEastPressed)
         self.pbSouthNorth.pressed.connect(self.onSouthNorthPressed)
+        self.pbDeleteSection.pressed.connect(self.onDeletePressed)
+        self.pbShowSection.pressed.connect(self.onShowPressed)
+        self.pbNewWindow.pressed.connect(self.onNewWindowPressed)
 
     def fillSectionList(self)        :
         self.listSection.clear()
@@ -42,20 +45,20 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         for s in self.sectionManager.sectionReg:
             item = QtWidgets.QListWidgetItem()
             item.setText(s.name)
-#            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-#            item.setCheckState(QtCore.Qt.Checked)
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Unchecked)
             item.setData(QtCore.Qt.UserRole, s)
             self.listSection.addItem(item)
         
     def onWestEastPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
-        dlg.show()
+#        dlg.show()
         result = dlg.exec_()
         if result:
             self.drillManager.sectionNorth = float(dlg.leCenter.text())
             self.drillManager.sectionLimitWest = float(dlg.leLimitMin.text())
             self.drillManager.sectionLimitEast = float(dlg.leLimitMax.text())
-            self.drillManager.sectionName = dlg.leName.text()
+            self.drillManager.sectionWEName = dlg.leName.text()
             self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             
             # Save the name of each checked attribute field in a list
@@ -69,7 +72,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         dlg.close()
         
         if result:
-            self.sectionManager.createSection(self.drillManager.sectionName, \
+            self.sectionManager.createSection(self.drillManager.sectionWEName, \
               self.drillManager.sectionLimitWest, self.drillManager.sectionNorth, \
               self.drillManager.sectionLimitEast, self.drillManager.sectionNorth, \
               self.drillManager.sectionWidth, \
@@ -79,13 +82,13 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         
     def onSouthNorthPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
-        dlg.show()
+#        dlg.show()
         result = dlg.exec_()
         if result:
             self.drillManager.sectionEast = float(dlg.leCenter.text())
             self.drillManager.sectionLimitSouth = float(dlg.leLimitMin.text())
             self.drillManager.sectionLimitNorth = float(dlg.leLimitMax.text())
-            self.drillManager.sectionName = dlg.leName.text()
+            self.drillManager.sectionSNName = dlg.leName.text()
             self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             
             # Save the name of each checked attribute field in a list
@@ -99,10 +102,76 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         dlg.close()
         
         if result:
-            self.sectionManager.createSection(self.drillManager.sectionName, \
+            self.sectionManager.createSection(self.drillManager.sectionSNName, \
               self.drillManager.sectionEast, self.drillManager.sectionLimitSouth, \
               self.drillManager.sectionEast, self.drillManager.sectionLimitNorth, \
               self.drillManager.sectionWidth, \
               self.drillManager.sectionLayers)
 
             self.fillSectionList()
+
+    def onDeletePressed(self):
+        sList = self.checkedSections()
+        if len(sList) == 0:
+            cs = self.currentSection()
+            if cs is not None:
+                sList.append( cs )
+        for s in sList:
+            if s.window != None:
+                s.window.close()
+                s.window = None
+            
+            if s.group != None:
+                s.group.removeAllChildren()
+                self.drillManager.sectionManager.sectionGroup().removeChildNode(s.group)
+            
+            self.removeSections(sList)
+
+    def onShowPressed(self):
+        cs = self.currentSection()
+        if cs != None:
+            for s in self.sectionManager.sectionReg:
+                if s == cs:
+                    s.group.setItemVisibilityChecked( True )
+                else:
+                    s.group.setItemVisibilityChecked( False )
+                    
+            extent = self.drillManager.sectionManager.groupExtent(cs.group)
+            extent.grow(10)
+            iface.mapCanvas().setExtent(extent)
+        
+    def onNewWindowPressed(self):
+        cs = self.currentSection()
+        if cs is not None:
+            cs.createWindow()
+        
+    def removeSections(self, sectionList):
+        for s in sectionList:
+            self.removeSection(s, update = False)
+            self.fillSectionList()
+        
+    def removeSection(self, section, update = True):
+        try:
+            self.sectionManager.sectionReg.remove(section)
+        except:
+            pass
+        
+        if update:
+            self.fillSectionList()
+        
+    def currentSection(self):
+        cs = None
+        item = self.listSection.currentItem()
+        if item is not None:
+            cs = item.data(QtCore.Qt.UserRole)
+        
+        return cs
+        
+    def checkedSections(self):
+        sList = []
+        for index in range(self.listSection.count()):
+            if self.listSection.item(index).checkState():
+                s = self.listSection.item(index).data(QtCore.Qt.UserRole)
+                sList.append(s)
+        return sList
+    

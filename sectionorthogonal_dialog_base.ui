@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>558</width>
-    <height>504</height>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -249,7 +249,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QCheckBox" name="checkSelectAll">
+       <widget class="QCheckBox" name="checkSelectAllLayers">
         <property name="text">
          <string>Select All/None</string>
         </property>
@@ -261,6 +261,31 @@
          <enum>QAbstractItemView::MultiSelection</enum>
         </property>
        </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Elevation Raster</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QCheckBox" name="checkSelectAllElevation">
+        <property name="text">
+         <string>Select All/None</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QListWidget" name="listElevation"/>
       </item>
      </layout>
     </widget>

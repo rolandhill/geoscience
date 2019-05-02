@@ -85,7 +85,7 @@ class DrillManager:
     # Setup and run the Drill Setup dialog        
     def onDesurveyHole(self):
         dlg = DesurveyHoleDialog(self)
-        dlg.show()
+#        dlg.show()
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
@@ -121,7 +121,7 @@ class DrillManager:
     # Setup and run the Drill Trace dialog
     def onDownholeData(self):
         dlg = DownholeDataDialog(self)
-        dlg.show()
+#        dlg.show()
         result = dlg.exec_()
         if result:
             self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
@@ -150,17 +150,23 @@ class DrillManager:
 #
     # Create a section
     def onDrillSectionManager(self):
-        try:
-            self.sectionManagerDlg.deiconfy()
-        except:
-#        if self.sectionManagerDlg == None:
+        if self.sectionManagerDlg is None:
             self.sectionManagerDlg = SectionManagerDialog(self)
-            self.sectionManagerDlg.show()
-            self.sectionManagerDlg.exec_()
-            self.sectionManagerDlg.close()
-            self.sectionManagerDlg = None
-#        else:
+
+        self.sectionManagerDlg.show()
+#        self.sectionManagerDlg.deiconfy()
+        self.sectionManagerDlg.activateWindow()
+
+#        try:
+#            self.sectionManagerDlg.deiconfy()
+#        except:
+##        if self.sectionManagerDlg == None:
 #            self.sectionManagerDlg.show()
+##            self.sectionManagerDlg.exec_()
+#            self.sectionManagerDlg.close()
+#            self.sectionManagerDlg = None
+##        else:
+##            self.sectionManagerDlg.show()
             
 
     # Create the down hole traces    
@@ -373,7 +379,10 @@ class DrillManager:
         floatConvError = False
         nullDataError = False
 
-# Loop through the collar layer and build list of collars
+        # Create a new Collar 3D layer to hold 3D points. This will be used for section creation.
+        collar3D = self.createCollarLayer()
+        
+        # Loop through the collar layer and build list of collars
         for index, feature in enumerate(self.collarLayer.getFeatures()):
             # Update progress bar
             pd.setValue(index)
@@ -403,6 +412,18 @@ class DrillManager:
                 if c.dip==NULL:
                     c.dip = -90 if self.downDipNegative else 90
             arrCollar.append(c)
+            
+            #Create a new 3D point feature and copy the attributes
+            f = QgsFeature()
+#            p = QPointF(c.east, c.north, c.elev)
+            f.setGeometry(QgsGeometry(QgsPoint(c.east, c.north, c.elev, wkbType = QgsWkbTypes.PointZ)))
+            # Add in the field attributes
+            f.setAttributes(attrs)
+            # Add the feature to the layer
+            collar3D.startEditing()
+            collar3D.addFeature(feature)
+            collar3D.commitChanges()
+            
             
         if (floatConvError):
             iface.messageBar().pushMessage("Warning", "Some 'East', 'North', 'Collar' or 'Depth' values are not numbers", level=Qgis.Warning)
@@ -625,30 +646,64 @@ class DrillManager:
             self.desurveyLayer.addFeature(feature)
             self.desurveyLayer.commitChanges()
 
-        fileName = self.createDesurveyFilename()
+        self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.sourceCrs())
+        self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.sourceCrs())
+#        QgsProject.instance().addMapLayer(collar3D)
 
+
+    def writeVectorLayerFromMemory(self, memLayer, fileBaseName, crs):
         # Calculate the filename for the on disk file
-        path="%s.gpkg" % (fileName)
+        path="%s.gpkg" % (fileBaseName)
         
         # work out a label for the layer from the file name
-        label = os.path.splitext(os.path.basename(fileName))[0]
+        label = os.path.splitext(os.path.basename(fileBaseName))[0]
         
         # Remove trace layer from project if it already exists
         layer = getLayerByName(label)
         QgsProject.instance().removeMapLayer(layer)
         
         #Save memory layer to GeoPackage
-        error = QgsVectorFileWriter.writeAsVectorFormat(self.desurveyLayer, fileName, "CP1250", self.collarLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
+        error = QgsVectorFileWriter.writeAsVectorFormat(memLayer, fileBaseName, "CP1250", crs, 
+                layerOptions=['OVERWRITE=YES'], overrideGeometryType=memLayer.wkbType())
 
         # Load the layer we just saved so the user can manipulate a real layer
-        self.desurveyLayer = QgsVectorLayer(path, label)
-        QgsProject.instance().addMapLayer(self.desurveyLayer)
-
+        fileLayer = QgsVectorLayer(path, label)
+        QgsProject.instance().addMapLayer(fileLayer)
+        return fileLayer
+        
+    def createCollarFilename(self):
+        # Build the new filename
+        base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
+        fileName = uriToFile(base + "_3D")
+        return fileName
+    
     def createDesurveyFilename(self):
         # Build the new filename
         base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
         fileName = uriToFile(base + "_Desurvey")
         return fileName
+    
+    def createCollarLayer(self):
+        #Find CRS of collar layer
+        crs = self.collarLayer.sourceCrs()
+        
+        #Create a new memory layer
+        layer = QgsVectorLayer("PointZ?crs=EPSG:4326", "geoscience_Temp", "memory")
+        layer.setCrs(crs)
+
+        atts = []
+        # Loop through the list of desired field names that the user checked
+        for field in self.collarLayer.fields():
+            atts.append(field)
+        
+        # Add all the attributes to the new layer
+        dp = layer.dataProvider()
+        dp.addAttributes(atts)
+        
+        # Tell the vector layer to fetch changes from the provider
+        layer.updateFields() 
+        return layer
+#        self.desurveyLayer = layer
     
     def createDesurveyLayer(self):
         #Find CRS of collar layer
@@ -716,6 +771,8 @@ class DrillManager:
         self.dataTo = readProjectField("DataTo")
         self.dataSuffix = readProjectField("DataSuffix")
 #       Section Data
+        self.sectionWEName = readProjectText("SectionWEName", '')
+        self.sectionSNName = readProjectText("SectionSNName", '')
         self.sectionName = readProjectText("SectionName", '')
         self.sectionWidth = readProjectNum("SectionWidth", 20)
         self.sectionStep = readProjectNum("SectionStep", 50)
@@ -754,6 +811,8 @@ class DrillManager:
         writeProjectField("DataTo", self.dataTo)
         writeProjectField("DataSuffix", self.dataSuffix)
 #       Section Data
+        writeProjectData("SectionWEName", self.sectionWEName)
+        writeProjectData("SectionSNName", self.sectionSNName)
         writeProjectData("SectionName", self.sectionName)
         writeProjectData("SectionWidth", self.sectionWidth)
         writeProjectData("SectionStep", self.sectionStep)

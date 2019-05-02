@@ -30,12 +30,12 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
 
         self.leSectionWidth.setText(str(self.drillManager.sectionWidth))
-        self.leName.setText(self.drillManager.sectionName)
         
         if dirWestEast == True:
             self.leCenter.setText(str(self.drillManager.sectionNorth))
             self.leLimitMin.setText(str(self.drillManager.sectionLimitWest))
             self.leLimitMax.setText(str(self.drillManager.sectionLimitEast))
+            self.leName.setText(self.drillManager.sectionWEName)
         else:
             self.setWindowTitle("Create South-North section")
             self.lCenter.setText("East")
@@ -45,6 +45,7 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
             self.leCenter.setText(str(self.drillManager.sectionEast))
             self.leLimitMin.setText(str(self.drillManager.sectionLimitSouth))
             self.leLimitMax.setText(str(self.drillManager.sectionLimitNorth))
+            self.leName.setText(self.drillManager.sectionSNName)
     
         self.leCenter.setValidator(QDoubleValidator())
         self.leLimitMin.setValidator(QDoubleValidator())
@@ -52,28 +53,37 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.leSectionWidth.setValidator(QDoubleValidator())
 
         self.listLayers.clear()
+        listLayerZ = []
         layers = QgsProject.instance().mapLayers()
         for name, layer in layers.items():
-            if layer.name()[:2] != "S_":
-                if layer.name().find("_Desurvey") > -1 or layer.name().find("_Downhole_") > -1:
-                    item = QtWidgets.QListWidgetItem()
-                    item.setText(layer.name())
-                    item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                    item.setCheckState(QtCore.Qt.Checked)
-                    item.setData(QtCore.Qt.UserRole, layer)
-                    self.listLayers.addItem(item)
+            if layer.type() == QgsMapLayer.VectorLayer and layer.name()[:2] != "S_":
+                if QgsWkbTypes.coordDimensions(layer.wkbType()) >= 3:
+                    listLayerZ.append(layer)
+        
+        for layer in listLayerZ:
+            self.addLayerToListWidget(layer, self.listLayers)
+        
+        self.listElevation.clear()
         
         self.leCenter.textChanged.connect(self.onCenterTextChanged)
         
         self.nameManual = False
 
+    def addLayerToListWidget(self, layer, listWidget):
+        item = QtWidgets.QListWidgetItem()
+        item.setText(layer.name())
+        item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+        item.setCheckState(QtCore.Qt.Checked)
+        item.setData(QtCore.Qt.UserRole, layer)
+        self.listLayers.addItem(item)
+        
     def onCenterTextChanged(self, str):
         if not self.nameManual:
 #            str = self.leCenter.text()
             if self.dirWestEast:
-                str = str + "N"
+                str = str.strip() + "N"
             else:
-                str = str + "E"
+                str = str.strip() + "E"
             self.leName.setText(str)
             
             

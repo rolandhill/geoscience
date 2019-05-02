@@ -13,6 +13,10 @@ import numpy as np
 from .SectionWindow import *
 from .Utils import *
 
+class layerMap:
+    original = QgsVectorLayer()
+    section = QgsVectorLayer()
+    
 def verticalPlane(startx, starty, endx, endy):
     p1 = np.array([startx, starty, 0.0])
     p2 = np.array([endx, endy, 0.0])
@@ -88,9 +92,14 @@ class Section:
         self.plane = verticalPlane(startX, startY, endX, endY)
 
         self.sectionLayers = self.sectionThroughLayers(self.sourceLayers)
+        self.window = None
         
+    def createWindow(self):
         self.window = SectionWindow(self.sectionLayers)
         self.window.show()
+#        extent = self.groupExtent(s.group)
+#        extent.grow(10)
+#        s.window.canvas.setExtent(extent)
         
     def sectionThroughLayers(self, layers):
         #Create new layers for the section based on the requested plan layers
@@ -184,9 +193,17 @@ class Section:
                         qPointList.append(QgsPoint(v0[0], v0[2], v0[1]))
                     
                 # Set the geometry for the new downhole feature
-                if len(pointList) > 1:
-                    feature.setGeometry(QgsGeometry.fromPolyline(qPointList))
-    
+                fvalid = False
+                if QgsWkbTypes.flatType(sectionLayer.wkbType()) == QgsWkbTypes.Point:
+                    if len(pointList) > 0:
+                        fvalid = True
+                        feature.setGeometry(QgsGeometry(QgsPoint(qPointList[0].x(), qPointList[0].y(), qPointList[0].z())))
+                else:
+                    if len(pointList) > 1:
+                        fvalid = True
+                        feature.setGeometry(QgsGeometry.fromPolyline(qPointList))
+
+                if fvalid:                        
                     # Set the attributes for the new feature
                     feature.setAttributes(lf.attributes())
             
@@ -206,6 +223,8 @@ class Section:
                     sectionLayer.styleManager().removeStyle("temp")
             
             sectionLayer.styleManager().setCurrentStyle(currentStyleName)
+            
+            sectionLayer.updateExtents(True)
     
             sectionLayers.append(sectionLayer)
 
@@ -214,10 +233,11 @@ class Section:
             
         return sectionLayers
 
+    
     def createSectionLayer(self, baseLayer, sectionName):
         #Create a new memory layer
         secName = "S_" + sectionName + "_" + baseLayer.name()[baseLayer.name().rfind("_"):]
-        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", secName, "memory")
+        layer = QgsVectorLayer("PointZ?crs=EPSG:4326" if QgsWkbTypes.flatType(baseLayer.wkbType()) == QgsWkbTypes.Point else "LineStringZ?crs=EPSG:4326", secName, "memory")
         layer.setCrs(baseLayer.sourceCrs())
         atts = []
         # Loop through the list of desired field names that the user checked
@@ -244,9 +264,24 @@ class SectionManager:
         
         s = Section(name, startX, startY, endX, endY, width, layerList)
         sectionGroup.addChildNode(s.group)
+        
+#        extent = self.groupExtent(s.group)
+#        extent.grow(10)
+#        s.window.canvas.setExtent(extent)
 
         self.sectionReg.append(s)
 
+    def groupExtent(self, group):
+        tLayers = group.findLayers()
+        extent = QgsRectangle()
+        for tl in tLayers:
+            l = tl.layer()
+            if l is not None:
+                rect = l.extent()
+                if rect is not None:
+                    extent.combineExtentWith(rect)
+        return extent
+                    
     def sectionGroup(self):
         group = None
         root = QgsProject.instance().layerTreeRoot()
