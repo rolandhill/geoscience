@@ -154,20 +154,7 @@ class DrillManager:
             self.sectionManagerDlg = SectionManagerDialog(self)
 
         self.sectionManagerDlg.show()
-#        self.sectionManagerDlg.deiconfy()
         self.sectionManagerDlg.activateWindow()
-
-#        try:
-#            self.sectionManagerDlg.deiconfy()
-#        except:
-##        if self.sectionManagerDlg == None:
-#            self.sectionManagerDlg.show()
-##            self.sectionManagerDlg.exec_()
-#            self.sectionManagerDlg.close()
-#            self.sectionManagerDlg = None
-##        else:
-##            self.sectionManagerDlg.show()
-            
 
     # Create the down hole traces    
     def createDownholeData(self):

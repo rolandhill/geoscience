@@ -10,6 +10,7 @@ from qgis.gui import *
 
 from .sectionorthogonal_dialog import SectionOrthogonalDialog
 from .dialogBase import dialogBase
+from .SectionMapTool import SectionMapTool
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'sectionmanager_dialog_base.ui'))
@@ -23,6 +24,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # Keep a reference to the DrillManager
         self.drillManager = drillManager
         self.sectionManager = self.drillManager.sectionManager
+        self.sectionMapTool = SectionMapTool(iface.mapCanvas())
         
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -32,7 +34,8 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.setupUi(self)
         
         self.fillSectionList()
-        
+
+        self.pbMapCanvas.pressed.connect(self.onMapCanvasPressed)        
         self.pbWestEast.pressed.connect(self.onWestEastPressed)
         self.pbSouthNorth.pressed.connect(self.onSouthNorthPressed)
         self.pbDeleteSection.pressed.connect(self.onDeletePressed)
@@ -50,6 +53,10 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             item.setData(QtCore.Qt.UserRole, s)
             self.listSection.addItem(item)
         
+    def onMapCanvasPressed(self):
+        iface.mapCanvas().activateWindow()
+        iface.mapCanvas().setMapTool( self.sectionMapTool ) 
+    
     def onWestEastPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
 #        dlg.show()

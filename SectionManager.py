@@ -265,10 +265,6 @@ class SectionManager:
         s = Section(name, startX, startY, endX, endY, width, layerList)
         sectionGroup.addChildNode(s.group)
         
-#        extent = self.groupExtent(s.group)
-#        extent.grow(10)
-#        s.window.canvas.setExtent(extent)
-
         self.sectionReg.append(s)
 
     def groupExtent(self, group):
