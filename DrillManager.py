@@ -57,7 +57,7 @@ class Surveys:
 class DrillManager:
     def __init__(self):
         
-        self.sectionManager = SectionManager()
+        self.sectionManager = SectionManager(self)
         self.sectionManagerDlg = None
         
         # Project data is normally read in response to a readProject signal.
@@ -769,7 +769,9 @@ class DrillManager:
         self.sectionLimitEast = readProjectNum("SectionLimitEast", 1)
         self.sectionLimitSouth = readProjectNum("SectionLimitSouth", 0)
         self.sectionLimitNorth = readProjectNum("SectionLimitNorth", 1)
-        
+
+        self.sectionManager.readProjectData()        
+
         # Collar layer might have changed, so re-open the log file
         self.openLogFile()
 
@@ -797,7 +799,7 @@ class DrillManager:
         writeProjectField("DataFrom", self.dataFrom)
         writeProjectField("DataTo", self.dataTo)
         writeProjectField("DataSuffix", self.dataSuffix)
-#       Section Data
+#       Section Dialog Data
         writeProjectData("SectionWEName", self.sectionWEName)
         writeProjectData("SectionSNName", self.sectionSNName)
         writeProjectData("SectionName", self.sectionName)
@@ -809,3 +811,7 @@ class DrillManager:
         writeProjectData("SectionLimitEast", self.sectionLimitEast)
         writeProjectData("SectionLimitSouth", self.sectionLimitSouth)
         writeProjectData("SectionLimitNorth", self.sectionLimitNorth)
+
+#       Sections
+        self.sectionManager.writeProjectData()
+            

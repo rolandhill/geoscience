@@ -91,8 +91,10 @@ class Section:
         # Find equation of the plane and the normal to the plane
         self.plane = verticalPlane(startX, startY, endX, endY)
 
-        self.sectionLayers = self.sectionThroughLayers(self.sourceLayers)
         self.window = None
+        
+    def create(self):
+        self.sectionLayers = self.sectionThroughLayers(self.sourceLayers)
         
     def createWindow(self):
         self.window = SectionWindow(self.sectionLayers)
@@ -253,10 +255,32 @@ class Section:
 
         return layer
 
+    def writeProjectData(self, index):
+        key = 'S[{:2d}]_Name'.format(index)
+        writeProjectData(key, name)
+        key = 'S[{:2d}]_StartX'.format(index)
+        writeProjectData(key, startX)
+        key = 'S[{:2d}]_StartY'.format(index)
+        writeProjectData(key, startY)            
+        key = 'S[{:2d}]_EndX'.format(index)
+        writeProjectData(key, endX)            
+        key = 'S[{:2d}]_EndY'.format(index)
+        writeProjectData(key, endY)            
+        key = 'S[{:2d}]_Width'.format(index)
+        writeProjectData(key, width)
+
+        key = 'S[{:2d}]_SourceLayers'.format(index)
+        writeProjectData(key, len(self.sourceLayers))
+        for li, layer in enumerate(self.sourceLayers):
+            key = 'S[{:2d}]_SourceLayer[{:2d}]'.format(index, li)
+            writeProjectData(key, layer.name())
+            
+        
     
 # The SectionManager class manipulates and keeps track of all the sections
 class SectionManager:
-    def __init__(self):
+    def __init__(self, drillManager):
+        self.drillManager = drillManager
         self.sectionReg = []
         
     def createSection(self, name, startX, startY, endX, endY, width, layerList):
@@ -291,4 +315,42 @@ class SectionManager:
             
         return group
     
+    def readProjectData(self):
+        numSections = readProjectText("Sections", 0)
+        for index in range(numSections):
+            key = 'S[{:2d}]_Name'.format(index)
+            name = readProjectText(key, "")
+            key = 'S[{:2d}]_StartX'.format(index)
+            startx = readProjectNum(key, 0)
+            key = 'S[{:2d}]_StartY'.format(index)
+            starty = readProjectNum(key, 0)            
+            key = 'S[{:2d}]_EndX'.format(index)
+            endx = readProjectNum(key, 100)            
+            key = 'S[{:2d}]_EndY'.format(index)
+            endy = readProjectNum(key, 0)            
+            key = 'S[{:2d}]_Width'.format(index)
+            width = readProjectNum(key, 20)
+
+            key = 'S[{:2d}]_SourceLayers'.format(index)
+            numLayers = readProjectNum(key, 0)
+            layerList = []
+            for li in range(numLayers):
+                key = 'S[{:2d}]_SourceLayer[{:2d}]'.format(index, li)
+                layerName = readProjectText(key, "")
+                if layerName != "":
+                    layer = getLayerByName(layerName)
+                    if layer != None:
+                        layerList.append()
+
+            s = Section(name, startx, starty, endx, endy, width, layerList)
+            
+            self.sectionReg.append(s)
+            
+            if self.drillManager.sectionManagerDlg != None:
+                self.drillManager.sectionManagerDlg.fillSectionList()
     
+    def writeProjectData(self):
+        writeProjectData("Sections", len(self.sectionReg))
+        for index, s in enumerate(self.sectionReg):
+            self.sectionReg[index].writeProjectData(index)
+        
