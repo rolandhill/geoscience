@@ -276,23 +276,23 @@ class Section:
         return layer
 
     def writeProjectData(self, index):
-        key = 'S{:02d}Name'.format(index)
+        key = 'S{:02d}_Name'.format(index)
         writeProjectData(key, self.name)
-        key = 'S{:02d}StartX'.format(index)
+        key = 'S{:02d}_StartX'.format(index)
         writeProjectData(key, self.startX)
-        key = 'S{:02d}StartY'.format(index)
+        key = 'S{:02d}_StartY'.format(index)
         writeProjectData(key, self.startY)            
-        key = 'S{:02d}EndX'.format(index)
+        key = 'S{:02d}_EndX'.format(index)
         writeProjectData(key, self.endX)            
-        key = 'S{:02d}EndY'.format(index)
+        key = 'S{:02d}_EndY'.format(index)
         writeProjectData(key, self.endY)            
-        key = 'S{:02d}Width'.format(index)
+        key = 'S{:02d}_Width'.format(index)
         writeProjectData(key, self.width)
 
-        key = 'S{:02d}SourceLayers'.format(index)
+        key = 'S{:02d}_SourceLayers'.format(index)
         writeProjectData(key, len(self.sourceLayers))
         for li, layer in enumerate(self.sourceLayers):
-            key = 'S{:02d}SourceLayer{:02d}'.format(index, li)
+            key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
             writeProjectData(key, layer.name())
             
         
@@ -399,25 +399,25 @@ class SectionManager:
         
         numSections = readProjectNum("Sections", 0)
         for index in range(numSections):
-            key = 'S{:02d}Name'.format(index)
+            key = 'S{:02d}_Name'.format(index)
 #            iface.messageBar().pushMessage("Debug", key, level=Qgis.Info)
             name = readProjectText(key, "")
-            key = 'S{:02d}StartX'.format(index)
+            key = 'S{:02d}_StartX'.format(index)
             startx = readProjectNum(key, 0)
-            key = 'S{:02d}StartY'.format(index)
+            key = 'S{:02d}_StartY'.format(index)
             starty = readProjectNum(key, 0)            
-            key = 'S{:02d}EndX'.format(index)
+            key = 'S{:02d}_EndX'.format(index)
             endx = readProjectNum(key, 100)            
-            key = 'S{:02d}EndY'.format(index)
+            key = 'S{:02d}_EndY'.format(index)
             endy = readProjectNum(key, 0)            
-            key = 'S{:02d}Width'.format(index)
+            key = 'S{:02d}_Width'.format(index)
             width = readProjectNum(key, 20)
 
-            key = 'S{:02d}SourceLayers'.format(index)
+            key = 'S{:02d}_SourceLayers'.format(index)
             numLayers = readProjectNum(key, 0)
             layerList = []
             for li in range(numLayers):
-                key = 'S{:02d}SourceLayer{:02d}'.format(index, li)
+                key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
                 layerName = readProjectText(key, "")
                 if layerName != "":
                     layer = getLayerByName(layerName)
@@ -437,24 +437,24 @@ class SectionManager:
         if numSections > len(self.sectionReg):
             for index in range( len(self.sectionReg), numSections):
                 # We first remove the layer list
-                key = 'S{:02d}SourceLayers'.format(index)
+                key = 'S{:02d}_SourceLayers'.format(index)
                 numLayers = readProjectNum(key, 0)
                 removeProjectEntry(key)
                 for li in range(numLayers):
-                    key = 'S{:02d}SourceLayer{:02d}'.format(index, li)
+                    key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
                     removeProjectEntry(key)
                 
-                key = 'S{:02d}Name'.format(index)
+                key = 'S{:02d}_Name'.format(index)
                 removeProjectEntry(key)
-                key = 'S{:02d}StartX'.format(index)
+                key = 'S{:02d}_StartX'.format(index)
                 removeProjectEntry(key)
-                key = 'S{:02d}StartY'.format(index)
+                key = 'S{:02d}_StartY'.format(index)
                 removeProjectEntry(key)
-                key = 'S{:02d}EndX'.format(index)
+                key = 'S{:02d}_EndX'.format(index)
                 removeProjectEntry(key)
-                key = 'S{:02d}EndY'.format(index)
+                key = 'S{:02d}_EndY'.format(index)
                 removeProjectEntry(key)
-                key = 'S{:02d}Width'.format(index)
+                key = 'S{:02d}_Width'.format(index)
                 removeProjectEntry(key)
     
         
