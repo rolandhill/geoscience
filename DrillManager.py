@@ -155,6 +155,7 @@ class DrillManager:
 
         self.sectionManagerDlg.show()
         self.sectionManagerDlg.activateWindow()
+        self.sectionManagerDlg.fillSectionList()
 
     # Create the down hole traces    
     def createDownholeData(self):

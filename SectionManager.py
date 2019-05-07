@@ -75,13 +75,16 @@ def projectPointToPlane(plane, pt):
 
 class Section:
     def __init__(self, name, startX, startY, endX, endY, width, layerList):
+#        iface.messageBar().pushMessage("Debug", "In Section Constructor", level=Qgis.Warning)
         self.name = name
         self.startX = startX
         self.startY = startY
         self.endX = endX
         self.endY = endY
         self.width = width
+        self.needToGenerate = True
         self.sourceLayers = layerList
+        self.sectionLayers = []
         
         self.westEast = startY == endY
         self.southNorth = startX == endX
@@ -108,8 +111,13 @@ class Section:
         sectionLayers = []
         
         for layer in layers:
-            #Create a new layer
-            sectionLayer = self.createSectionLayer(layer, self.name)
+            #Try and match the layer to be created with one already under the section.group, else create a new layer
+            newName = self.createSectionLayerName(layer, self.name)
+            sectionLayer = self.matchLayer(newName)
+            usingNewLayer = False
+            if sectionLayer == None:
+                sectionLayer = self.createSectionLayer(layer, newName)
+                usingNewLayer = True
 
             #Loop through plan layer
             for lf in layer.getFeatures():
@@ -230,16 +238,28 @@ class Section:
     
             sectionLayers.append(sectionLayer)
 
-            QgsProject.instance().addMapLayer(sectionLayer, False)
-            self.group.addLayer(sectionLayer)
+            if usingNewLayer:
+                QgsProject.instance().addMapLayer(sectionLayer, False)
+                self.group.addLayer(sectionLayer)
             
         return sectionLayers
 
     
-    def createSectionLayer(self, baseLayer, sectionName):
+    def matchLayer(self, name):
+        layer = None
+        for child in self.group.children():
+            if child.name() == name:
+                layer = child.layer()
+                break
+        return layer
+
+    def createSectionLayerName(self, baseLayer, sectionName):
+        name = "S_" + sectionName + "_" + baseLayer.name()[baseLayer.name().rfind("_"):]
+        return name
+
+    def createSectionLayer(self, baseLayer, name):
         #Create a new memory layer
-        secName = "S_" + sectionName + "_" + baseLayer.name()[baseLayer.name().rfind("_"):]
-        layer = QgsVectorLayer("PointZ?crs=EPSG:4326" if QgsWkbTypes.flatType(baseLayer.wkbType()) == QgsWkbTypes.Point else "LineStringZ?crs=EPSG:4326", secName, "memory")
+        layer = QgsVectorLayer("PointZ?crs=EPSG:4326" if QgsWkbTypes.flatType(baseLayer.wkbType()) == QgsWkbTypes.Point else "LineStringZ?crs=EPSG:4326", name, "memory")
         layer.setCrs(baseLayer.sourceCrs())
         atts = []
         # Loop through the list of desired field names that the user checked
@@ -256,23 +276,23 @@ class Section:
         return layer
 
     def writeProjectData(self, index):
-        key = 'S[{:2d}]_Name'.format(index)
-        writeProjectData(key, name)
-        key = 'S[{:2d}]_StartX'.format(index)
-        writeProjectData(key, startX)
-        key = 'S[{:2d}]_StartY'.format(index)
-        writeProjectData(key, startY)            
-        key = 'S[{:2d}]_EndX'.format(index)
-        writeProjectData(key, endX)            
-        key = 'S[{:2d}]_EndY'.format(index)
-        writeProjectData(key, endY)            
-        key = 'S[{:2d}]_Width'.format(index)
-        writeProjectData(key, width)
+        key = 'S{:02d}Name'.format(index)
+        writeProjectData(key, self.name)
+        key = 'S{:02d}StartX'.format(index)
+        writeProjectData(key, self.startX)
+        key = 'S{:02d}StartY'.format(index)
+        writeProjectData(key, self.startY)            
+        key = 'S{:02d}EndX'.format(index)
+        writeProjectData(key, self.endX)            
+        key = 'S{:02d}EndY'.format(index)
+        writeProjectData(key, self.endY)            
+        key = 'S{:02d}Width'.format(index)
+        writeProjectData(key, self.width)
 
-        key = 'S[{:2d}]_SourceLayers'.format(index)
+        key = 'S{:02d}SourceLayers'.format(index)
         writeProjectData(key, len(self.sourceLayers))
         for li, layer in enumerate(self.sourceLayers):
-            key = 'S[{:2d}]_SourceLayer[{:2d}]'.format(index, li)
+            key = 'S{:02d}SourceLayer{:02d}'.format(index, li)
             writeProjectData(key, layer.name())
             
         
@@ -283,13 +303,34 @@ class SectionManager:
         self.drillManager = drillManager
         self.sectionReg = []
         
-    def createSection(self, name, startX, startY, endX, endY, width, layerList):
+    def createSection(self, name, startX, startY, endX, endY, width, layerList, writeProjectData = True):
+#        iface.messageBar().pushMessage("Debug", "In CreateSection", level=Qgis.Warning)
         sectionGroup = self.sectionGroup()
         
         s = Section(name, startX, startY, endX, endY, width, layerList)
-        sectionGroup.addChildNode(s.group)
+        # Re-assign the layerTreeGroup if a matching one already exists
+        group = self.matchGroup(s)
+        if group != None:
+#            iface.messageBar().pushMessage("Debug", group.name(), level=Qgis.Warning)
+            s.group = group
+        else:
+            sectionGroup.addChildNode(s.group)
         
         self.sectionReg.append(s)
+
+        if writeProjectData:
+            self.drillManager.writeProjectData()
+        
+        return s
+
+    def matchGroup(self, section):
+        group = None
+        sgroup = self.sectionGroup()
+        for child in sgroup.children():
+            if isinstance(child, QgsLayerTreeGroup) and child.name() == section.name:
+                group = child
+                break
+        return group
 
     def groupExtent(self, group):
         tLayers = group.findLayers()
@@ -314,42 +355,112 @@ class SectionManager:
             group = root.insertGroup(0, "Sections")
             
         return group
-    
+
+    def showSection(self, section):
+        # Generate the section data if it hasn't already been done
+        if len(section.sectionLayers) == 0:
+            section.create()
+            
+        for s in self.sectionReg:
+            if s == section:
+                s.group.setItemVisibilityChecked( True )
+            else:
+                s.group.setItemVisibilityChecked( False )
+                
+        extent = self.groupExtent(section.group)
+        if not extent.isEmpty():
+            extent.grow(10)
+            iface.mapCanvas().setExtent(extent)
+
+    def deleteSection(self, s):
+        if s.window != None:
+            s.window.close()
+            s.window = None
+        
+        if s.group != None:
+            s.group.removeAllChildren()
+            self.sectionGroup().removeChildNode(s.group)
+        
+            self.removeSection(s)
+        
+    def removeSections(self, sectionList):
+        for s in sectionList:
+            self.removeSection(s)
+        
+    def removeSection(self, section):
+        try:
+            self.sectionManager.sectionReg.remove(section)
+        except:
+            pass
+        
     def readProjectData(self):
-        numSections = readProjectText("Sections", 0)
+        self.sectionReg.clear()
+#        self.sectionGroup().removeAllChildren()
+        
+        numSections = readProjectNum("Sections", 0)
         for index in range(numSections):
-            key = 'S[{:2d}]_Name'.format(index)
+            key = 'S{:02d}Name'.format(index)
+#            iface.messageBar().pushMessage("Debug", key, level=Qgis.Info)
             name = readProjectText(key, "")
-            key = 'S[{:2d}]_StartX'.format(index)
+            key = 'S{:02d}StartX'.format(index)
             startx = readProjectNum(key, 0)
-            key = 'S[{:2d}]_StartY'.format(index)
+            key = 'S{:02d}StartY'.format(index)
             starty = readProjectNum(key, 0)            
-            key = 'S[{:2d}]_EndX'.format(index)
+            key = 'S{:02d}EndX'.format(index)
             endx = readProjectNum(key, 100)            
-            key = 'S[{:2d}]_EndY'.format(index)
+            key = 'S{:02d}EndY'.format(index)
             endy = readProjectNum(key, 0)            
-            key = 'S[{:2d}]_Width'.format(index)
+            key = 'S{:02d}Width'.format(index)
             width = readProjectNum(key, 20)
 
-            key = 'S[{:2d}]_SourceLayers'.format(index)
+            key = 'S{:02d}SourceLayers'.format(index)
             numLayers = readProjectNum(key, 0)
             layerList = []
             for li in range(numLayers):
-                key = 'S[{:2d}]_SourceLayer[{:2d}]'.format(index, li)
+                key = 'S{:02d}SourceLayer{:02d}'.format(index, li)
                 layerName = readProjectText(key, "")
                 if layerName != "":
                     layer = getLayerByName(layerName)
                     if layer != None:
-                        layerList.append()
+                        layerList.append(layer)
 
-            s = Section(name, startx, starty, endx, endy, width, layerList)
+#            msg = 'Creating Section: {:s}'.format(name)
+#            iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
+            self.createSection(name, startx, starty, endx, endy, width, layerList, False)
             
-            self.sectionReg.append(s)
-            
-            if self.drillManager.sectionManagerDlg != None:
-                self.drillManager.sectionManagerDlg.fillSectionList()
+        if self.drillManager.sectionManagerDlg != None:
+            self.drillManager.sectionManagerDlg.fillSectionList()
     
     def writeProjectData(self):
+        #We first need to remove excess section entries
+        numSections = readProjectNum("Sections", 0)
+        if numSections > len(self.sectionReg):
+            for index in range( len(self.sectionReg), numSections):
+                # We first remove the layer list
+                key = 'S{:02d}SourceLayers'.format(index)
+                numLayers = readProjectNum(key, 0)
+                removeProjectEntry(key)
+                for li in range(numLayers):
+                    key = 'S{:02d}SourceLayer{:02d}'.format(index, li)
+                    removeProjectEntry(key)
+                
+                key = 'S{:02d}Name'.format(index)
+                removeProjectEntry(key)
+                key = 'S{:02d}StartX'.format(index)
+                removeProjectEntry(key)
+                key = 'S{:02d}StartY'.format(index)
+                removeProjectEntry(key)
+                key = 'S{:02d}EndX'.format(index)
+                removeProjectEntry(key)
+                key = 'S{:02d}EndY'.format(index)
+                removeProjectEntry(key)
+                key = 'S{:02d}Width'.format(index)
+                removeProjectEntry(key)
+    
+        
+#         Now, write over the needed ones        
+#        msg = 'WriteData numSections: {:d}'.format(len(self.sectionReg))
+#        iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
         writeProjectData("Sections", len(self.sectionReg))
         for index, s in enumerate(self.sectionReg):
             self.sectionReg[index].writeProjectData(index)

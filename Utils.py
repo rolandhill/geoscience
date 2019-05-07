@@ -88,6 +88,9 @@ def readProjectBool(entry, default):
 def writeProjectData(entry, val):
     QgsProject.instance().writeEntry("Geoscience", entry, val)
 
+def removeProjectEntry(entry):
+    QgsProject.instance().removeEntry("Geoscience", entry)
+    
 # Calculate an interpolated 3D point at given depth from the supplied polyline.
 # The polyline must have constant segment lengths given by segLength
 def interpPolyline(depth, segLength, polyline):

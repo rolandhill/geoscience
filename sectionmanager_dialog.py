@@ -44,14 +44,15 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
 
     def fillSectionList(self)        :
         self.listSection.clear()
-        self.sectionManager.sectionReg.sort(key = lambda x: x.name)                        
-        for s in self.sectionManager.sectionReg:
-            item = QtWidgets.QListWidgetItem()
-            item.setText(s.name)
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Unchecked)
-            item.setData(QtCore.Qt.UserRole, s)
-            self.listSection.addItem(item)
+        if len(self.sectionManager.sectionReg) > 0:
+            self.sectionManager.sectionReg.sort(key = lambda x: x.name)                        
+            for s in self.sectionManager.sectionReg:
+                item = QtWidgets.QListWidgetItem()
+                item.setText(s.name)
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                item.setCheckState(QtCore.Qt.Unchecked)
+                item.setData(QtCore.Qt.UserRole, s)
+                self.listSection.addItem(item)
         
     def onMapCanvasPressed(self):
         iface.mapCanvas().activateWindow()
@@ -74,18 +75,18 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
                 if dlg.listLayers.item(index).checkState():
                     self.drillManager.sectionLayers.append(dlg.listLayers.item(index).data(QtCore.Qt.UserRole))
 
-            self.drillManager.writeProjectData()
-            
         dlg.close()
         
         if result:
-            self.sectionManager.createSection(self.drillManager.sectionWEName, \
+            s = self.sectionManager.createSection(self.drillManager.sectionWEName, \
               self.drillManager.sectionLimitWest, self.drillManager.sectionNorth, \
               self.drillManager.sectionLimitEast, self.drillManager.sectionNorth, \
               self.drillManager.sectionWidth, \
               self.drillManager.sectionLayers)
             
             self.fillSectionList()
+
+            self.sectionManager.showSection(s)
         
     def onSouthNorthPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
@@ -104,18 +105,18 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
                 if dlg.listLayers.item(index).checkState():
                     self.drillManager.sectionLayers.append(dlg.listLayers.item(index).data(QtCore.Qt.UserRole))
 
-            self.drillManager.writeProjectData()
-            
         dlg.close()
         
         if result:
-            self.sectionManager.createSection(self.drillManager.sectionSNName, \
+            s = self.sectionManager.createSection(self.drillManager.sectionSNName, \
               self.drillManager.sectionEast, self.drillManager.sectionLimitSouth, \
               self.drillManager.sectionEast, self.drillManager.sectionLimitNorth, \
               self.drillManager.sectionWidth, \
               self.drillManager.sectionLayers)
 
             self.fillSectionList()
+            
+            self.sectionManager.showSection(s)
 
     def onDeletePressed(self):
         sList = self.checkedSections()
@@ -124,47 +125,19 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             if cs is not None:
                 sList.append( cs )
         for s in sList:
-            if s.window != None:
-                s.window.close()
-                s.window = None
-            
-            if s.group != None:
-                s.group.removeAllChildren()
-                self.drillManager.sectionManager.sectionGroup().removeChildNode(s.group)
-            
-            self.removeSections(sList)
+            self.sectionManager.deleteSection(s)
 
+        self.fillSectionList()
+            
     def onShowPressed(self):
         cs = self.currentSection()
         if cs != None:
-            for s in self.sectionManager.sectionReg:
-                if s == cs:
-                    s.group.setItemVisibilityChecked( True )
-                else:
-                    s.group.setItemVisibilityChecked( False )
-                    
-            extent = self.drillManager.sectionManager.groupExtent(cs.group)
-            extent.grow(10)
-            iface.mapCanvas().setExtent(extent)
-        
+            self.sectionManager.showSection(cs)
+            
     def onNewWindowPressed(self):
         cs = self.currentSection()
         if cs is not None:
             cs.createWindow()
-        
-    def removeSections(self, sectionList):
-        for s in sectionList:
-            self.removeSection(s, update = False)
-            self.fillSectionList()
-        
-    def removeSection(self, section, update = True):
-        try:
-            self.sectionManager.sectionReg.remove(section)
-        except:
-            pass
-        
-        if update:
-            self.fillSectionList()
         
     def currentSection(self):
         cs = None
