@@ -90,6 +90,7 @@ class Section:
         self.southNorth = startX == endX
 
         self.group = QgsLayerTreeGroup(self.name)
+        self.group.setExpanded(False)
 
         # Find equation of the plane and the normal to the plane
         self.plane = verticalPlane(startX, startY, endX, endY)
@@ -343,6 +344,7 @@ class SectionManager:
                     extent.combineExtentWith(rect)
         return extent
                     
+    #Return the root group for all sections or create it if it doesn't exist
     def sectionGroup(self):
         group = None
         root = QgsProject.instance().layerTreeRoot()
@@ -353,11 +355,12 @@ class SectionManager:
         
         if group == None:
             group = root.insertGroup(0, "Sections")
+            group.setIsMutuallyExclusive(True)
             
         return group
 
     def showSection(self, section):
-        # Generate the section data if it hasn't already been done
+        # Generate the section data if it hasn't already been done (ie it has no sectionLayers).
         if len(section.sectionLayers) == 0:
             section.create()
             
@@ -372,26 +375,27 @@ class SectionManager:
             extent.grow(10)
             iface.mapCanvas().setExtent(extent)
 
-    def deleteSection(self, s):
-        if s.window != None:
-            s.window.close()
-            s.window = None
+    def recreateSection(self, section):
+        section.sectionLayers.clear()
+        section.create()
         
-        if s.group != None:
-            s.group.removeAllChildren()
-            self.sectionGroup().removeChildNode(s.group)
+    def deleteSection(self, section):
+        if section.window != None:
+            section.window.close()
+            section.window = None
         
-            self.removeSection(s)
+        if section.group != None:
+            section.group.removeAllChildren()
+            self.sectionGroup().removeChildNode(section.group)
+        
+        self.removeSection(section)
         
     def removeSections(self, sectionList):
         for s in sectionList:
             self.removeSection(s)
         
     def removeSection(self, section):
-        try:
-            self.sectionManager.sectionReg.remove(section)
-        except:
-            pass
+        self.sectionReg.remove(section)
         
     def readProjectData(self):
         self.sectionReg.clear()

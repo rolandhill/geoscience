@@ -8,9 +8,15 @@ from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes
 from qgis.utils import iface
 
+from PyQt5 import QtCore
+
+from .sectionMapCanvas_dialog import SectionMapCanvasDialog
+
 class SectionMapTool(QgsMapToolEmitPoint):
-    def __init__(self, canvas):
+    def __init__(self, canvas, parent):
         self.canvas = canvas
+        self.sectionManagerDlg = parent
+        self.drillManager = self.sectionManagerDlg.drillManager
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.rubberBand = QgsRubberBand(self.canvas, True)
 #        self.rubberBand.setColor(Qt.red)
@@ -28,13 +34,33 @@ class SectionMapTool(QgsMapToolEmitPoint):
         self.showLine(self.startPoint, self.endPoint)
 
     def canvasReleaseEvent(self, e):
+        self.endPoint = self.toMapCoordinates(e.pos())
         self.isEmittingPoint = False
-        msg = 'start: {:f}, {:f}  end: {:f}, {:f}'.format(self.startPoint.x(), self.startPoint.y(), self.endPoint.x() , self.endPoint.y())
-        iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
-#        r = self.rectangle()
-#        if r is not None:
-#            print("Rectangle:", r.xMinimum(), r.yMinimum(), r.xMaximum(), r.yMaximum())
-#            self._iface.actionPan().trigger()
+
+        # Get the layers to incude in the section from a dlg
+        dlg = SectionMapCanvasDialog()
+        dlg.leName.setText(self.suggestName())
+        dlg.leSectionWidth.setText(str(self.drillManager.sectionWidth))
+        result = dlg.exec_()
+        if result:
+            self.drillManager.sectionName = dlg.leName.text()
+            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
+            # Save the name of each checked attribute field in a list
+            self.drillManager.sectionLayers = []
+            for index in range(dlg.listLayers.count()):
+                if dlg.listLayers.item(index).checkState():
+                    self.drillManager.sectionLayers.append(dlg.listLayers.item(index).data(QtCore.Qt.UserRole))
+
+        dlg.close()
+        
+        if result:
+            s = self.drillManager.sectionManager.createSection(self.drillManager.sectionName, \
+               self.startPoint.x(), self.startPoint.y(), self.endPoint.x(), self.endPoint.y(), \
+               self.drillManager.sectionWidth, self.drillManager.sectionLayers)
+        
+            self.sectionManagerDlg.fillSectionList()
+            
+            self.sectionManagerDlg.sectionManager.showSection(s)
 
     def canvasMoveEvent(self, e):
         if not self.isEmittingPoint:
@@ -43,6 +69,19 @@ class SectionMapTool(QgsMapToolEmitPoint):
         self.endPoint = self.toMapCoordinates(e.pos())
         self.showLine(self.startPoint, self.endPoint)
 
+    def suggestName(self):
+        dir = 'N'
+        if abs(self.endPoint.y() - self.startPoint.y()) > abs(self.endPoint.x() - self.startPoint.x()):
+            dir = 'E'
+        
+        name = "00"
+        if dir == 'N':
+            name = "{:d}".format(int((self.endPoint.y() + self.startPoint.y())/2.0)) + dir
+        else:
+            name = "{:d}".format(int((self.endPoint.x() + self.startPoint.x())/2.0)) + dir
+        
+        return name
+        
     def showLine(self, startPoint, endPoint):
         self.rubberBand.reset(QgsWkbTypes.LineGeometry)
 #        if startPoint.x() == endPoint.x() or startPoint.y() == endPoint.y():

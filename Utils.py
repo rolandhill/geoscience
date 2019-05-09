@@ -8,6 +8,8 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
+from PyQt5 import QtWidgets
+
 import os.path
 import math
 import platform
@@ -119,4 +121,25 @@ def uriToFile(url):
     fileName = fileName.replace("%20", " ")
     fileName = os.path.normpath(fileName)
     return fileName
+    
+def addLayerToListWidget(layer, listWidget):
+    item = QtWidgets.QListWidgetItem()
+    item.setText(layer.name())
+    item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+    item.setCheckState(QtCore.Qt.Checked)
+    item.setData(QtCore.Qt.UserRole, layer)
+    listWidget.addItem(item)
+        
+def fillVectorLayersForSection(listWidget):
+    listWidget.clear()
+    
+    listLayerZ = []
+    layers = QgsProject.instance().mapLayers()
+    for name, layer in layers.items():
+        if layer.type() == QgsMapLayer.VectorLayer and layer.name()[:2] != "S_":
+            if QgsWkbTypes.coordDimensions(layer.wkbType()) >= 3:
+                listLayerZ.append(layer)
+    
+    for layer in listLayerZ:
+        addLayerToListWidget(layer, listWidget)
     

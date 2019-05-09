@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Create West-East Section</string>
+   <string>Create Orthogonal Section</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">

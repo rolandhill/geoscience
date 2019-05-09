@@ -24,7 +24,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # Keep a reference to the DrillManager
         self.drillManager = drillManager
         self.sectionManager = self.drillManager.sectionManager
-        self.sectionMapTool = SectionMapTool(iface.mapCanvas())
+        self.sectionMapTool = SectionMapTool(iface.mapCanvas(), self)
         
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
@@ -41,6 +41,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.pbDeleteSection.pressed.connect(self.onDeletePressed)
         self.pbShowSection.pressed.connect(self.onShowPressed)
         self.pbNewWindow.pressed.connect(self.onNewWindowPressed)
+        self.pbRecreate.pressed.connect(self.onRecreatePressed)
 
     def fillSectionList(self)        :
         self.listSection.clear()
@@ -60,7 +61,6 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     
     def onWestEastPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
-#        dlg.show()
         result = dlg.exec_()
         if result:
             self.drillManager.sectionNorth = float(dlg.leCenter.text())
@@ -90,7 +90,6 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         
     def onSouthNorthPressed(self):
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
-#        dlg.show()
         result = dlg.exec_()
         if result:
             self.drillManager.sectionEast = float(dlg.leCenter.text())
@@ -119,15 +118,32 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.sectionManager.showSection(s)
 
     def onDeletePressed(self):
+        #Build a list of sections from all checked ones, or if none checked, the currently selected one
         sList = self.checkedSections()
         if len(sList) == 0:
             cs = self.currentSection()
             if cs is not None:
                 sList.append( cs )
+
         for s in sList:
             self.sectionManager.deleteSection(s)
 
         self.fillSectionList()
+            
+    def onRecreatePressed(self):
+        #Build a list of sections from all checked ones, or if none checked, the currently selected one
+        sList = self.checkedSections()
+        if len(sList) == 0:
+            cs = self.currentSection()
+            if cs is not None:
+                sList.append( cs )
+
+        for s in sList:
+            self.sectionManager.recreateSection(s)
+
+        #If there was only 1 section to recreate, then show it as well
+        if len(sList) == 0:
+            self.sectionManager.showSection(s)
             
     def onShowPressed(self):
         cs = self.currentSection()

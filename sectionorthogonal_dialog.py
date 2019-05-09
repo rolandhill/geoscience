@@ -52,31 +52,14 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.leLimitMax.setValidator(QDoubleValidator())
         self.leSectionWidth.setValidator(QDoubleValidator())
 
-        self.listLayers.clear()
-        listLayerZ = []
-        layers = QgsProject.instance().mapLayers()
-        for name, layer in layers.items():
-            if layer.type() == QgsMapLayer.VectorLayer and layer.name()[:2] != "S_":
-                if QgsWkbTypes.coordDimensions(layer.wkbType()) >= 3:
-                    listLayerZ.append(layer)
+        fillVectorLayersForSection(self.listLayers)
         
-        for layer in listLayerZ:
-            self.addLayerToListWidget(layer, self.listLayers)
-        
-        self.listElevation.clear()
+#        fillRasterLayersForSection(self.listElevation)
         
         self.leCenter.textChanged.connect(self.onCenterTextChanged)
         
         self.nameManual = False
 
-    def addLayerToListWidget(self, layer, listWidget):
-        item = QtWidgets.QListWidgetItem()
-        item.setText(layer.name())
-        item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-        item.setCheckState(QtCore.Qt.Checked)
-        item.setData(QtCore.Qt.UserRole, layer)
-        self.listLayers.addItem(item)
-        
     def onCenterTextChanged(self, str):
         if not self.nameManual:
 #            str = self.leCenter.text()
