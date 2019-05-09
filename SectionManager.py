@@ -389,6 +389,7 @@ class SectionManager:
             self.sectionGroup().removeChildNode(section.group)
         
         self.removeSection(section)
+        self.drillManager.writeProjectData()
         
     def removeSections(self, sectionList):
         for s in sectionList:

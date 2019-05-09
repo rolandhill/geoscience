@@ -61,6 +61,8 @@ class SectionMapTool(QgsMapToolEmitPoint):
             self.sectionManagerDlg.fillSectionList()
             
             self.sectionManagerDlg.sectionManager.showSection(s)
+            
+        iface.mapCanvas().setMapTool(self.oldMapTool)
 
     def canvasMoveEvent(self, e):
         if not self.isEmittingPoint:

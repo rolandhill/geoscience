@@ -42,6 +42,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.pbShowSection.pressed.connect(self.onShowPressed)
         self.pbNewWindow.pressed.connect(self.onNewWindowPressed)
         self.pbRecreate.pressed.connect(self.onRecreatePressed)
+        self.listSection.itemDoubleClicked.connect(self.onListItemdoubleClicked)
 
     def fillSectionList(self)        :
         self.listSection.clear()
@@ -57,6 +58,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         
     def onMapCanvasPressed(self):
         iface.mapCanvas().activateWindow()
+        self.sectionMapTool.oldMapTool = iface.mapCanvas().mapTool()
         iface.mapCanvas().setMapTool( self.sectionMapTool ) 
     
     def onWestEastPressed(self):
@@ -146,14 +148,20 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.sectionManager.showSection(s)
             
     def onShowPressed(self):
-        cs = self.currentSection()
-        if cs != None:
-            self.sectionManager.showSection(cs)
+        self.showCurrentSelection()
             
     def onNewWindowPressed(self):
         cs = self.currentSection()
         if cs is not None:
             cs.createWindow()
+
+    def onListItemdoubleClicked(self):
+        self.showCurrentSelection()
+        
+    def showCurrentSelection(self):
+        cs = self.currentSection()
+        if cs != None:
+            self.sectionManager.showSection(cs)
         
     def currentSection(self):
         cs = None
