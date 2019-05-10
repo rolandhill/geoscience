@@ -9,11 +9,14 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
+from .Utils import *
+from .dialogBase import dialogBase
+
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'sectionorthogonal_dialog_base.ui'))
 
 
-class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
+class SectionOrthogonalDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, dirWestEast=True, parent=None):
         """Constructor."""
         super(SectionOrthogonalDialog, self).__init__(parent)
@@ -53,9 +56,10 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
         self.leSectionWidth.setValidator(QDoubleValidator())
 
         fillVectorLayersForSection(self.listLayers)
+        fillRasterLayersForSection(self.listElevation)
         
-#        fillRasterLayersForSection(self.listElevation)
-        
+        self.checkSelectAllLayers.toggled.connect(self.onSelectAllCheckedLayers)
+        self.checkSelectAllElevation.toggled.connect(self.onSelectAllCheckedElevation)
         self.leCenter.textChanged.connect(self.onCenterTextChanged)
         
         self.nameManual = False
@@ -68,5 +72,11 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, FORM_CLASS):
             else:
                 str = str.strip() + "E"
             self.leName.setText(str)
+
+    def onSelectAllCheckedLayers(self):
+        self.selectAll(self.listLayers, self.checkSelectAllLayers.isChecked())
+            
+    def onSelectAllCheckedElevation(self):
+        self.selectAll(self.listElevation, self.checkSelectAllElevation.isChecked())
             
             

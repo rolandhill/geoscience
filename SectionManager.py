@@ -304,7 +304,7 @@ class SectionManager:
         self.drillManager = drillManager
         self.sectionReg = []
         
-    def createSection(self, name, startX, startY, endX, endY, width, layerList, writeProjectData = True):
+    def createSection(self, name, startX, startY, endX, endY, width, layerList, elevationList, writeProjectData = True):
 #        iface.messageBar().pushMessage("Debug", "In CreateSection", level=Qgis.Warning)
         sectionGroup = self.sectionGroup()
         
@@ -429,9 +429,20 @@ class SectionManager:
                     if layer != None:
                         layerList.append(layer)
 
+            key = 'S{:02d}_ElevationLayers'.format(index)
+            numLayers = readProjectNum(key, 0)
+            elevationList = []
+            for li in range(numLayers):
+                key = 'S{:02d}_ElevationLayer{:02d}'.format(index, li)
+                layerName = readProjectText(key, "")
+                if layerName != "":
+                    layer = getLayerByName(layerName)
+                    if layer != None:
+                        elevationList.append(layer)
+
 #            msg = 'Creating Section: {:s}'.format(name)
 #            iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
-            self.createSection(name, startx, starty, endx, endy, width, layerList, False)
+            self.createSection(name, startx, starty, endx, endy, width, layerList, elevationList, False)
             
         if self.drillManager.sectionManagerDlg != None:
             self.drillManager.sectionManagerDlg.fillSectionList()
@@ -447,6 +458,14 @@ class SectionManager:
                 removeProjectEntry(key)
                 for li in range(numLayers):
                     key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
+                    removeProjectEntry(key)
+
+                # and the elevation list
+                key = 'S{:02d}_ElevationLayers'.format(index)
+                numLayers = readProjectNum(key, 0)
+                removeProjectEntry(key)
+                for li in range(numLayers):
+                    key = 'S{:02d}_ElevationLayer{:02d}'.format(index, li)
                     removeProjectEntry(key)
                 
                 key = 'S{:02d}_Name'.format(index)

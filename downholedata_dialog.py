@@ -68,15 +68,7 @@ class DownholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.listFields.clear()
 
     def onSelectAllChecked(self):
-#        qgis.utils.iface.messageBar.pushMessage("SelectAll toggled")
-        if self.checkSelectAll.isChecked() == True:
-#            iface.messageBar().pushMessage("SelectAll")
-            for index in range(self.listFields.count()):
-                self.listFields.item(index).setCheckState(QtCore.Qt.Checked)
-        else:
-#            iface.messageBar().pushMessage("SelectNone")
-            for index in range(self.listFields.count()):
-                self.listFields.item(index).setCheckState(QtCore.Qt.Unchecked)
+        self.selectAll(self.listFields, self.checkSelectAll.isChecked())
             
     def setSuffix(self):
         str = self.lbDataLayer.currentLayer().name()

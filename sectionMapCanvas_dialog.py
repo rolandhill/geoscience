@@ -9,12 +9,13 @@ from PyQt5 import QtCore, uic
 from PyQt5 import QtWidgets
 
 from .Utils import *
+from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'sectionMapCanvas_dialog_base.ui'))
 
 
-class SectionMapCanvasDialog(QtWidgets.QDialog, FORM_CLASS):
+class SectionMapCanvasDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(SectionMapCanvasDialog, self).__init__(parent)
@@ -26,4 +27,16 @@ class SectionMapCanvasDialog(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
+        self.checkSelectAllLayers.toggled.connect(self.onSelectAllCheckedLayers)
+        self.checkSelectAllElevation.toggled.connect(self.onSelectAllCheckedElevation)
+
         fillVectorLayersForSection(self.listLayers)
+        fillRasterLayersForSection(self.listElevation)
+
+    def onSelectAllCheckedLayers(self):
+        self.selectAll(self.listLayers, self.checkSelectAllLayers.isChecked())
+            
+    def onSelectAllCheckedElevation(self):
+        self.selectAll(self.listElevation, self.checkSelectAllElevation.isChecked())
+            
+            

@@ -47,3 +47,11 @@ class dialogBase():
                 cb.setCurrentIndex(index)
                 break
             
+    def selectAll(self, listWidget, state):
+        if state == True:
+            for index in range(listWidget.count()):
+                listWidget.item(index).setCheckState(QtCore.Qt.Checked)
+        else:
+            for index in range(listWidget.count()):
+                listWidget.item(index).setCheckState(QtCore.Qt.Unchecked)
+            

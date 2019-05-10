@@ -142,4 +142,23 @@ def fillVectorLayersForSection(listWidget):
     
     for layer in listLayerZ:
         addLayerToListWidget(layer, listWidget)
+
+def fillRasterLayersForSection(listWidget):
+    listWidget.clear()
     
+    listLayerZ = []
+    layers = QgsProject.instance().mapLayers()
+    for name, layer in layers.items():
+        if layer.type() == QgsMapLayer.RasterLayer:
+            if layer.bandCount() == 1:
+                listLayerZ.append(layer)
+    
+    for layer in listLayerZ:
+        addLayerToListWidget(layer, listWidget)
+        
+def getCheckedLayers(listWidget):
+    layers = []
+    for index in range(listWidget.count()):
+        if listWidget.item(index).checkState():
+            layers.append(listWidget.item(index).data(QtCore.Qt.UserRole))
+    return layers

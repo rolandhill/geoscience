@@ -10,6 +10,7 @@ from qgis.utils import iface
 
 from PyQt5 import QtCore
 
+from .Utils import *
 from .sectionMapCanvas_dialog import SectionMapCanvasDialog
 
 class SectionMapTool(QgsMapToolEmitPoint):
@@ -46,17 +47,15 @@ class SectionMapTool(QgsMapToolEmitPoint):
             self.drillManager.sectionName = dlg.leName.text()
             self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             # Save the name of each checked attribute field in a list
-            self.drillManager.sectionLayers = []
-            for index in range(dlg.listLayers.count()):
-                if dlg.listLayers.item(index).checkState():
-                    self.drillManager.sectionLayers.append(dlg.listLayers.item(index).data(QtCore.Qt.UserRole))
+            self.drillManager.sectionLayers = getCheckedLayers(dlg.listLayers)
+            self.drillManager.elevationLayers = getCheckedLayers(dlg.elevationLayers)
 
         dlg.close()
         
         if result:
             s = self.drillManager.sectionManager.createSection(self.drillManager.sectionName, \
                self.startPoint.x(), self.startPoint.y(), self.endPoint.x(), self.endPoint.y(), \
-               self.drillManager.sectionWidth, self.drillManager.sectionLayers)
+               self.drillManager.sectionWidth, self.drillManager.sectionLayers, self.drillManager.elevationLayers)
         
             self.sectionManagerDlg.fillSectionList()
             

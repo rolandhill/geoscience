@@ -43,6 +43,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.pbNewWindow.pressed.connect(self.onNewWindowPressed)
         self.pbRecreate.pressed.connect(self.onRecreatePressed)
         self.listSection.itemDoubleClicked.connect(self.onListItemdoubleClicked)
+        self.checkSelectAll.toggled.connect(self.onSelectAllChecked)
 
     def fillSectionList(self)        :
         self.listSection.clear()
@@ -71,11 +72,8 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.drillManager.sectionWEName = dlg.leName.text()
             self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             
-            # Save the name of each checked attribute field in a list
-            self.drillManager.sectionLayers = []
-            for index in range(dlg.listLayers.count()):
-                if dlg.listLayers.item(index).checkState():
-                    self.drillManager.sectionLayers.append(dlg.listLayers.item(index).data(QtCore.Qt.UserRole))
+            self.drillManager.sectionLayers = getCheckedLayers(dlg.listLayers)
+            self.drillManager.elevationLayers = getCheckedLayers(dlg.elevationLayers)
 
         dlg.close()
         
@@ -84,7 +82,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
               self.drillManager.sectionLimitWest, self.drillManager.sectionNorth, \
               self.drillManager.sectionLimitEast, self.drillManager.sectionNorth, \
               self.drillManager.sectionWidth, \
-              self.drillManager.sectionLayers)
+              self.drillManager.sectionLayers, self.drillManager.elevationLayers)
             
             self.fillSectionList()
 
@@ -100,11 +98,8 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.drillManager.sectionSNName = dlg.leName.text()
             self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             
-            # Save the name of each checked attribute field in a list
-            self.drillManager.sectionLayers = []
-            for index in range(dlg.listLayers.count()):
-                if dlg.listLayers.item(index).checkState():
-                    self.drillManager.sectionLayers.append(dlg.listLayers.item(index).data(QtCore.Qt.UserRole))
+            self.drillManager.sectionLayers = getCheckedLayers(dlg.listLayers)
+            self.drillManager.elevationLayers = getCheckedLayers(dlg.elevationLayers)
 
         dlg.close()
         
@@ -113,7 +108,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
               self.drillManager.sectionEast, self.drillManager.sectionLimitSouth, \
               self.drillManager.sectionEast, self.drillManager.sectionLimitNorth, \
               self.drillManager.sectionWidth, \
-              self.drillManager.sectionLayers)
+              self.drillManager.sectionLayers, self.drillManager.elevationLayers)
 
             self.fillSectionList()
             
@@ -158,6 +153,9 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def onListItemdoubleClicked(self):
         self.showCurrentSelection()
         
+    def onSelectAllChecked(self):
+        self.selectAll(self.listSection, self.checkSelectAll.isChecked())
+            
     def showCurrentSelection(self):
         cs = self.currentSection()
         if cs != None:
