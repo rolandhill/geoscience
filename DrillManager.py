@@ -634,8 +634,8 @@ class DrillManager:
             self.desurveyLayer.addFeature(feature)
             self.desurveyLayer.commitChanges()
 
-        self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.sourceCrs())
-        self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.sourceCrs())
+        self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.crs())
+        self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.crs())
 #        QgsProject.instance().addMapLayer(collar3D)
 
 
@@ -691,7 +691,6 @@ class DrillManager:
         # Tell the vector layer to fetch changes from the provider
         layer.updateFields() 
         return layer
-#        self.desurveyLayer = layer
     
     def createDesurveyLayer(self):
         #Find CRS of collar layer

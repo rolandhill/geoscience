@@ -13,6 +13,7 @@ from PyQt5 import QtCore
 from .Utils import *
 from .sectionMapCanvas_dialog import SectionMapCanvasDialog
 
+
 class SectionMapTool(QgsMapToolEmitPoint):
     def __init__(self, canvas, parent):
         self.canvas = canvas
@@ -48,7 +49,7 @@ class SectionMapTool(QgsMapToolEmitPoint):
             self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             # Save the name of each checked attribute field in a list
             self.drillManager.sectionLayers = getCheckedLayers(dlg.listLayers)
-            self.drillManager.elevationLayers = getCheckedLayers(dlg.elevationLayers)
+            self.drillManager.elevationLayers = getCheckedLayers(dlg.listElevation)
 
         dlg.close()
         

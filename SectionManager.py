@@ -9,6 +9,7 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 import numpy as np
+import math
 
 from .SectionWindow import *
 from .Utils import *
@@ -74,7 +75,7 @@ def projectPointToPlane(plane, pt):
     return pi
 
 class Section:
-    def __init__(self, name, startX, startY, endX, endY, width, layerList):
+    def __init__(self, name, startX, startY, endX, endY, width, layerList, elevationList):
 #        iface.messageBar().pushMessage("Debug", "In Section Constructor", level=Qgis.Warning)
         self.name = name
         self.startX = startX
@@ -84,8 +85,9 @@ class Section:
         self.width = width
         self.needToGenerate = True
         self.sourceLayers = layerList
+        self.sourceElevation = elevationList
         self.sectionLayers = []
-        
+            
         self.westEast = startY == endY
         self.southNorth = startX == endX
 
@@ -99,6 +101,7 @@ class Section:
         
     def create(self):
         self.sectionLayers = self.sectionThroughLayers(self.sourceLayers)
+        self.sectionLayers.append(self.sectionThroughElevation(self.sourceElevation))
         
     def createWindow(self):
         self.window = SectionWindow(self.sectionLayers)
@@ -107,6 +110,66 @@ class Section:
 #        extent.grow(10)
 #        s.window.canvas.setExtent(extent)
         
+    def sectionThroughElevation(self, layers):
+        #Create new layers for the section based on the requested plan layers
+        elevationLayers = []
+        
+        for layer in layers:
+            #Try and match the layer to be created with one already under the section.group, else create a new layer
+            newName = self.createSectionLayerName(layer, self.name)
+            elevLayer = self.matchLayer(newName)
+            usingNewLayer = False
+            if elevLayer == None:
+                elevLayer = self.createSectionElevationLayer(layer, newName)
+                usingNewLayer = True
+
+            # List of points to represent the portion of the line within the section
+            pointList = []
+
+            dp = layer.dataProvider()
+            profLength = math.sqrt((self.endX - self.startX)*(self.endX - self.startX) + (self.endY - self.startY)*(self.endY - self.startY))
+            step = min(abs(layer.rasterUnitsPerPixelX()), abs(layer.rasterUnitsPerPixelY()))
+            steps =  math.ceil(profLength / step)
+            dx = (self.endX - self.startX) / step
+            dy = (self.endY - self.startY) / step
+            x = self.startX
+            y = self.startY
+            dist = 0.0
+            for i in range(steps):
+                ht, ok = dp.sample(QgsPointXY(x, y), 1)
+                x = x + dx
+                y = y + dy
+                dist = dist + step
+                if ok:
+                    pointList.append(QgsPoint(dist, ht, 0.0))
+                
+            # Is this a west-east section
+            if self.westEast:
+                for pt in pointList:
+                    pt.setX(pt.x() + self.startX)
+            # Or maybe a south-north section
+            elif self.southNorth:
+                for pt in pointList:
+                    pt.setX(pt.x() + self.startY)
+            
+            if len(pointList) > 1:
+                # Variable to hold a feature
+                feature = QgsFeature()
+                feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+        
+                # Add the new feature to the new Trace_ layer
+                elevLayer.startEditing()
+                elevLayer.addFeature(feature)
+                elevLayer.commitChanges()
+
+                elevationLayers.append(elevLayer)
+
+                if usingNewLayer:
+                    QgsProject.instance().addMapLayer(elevLayer, False)
+                    self.group.addLayer(elevLayer)
+            
+        return elevationLayers
+    
     def sectionThroughLayers(self, layers):
         #Create new layers for the section based on the requested plan layers
         sectionLayers = []
@@ -261,7 +324,7 @@ class Section:
     def createSectionLayer(self, baseLayer, name):
         #Create a new memory layer
         layer = QgsVectorLayer("PointZ?crs=EPSG:4326" if QgsWkbTypes.flatType(baseLayer.wkbType()) == QgsWkbTypes.Point else "LineStringZ?crs=EPSG:4326", name, "memory")
-        layer.setCrs(baseLayer.sourceCrs())
+        layer.setCrs(baseLayer.crs())
         atts = []
         # Loop through the list of desired field names that the user checked
         for field in baseLayer.fields():
@@ -276,6 +339,13 @@ class Section:
 
         return layer
 
+    def createSectionElevationLayer(self, baseLayer, name):
+        #Create a new memory layer
+        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", name, "memory")
+        layer.setCrs(baseLayer.crs())
+
+        return layer
+    
     def writeProjectData(self, index):
         key = 'S{:02d}_Name'.format(index)
         writeProjectData(key, self.name)
@@ -308,7 +378,7 @@ class SectionManager:
 #        iface.messageBar().pushMessage("Debug", "In CreateSection", level=Qgis.Warning)
         sectionGroup = self.sectionGroup()
         
-        s = Section(name, startX, startY, endX, endY, width, layerList)
+        s = Section(name, startX, startY, endX, endY, width, layerList, elevationList)
         # Re-assign the layerTreeGroup if a matching one already exists
         group = self.matchGroup(s)
         if group != None:
