@@ -5,6 +5,8 @@ Created on Thu Mar 28 17:41:08 2019
 @author: HillR
 """
 
+from PyQt5.QtWidgets import QProgressDialog, qApp
+
 from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
@@ -83,11 +85,19 @@ class Section:
         self.endX = endX
         self.endY = endY
         self.width = width
-        self.needToGenerate = True
         self.sourceLayers = layerList
         self.sourceElevation = elevationList
+
+        # These are different from the start and end variables as a section may be defined 'backwards'
+        self.minX = min(self.startX, self.endX)
+        self.maxX = max(self.startX, self.endX)
+        self.minY = min(self.startY, self.endY)
+        self.maxY = max(self.startY, self.endY)
+        
         self.sectionLayers = []
-            
+
+        self.needToGenerate = True
+        self.sectionLength = math.sqrt((self.endX-self.startX)*(self.endX-self.startX) + (self.endY-self.startY)*(self.endY-self.startY))
         self.westEast = startY == endY
         self.southNorth = startX == endX
 
@@ -101,14 +111,17 @@ class Section:
         
     def create(self):
         self.sectionLayers = self.sectionThroughLayers(self.sourceLayers)
-        self.sectionLayers.append(self.sectionThroughElevation(self.sourceElevation))
+        
+        layers = self.sectionThroughElevation(self.sourceElevation)
+        for layer in layers:
+            self.sectionLayers.append(layer)
         
     def createWindow(self):
         self.window = SectionWindow(self.sectionLayers)
         self.window.show()
-#        extent = self.groupExtent(s.group)
-#        extent.grow(10)
-#        s.window.canvas.setExtent(extent)
+        extent = layersExtent(self.sectionLayers)
+        extent.grow(10)
+        self.window.canvas.setExtent(extent)
         
     def sectionThroughElevation(self, layers):
         #Create new layers for the section based on the requested plan layers
@@ -127,9 +140,8 @@ class Section:
             pointList = []
 
             dp = layer.dataProvider()
-            profLength = math.sqrt((self.endX - self.startX)*(self.endX - self.startX) + (self.endY - self.startY)*(self.endY - self.startY))
             step = min(abs(layer.rasterUnitsPerPixelX()), abs(layer.rasterUnitsPerPixelY()))
-            steps =  math.ceil(profLength / step)
+            steps =  math.ceil(self.sectionLength / step) + 1
             dx = (self.endX - self.startX) / step
             dy = (self.endY - self.startY) / step
             x = self.startX
@@ -137,11 +149,11 @@ class Section:
             dist = 0.0
             for i in range(steps):
                 ht, ok = dp.sample(QgsPointXY(x, y), 1)
+                if ok:
+                    pointList.append(QgsPoint(dist, ht, 0.0))
                 x = x + dx
                 y = y + dy
                 dist = dist + step
-                if ok:
-                    pointList.append(QgsPoint(dist, ht, 0.0))
                 
             # Is this a west-east section
             if self.westEast:
@@ -173,6 +185,23 @@ class Section:
     def sectionThroughLayers(self, layers):
         #Create new layers for the section based on the requested plan layers
         sectionLayers = []
+
+        # Total number of features for progress bar
+        totalFeatures = 0
+        for layer in layers:
+            totalFeatures = totalFeatures + layer.featureCount()
+        pdInc = totalFeatures / 100
+        pdVal = 0
+        pdCount = 0
+        
+        # Set up a progress bar
+        pd = QProgressDialog()
+        pd.setWindowTitle("Building Section")
+        pd.setAutoReset(False)
+        pd.setMinimumWidth(500)
+        pd.setMinimum(0)
+        pd.setMaximum(100)
+        pd.setValue(0)
         
         for layer in layers:
             #Try and match the layer to be created with one already under the section.group, else create a new layer
@@ -187,6 +216,13 @@ class Section:
             for lf in layer.getFeatures():
                 # !!!! ToDo: Can we check the bounding box to reject entire features
                 
+                pdCount = pdCount + 1
+                if pdCount >= pdInc:
+                    pdVal = pdVal + 1
+                    pdCount = 0
+                    pd.setValue(pdVal)
+                    qApp.processEvents()
+                    
                 # Variable to hold a feature
                 feature = QgsFeature()
     
@@ -254,26 +290,31 @@ class Section:
                 # Is this a west-east section
                 if self.westEast:
                     for pt in pointList:
-                        qPointList.append(QgsPoint(pt[0], pt[2], pt[1]))
+                        if pt[0] >= self.minX and pt[0] <= self.maxX:
+                            qPointList.append(QgsPoint(pt[0], pt[2], pt[1]))
                 # Or maybe a south-north section
                 elif self.southNorth:
                     for pt in pointList:
-                        qPointList.append(QgsPoint(pt[1], pt[2], pt[0]))
+                        # Only include if within the section limits
+                        if pt[1] >= self.minY and pt[1] <= self.maxY:
+                            qPointList.append(QgsPoint(pt[1], pt[2], pt[0]))
                 # Then it must be an oblique section
                 else:
                     x0 = np.array([self.startX, self.startY, 0.0])
                     for pt in pointList:
                         v0 = pt - x0
-                        qPointList.append(QgsPoint(v0[0], v0[2], v0[1]))
+                        # Only include if within the section limits
+                        if v0[0] >= 0 and v0[0] <= self.sectionLength:
+                            qPointList.append(QgsPoint(v0[0], v0[2], v0[1]))
                     
                 # Set the geometry for the new downhole feature
                 fvalid = False
                 if QgsWkbTypes.flatType(sectionLayer.wkbType()) == QgsWkbTypes.Point:
-                    if len(pointList) > 0:
+                    if len(qPointList) > 0:
                         fvalid = True
                         feature.setGeometry(QgsGeometry(QgsPoint(qPointList[0].x(), qPointList[0].y(), qPointList[0].z())))
                 else:
-                    if len(pointList) > 1:
+                    if len(qPointList) > 1:
                         fvalid = True
                         feature.setGeometry(QgsGeometry.fromPolyline(qPointList))
 
@@ -366,6 +407,11 @@ class Section:
             key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
             writeProjectData(key, layer.name())
             
+        key = 'S{:02d}_ElevationLayers'.format(index)
+        writeProjectData(key, len(self.sourceElevation))
+        for li, layer in enumerate(self.sourceElevation):
+            key = 'S{:02d}_ElevationLayer{:02d}'.format(index, li)
+            writeProjectData(key, layer.name())
         
     
 # The SectionManager class manipulates and keeps track of all the sections

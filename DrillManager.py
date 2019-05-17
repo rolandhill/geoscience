@@ -278,8 +278,9 @@ class DrillManager:
             # Add the first (From) point to the list
             pointList.append(pFrom)
             # Add all the intermediate points (so a long interval accurately reflects the bend of the hole)
-            for i in range(math.ceil(iFrom), math.floor(iTo)):
-                pointList.append(currentTracePolyline[i])
+            if math.floor(iTo) - math.ceil(iFrom) > currentTraceSegLength:
+                for i in range(math.ceil(iFrom), math.floor(iTo)):
+                    pointList.append(currentTracePolyline[i])
             # Add the last (To) point
             pointList.append(pTo)
             
@@ -325,7 +326,7 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(oldLayer)
 
         #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.sourceCrs(), layerOptions=['OVERWRITE=YES'])
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -409,7 +410,7 @@ class DrillManager:
             f.setAttributes(attrs)
             # Add the feature to the layer
             collar3D.startEditing()
-            collar3D.addFeature(feature)
+            collar3D.addFeature(f)
             collar3D.commitChanges()
             
             
@@ -673,7 +674,7 @@ class DrillManager:
     
     def createCollarLayer(self):
         #Find CRS of collar layer
-        crs = self.collarLayer.sourceCrs()
+        crs = self.collarLayer.crs()
         
         #Create a new memory layer
         layer = QgsVectorLayer("PointZ?crs=EPSG:4326", "geoscience_Temp", "memory")
@@ -694,7 +695,7 @@ class DrillManager:
     
     def createDesurveyLayer(self):
         #Find CRS of collar layer
-        crs = self.collarLayer.sourceCrs()
+        crs = self.collarLayer.crs()
         
         #Create a new memory layer
         layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "geoscience_Temp", "memory")
@@ -710,7 +711,7 @@ class DrillManager:
     def createDownholeLayer(self):
         #Create a new memory layer
         layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "geoscience_Temp", "memory")
-        layer.setCrs(self.desurveyLayer.sourceCrs())
+        layer.setCrs(self.desurveyLayer.crs())
         atts = []
         # Loop through the list of desired field names that the user checked
         for field in self.dataLayer.fields():

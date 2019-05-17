@@ -8,7 +8,9 @@ from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes
 from qgis.utils import iface
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore, Qt
+
+import numpy as np
 
 from .Utils import *
 from .sectionMapCanvas_dialog import SectionMapCanvasDialog
@@ -21,13 +23,15 @@ class SectionMapTool(QgsMapToolEmitPoint):
         self.drillManager = self.sectionManagerDlg.drillManager
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.rubberBand = QgsRubberBand(self.canvas, True)
-#        self.rubberBand.setColor(Qt.red)
+        self.rubberBand.setColor(QtCore.Qt.red)
+        self.rubberBand.setWidth(1.5)
+        
         self.reset()
 
     def reset(self):
         self.startPoint = self.endPoint = None
         self.isEmittingPoint = False
-        self.rubberBand.reset(True)
+        self.rubberBand.reset(QgsWkbTypes.LineGeometry)
 
     def canvasPressEvent(self, e):
         self.startPoint = self.toMapCoordinates(e.pos())
@@ -62,6 +66,7 @@ class SectionMapTool(QgsMapToolEmitPoint):
             
             self.sectionManagerDlg.sectionManager.showSection(s)
             
+        self.rubberBand.reset(QgsWkbTypes.LineGeometry)
         iface.mapCanvas().setMapTool(self.oldMapTool)
 
     def canvasMoveEvent(self, e):
@@ -85,18 +90,25 @@ class SectionMapTool(QgsMapToolEmitPoint):
         return name
         
     def showLine(self, startPoint, endPoint):
+        start = np.array([startPoint.x(), startPoint.y(), 0.0])
+        end = np.array([endPoint.x(), endPoint.y(), 0.0])
+        v = end - start
+        u = v / np.linalg.norm(v)
+        n = np.cross(np.array([0.0, 0.0, 1.0]), u)
+        width = self.drillManager.sectionWidth
+        nw = n * (width*0.5)
+        qnw = QgsVector(nw[0], nw[1])
+        p0 = endPoint + qnw
+        p1 = startPoint + qnw
+        p2 = startPoint - qnw
+        p3 = endPoint - qnw
         self.rubberBand.reset(QgsWkbTypes.LineGeometry)
-#        if startPoint.x() == endPoint.x() or startPoint.y() == endPoint.y():
-#            return
-
-#        point1 = QgsPointXY(startPoint.x(), startPoint.y())
-#        point2 = QgsPointXY(startPoint.x(), endPoint.y())
-#        point3 = QgsPointXY(endPoint.x(), endPoint.y())
-#        point4 = QgsPointXY(endPoint.x(), startPoint.y())
-
         self.rubberBand.addPoint(startPoint, False)
-#        self.rubberBand.addPoint(point2, False)
-#        self.rubberBand.addPoint(point3, False)
+        self.rubberBand.addPoint(endPoint, False)  # true to update canvas
+        self.rubberBand.addPoint(p0, False)
+        self.rubberBand.addPoint(p1, False)
+        self.rubberBand.addPoint(p2, False)
+        self.rubberBand.addPoint(p3, False)
         self.rubberBand.addPoint(endPoint, True)  # true to update canvas
         self.rubberBand.show()
 

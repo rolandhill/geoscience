@@ -9,6 +9,8 @@ from qgis.gui import *
 from qgis.PyQt.QtWidgets import QAction, QMainWindow
 from qgis.PyQt.QtCore import Qt
 
+from .Utils import *
+
 class SectionWindow(QMainWindow):
     def __init__(self, layers):
         QMainWindow.__init__(self)
@@ -16,7 +18,7 @@ class SectionWindow(QMainWindow):
         self.canvas = QgsMapCanvas()
         self.canvas.setCanvasColor(Qt.white)
 
-#        self.canvas.setExtent(layers[0].extent())
+        self.canvas.setExtent(layersExtent(layers))
         self.canvas.setLayers(layers)
 
         self.setCentralWidget(self.canvas)
@@ -50,7 +52,7 @@ class SectionWindow(QMainWindow):
         
     def setLayers(layerList):
         self.canvas.setLayers(layerList)
-        self.canvas.setExtent(layerList[0].extent())
+        self.canvas.setExtent(layersExtent(layerList))
 
     def zoomIn(self):
         self.canvas.setMapTool(self.toolZoomIn)

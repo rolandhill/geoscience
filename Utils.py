@@ -97,9 +97,9 @@ def removeProjectEntry(entry):
 # The polyline must have constant segment lengths given by segLength
 def interpPolyline(depth, segLength, polyline):
     p = QgsPoint()
-    i = depth / segLength
-    i0 = int(i)
-    ratio = i - i0
+    findex = float(depth) / float(segLength)
+    i0 = math.floor(findex)
+    ratio = findex - float(i0)
 
     p0 = polyline[i0]
     if ratio > 0.0:
@@ -108,7 +108,7 @@ def interpPolyline(depth, segLength, polyline):
         p = p0 + dp
     else:
         p = p0
-    return p, i
+    return p, findex
 
 # Process the url to provide a valid filename
 def uriToFile(url):
@@ -162,3 +162,11 @@ def getCheckedLayers(listWidget):
         if listWidget.item(index).checkState():
             layers.append(listWidget.item(index).data(QtCore.Qt.UserRole))
     return layers
+
+def layersExtent(layers):
+    extent = QgsRectangle()
+    for layer in layers:
+        rect = layer.extent()
+        if rect is not None:
+            extent.combineExtentWith(rect)
+    return extent
