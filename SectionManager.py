@@ -98,8 +98,8 @@ class Section:
 
         self.needToGenerate = True
         self.sectionLength = math.sqrt((self.endX-self.startX)*(self.endX-self.startX) + (self.endY-self.startY)*(self.endY-self.startY))
-        self.westEast = startY == endY
-        self.southNorth = startX == endX
+        self.westEast = (startY == endY)
+        self.southNorth = (startX == endX)
 
         self.group = QgsLayerTreeGroup(self.name)
         self.group.setExpanded(False)
@@ -142,10 +142,10 @@ class Section:
             dp = layer.dataProvider()
             step = min(abs(layer.rasterUnitsPerPixelX()), abs(layer.rasterUnitsPerPixelY()))
             steps =  math.ceil(self.sectionLength / step) + 1
-            dx = (self.endX - self.startX) / step
-            dy = (self.endY - self.startY) / step
-            x = self.startX
-            y = self.startY
+            dx = (self.maxX - self.minX) / step
+            dy = (self.maxY - self.minY) / step
+            x = self.minX
+            y = self.minY
             dist = 0.0
             for i in range(steps):
                 ht, ok = dp.sample(QgsPointXY(x, y), 1)
@@ -158,11 +158,11 @@ class Section:
             # Is this a west-east section
             if self.westEast:
                 for pt in pointList:
-                    pt.setX(pt.x() + self.startX)
+                    pt.setX(pt.x() + self.minX)
             # Or maybe a south-north section
             elif self.southNorth:
                 for pt in pointList:
-                    pt.setX(pt.x() + self.startY)
+                    pt.setX(pt.x() + self.minY)
             
             if len(pointList) > 1:
                 # Variable to hold a feature
@@ -302,10 +302,11 @@ class Section:
                 else:
                     x0 = np.array([self.startX, self.startY, 0.0])
                     for pt in pointList:
+                        -------------- wrong way
                         v0 = pt - x0
                         # Only include if within the section limits
-                        if v0[0] >= 0 and v0[0] <= self.sectionLength:
-                            qPointList.append(QgsPoint(v0[0], v0[2], v0[1]))
+#                        if v0[0] >= 0 and v0[0] <= self.sectionLength:
+                        qPointList.append(QgsPoint(abs(v0[0]), v0[2], v0[1]))
                     
                 # Set the geometry for the new downhole feature
                 fvalid = False
@@ -500,9 +501,13 @@ class SectionManager:
             section.window.close()
             section.window = None
         
-        if section.group != None:
-            section.group.removeAllChildren()
-            self.sectionGroup().removeChildNode(section.group)
+        try:
+            if section.group != None:
+                section.group.removeAllChildren()
+                self.sectionGroup().removeChildNode(section.group)
+        except:
+            # The user probably already removed the section group
+            pass
         
         self.removeSection(section)
         self.drillManager.writeProjectData()
