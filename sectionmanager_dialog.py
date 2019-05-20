@@ -34,6 +34,8 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         
+        self.leSectionWidth.setText(str(self.drillManager.sectionWidth))
+        
         self.fillSectionList()
 
         self.pbMapCanvas.pressed.connect(self.onMapCanvasPressed)        
@@ -59,6 +61,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
                 self.listSection.addItem(item)
         
     def onMapCanvasPressed(self):
+        self.drillManager.sectionWidth = float(self.leSectionWidth.text())
         iface.mapCanvas().activateWindow()
         self.sectionMapTool.oldMapTool = iface.mapCanvas().mapTool()
         iface.mapCanvas().setMapTool( self.sectionMapTool ) 

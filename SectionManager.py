@@ -226,8 +226,6 @@ class Section:
 
             #Loop through plan layer
             for lf in layer.getFeatures():
-                # !!!! ToDo: Can we check the bounding box to reject entire features
-                
                 pdCount = pdCount + 1
                 if pdCount >= pdInc:
                     pdVal = pdVal + 1
@@ -246,16 +244,6 @@ class Section:
                     p = vi.next()
                     tracePolyline.append(qgsToNp(p))
 
-                # Create an array to hold the distance of each point from the plane
-#                distance = []
-                
-                # Calculate the distance of each point from the plane
-#                for pt in tracePolyline:
-#                    d = distancePointFromPlane(pt, self.plane)
-#                    distance.append(d)
-##                    msg = 'p:  {:f} {:f} {:f}   plane:  {:f} {:f} {:f} {:f}    d: {:f}'.format(p[0], p[1], p[2] , plane[0], plane[1], plane[2], plane[3], d)
-##                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
-
                 # Build array of points transalted to the +X axis
                 pr = []
                 for p in tracePolyline:
@@ -263,12 +251,14 @@ class Section:
                     pr.append(self.quat.rotate(pt))
                 
                 # List of points to represent the portion of the line within the section
+                # Note that the pointList array is in Section2D coordinates
                 pointList = []
                 
                 # Build new feature pointlist only for line segments that are inside or cross the section
                 # Loop through the distance array and check each point pair
                 prlen = len(pr)
                 plane = np.array([0.0, 1.0, 0.0, 0.0])
+                halfWidth = self.width/2.0
                 for index, p in enumerate(pr):
                     # We are in Section3D coordinates, so we can reject anything with X less than 0 or greater
                     #   then the section length
@@ -276,61 +266,39 @@ class Section:
                         continue
                     
                     #Now, the distance from the section plane is equivalent to the Y coordinate
-                    if p[1] > self.width:
+                    if p[1] > halfWidth:
                         # The point is in front of the section so check if the line segment passes through
                         # Check that we're nopt on the last point
                         if index < prlen - 1:
-                            if pr[index+1][1] < self.width:
+                            if pr[index+1][1] < halfWidth:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(plane, self.width, p, pr[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, halfWidth, p, pr[index + 1])
                                 if pi is not None:
                                     pointList.append(QgsPoint(pi[0], pi[2], 0.0))
-                    elif p[1] >= -self.width:
+                    elif p[1] >= -halfWidth:
                         # The point is within the section, so add it to the list
                         pointList.append(QgsPoint(p[0], p[2], 0.0))
                         # We still need to check if the following line segment passes out of the section
                         if index < prlen - 1:
-                            if pr[index+1][1] > self.width:
+                            if pr[index+1][1] > halfWidth:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(plane, self.width, p, pr[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, halfWidth, p, pr[index + 1])
                                 if pi is not None:
                                     pointList.append(QgsPoint(pi[0], pi[2], 0.0))
-                            elif pr[index+1][1] < -self.width:
+                            elif pr[index+1][1] < -halfWidth:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, -halfWidth, p, pr[index + 1])
                                 if pi is not None:
                                     pointList.append(QgsPoint(pi[0], pi[2], 0.0))
                     else:
                         # The point is behind the section so check if line segment passes through
                         # Check that we're not on the last point
                         if index < prlen - 1:
-                            if p[1] > -self.width:
+                            if p[1] > -halfWidth:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, -halfWidth, p, pr[index + 1])
                                 if pi is not None:
                                     pointList.append(QgsPoint(pi[0], pi[2], 0.0))
-                # Translate the projected points into a plane based coordinate system
-#                qPointList = []
-#                # Is this a west-east section
-#                if self.westEast:
-#                    for pt in pointList:
-#                        if pt[0] >= self.minX and pt[0] <= self.maxX:
-#                            qPointList.append(QgsPoint(pt[0], pt[2], pt[1]))
-#                # Or maybe a south-north section
-#                elif self.southNorth:
-#                    for pt in pointList:
-#                        # Only include if within the section limits
-#                        if pt[1] >= self.minY and pt[1] <= self.maxY:
-#                            qPointList.append(QgsPoint(pt[1], pt[2], pt[0]))
-#                # Then it must be an oblique section
-#                else:
-#                    x0 = np.array([self.startX, self.startY, 0.0])
-#                    for pt in pointList:
-#                        -------------- wrong way
-#                        v0 = pt - x0
-#                        # Only include if within the section limits
-##                        if v0[0] >= 0 and v0[0] <= self.sectionLength:
-#                        qPointList.append(QgsPoint(abs(v0[0]), v0[2], v0[1]))
                     
                 # Set the geometry for the new downhole feature
                 fvalid = False

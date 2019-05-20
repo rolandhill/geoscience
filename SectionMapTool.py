@@ -46,11 +46,10 @@ class SectionMapTool(QgsMapToolEmitPoint):
         # Get the layers to incude in the section from a dlg
         dlg = SectionMapCanvasDialog()
         dlg.leName.setText(self.suggestName())
-        dlg.leSectionWidth.setText(str(self.drillManager.sectionWidth))
         result = dlg.exec_()
         if result:
             self.drillManager.sectionName = dlg.leName.text()
-            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
+#            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             # Save the name of each checked attribute field in a list
             self.drillManager.sectionLayers = getCheckedLayers(dlg.listLayers)
             self.drillManager.elevationLayers = getCheckedLayers(dlg.listElevation)

@@ -104,8 +104,7 @@ def interpPolyline(depth, segLength, polyline):
     p0 = polyline[i0]
     if ratio > 0.0:
         p1 = polyline[i0 + 1]
-        dp = (p1 - p0) * ratio
-        p = p0 + dp
+        p = QgsPoint(p0.x() + (p1.x() - p0.x()) * ratio, p0.y() + (p1.y() - p0.y()) * ratio, p0.z() + (p1.z() - p0.z()) * ratio)
     else:
         p = p0
     return p, findex

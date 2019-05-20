@@ -41,27 +41,58 @@
        <property name="title">
         <string>New Section</string>
        </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QPushButton" name="pbMapCanvas">
-          <property name="text">
-           <string>Map Canvas</string>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="topMargin">
+           <number>0</number>
           </property>
-         </widget>
+          <item>
+           <widget class="QPushButton" name="pbMapCanvas">
+            <property name="text">
+             <string>Map Canvas</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pbWestEast">
+            <property name="text">
+             <string>West-East</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pbSouthNorth">
+            <property name="text">
+             <string>South-North</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QPushButton" name="pbWestEast">
-          <property name="text">
-           <string>West-East</string>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <property name="topMargin">
+           <number>0</number>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pbSouthNorth">
-          <property name="text">
-           <string>South-North</string>
-          </property>
-         </widget>
+          <item>
+           <widget class="QLineEdit" name="leSectionWidth">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Section width for Map Canvas tool</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>

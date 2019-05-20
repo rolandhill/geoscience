@@ -278,7 +278,7 @@ class DrillManager:
             # Add the first (From) point to the list
             pointList.append(pFrom)
             # Add all the intermediate points (so a long interval accurately reflects the bend of the hole)
-            if math.floor(iTo) - math.ceil(iFrom) > currentTraceSegLength:
+            if math.floor(iTo) - math.ceil(iFrom) > 1:
                 for i in range(math.ceil(iFrom), math.floor(iTo)):
                     pointList.append(currentTracePolyline[i])
             # Add the last (To) point
@@ -647,7 +647,7 @@ class DrillManager:
         # work out a label for the layer from the file name
         label = os.path.splitext(os.path.basename(fileBaseName))[0]
         
-        # Remove trace layer from project if it already exists
+        # Remove layer from project if it already exists
         layer = getLayerByName(label)
         QgsProject.instance().removeMapLayer(layer)
         
