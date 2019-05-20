@@ -13,6 +13,7 @@ from qgis.gui import *
 import numpy as np
 import math
 
+from .quaternion import Quaternion
 from .SectionWindow import *
 from .Utils import *
 
@@ -88,6 +89,18 @@ class Section:
         self.sourceLayers = layerList
         self.sourceElevation = elevationList
 
+        self.origin = np.array([self.startX, self.startY, 0.0])
+        
+        # Calculate angle of rotation around startPoint from +X axis
+        # Translate the end point to make the start point the origin
+        ptx = self.endX - self.startX
+        pty = self.endY - self.startY
+        # Anticlockwise angle from +X axis
+        angle = np.arctan2(pty, ptx)
+        
+        # Now, let's create a quaternion to represent the rotation from the real life section back to +X axis
+        self.quat = Quaternion(axis=[0, 0, 1], radians=-angle)
+        
         # These are different from the start and end variables as a section may be defined 'backwards'
         self.minX = min(self.startX, self.endX)
         self.maxX = max(self.startX, self.endX)
@@ -235,89 +248,96 @@ class Section:
                     tracePolyline.append(qgsToNp(p))
 
                 # Create an array to hold the distance of each point from the plane
-                distance = []
+#                distance = []
                 
                 # Calculate the distance of each point from the plane
-                for pt in tracePolyline:
-                    d = distancePointFromPlane(pt, self.plane)
-                    distance.append(d)
-#                    msg = 'p:  {:f} {:f} {:f}   plane:  {:f} {:f} {:f} {:f}    d: {:f}'.format(p[0], p[1], p[2] , plane[0], plane[1], plane[2], plane[3], d)
-#                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
-                        
+#                for pt in tracePolyline:
+#                    d = distancePointFromPlane(pt, self.plane)
+#                    distance.append(d)
+##                    msg = 'p:  {:f} {:f} {:f}   plane:  {:f} {:f} {:f} {:f}    d: {:f}'.format(p[0], p[1], p[2] , plane[0], plane[1], plane[2], plane[3], d)
+##                    iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
+
+                # Build array of points transalted to the +X axis
+                pr = []
+                for p in tracePolyline:
+                    pt = p - self.origin
+                    pr.append(self.quat.rotate(pt))
+                
                 # List of points to represent the portion of the line within the section
                 pointList = []
                 
                 # Build new feature pointlist only for line segments that are inside or cross the section
                 # Loop through the distance array and check each point pair
-                distlen = len(distance)
-                for index, d in enumerate(distance):
-                    if d > self.width:
+                prlen = len(pr)
+                plane = np.array([0.0, 1.0, 0.0, 0.0])
+                for index, p in enumerate(pr):
+                    #Now, the distance from the section plane is equivalent to the Y coordinate
+                    if p[1] > self.width:
                         # The point is in front of the section so check if the line segment passes through
                         # Check that we're nopt on the last point
-                        if index < distlen - 1:
-                            if distance[index+1] < self.width:
+                        if index < prlen - 1:
+                            if pr[index+1][1] < self.width:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(self.plane, self.width, tracePolyline[index], tracePolyline[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, self.width, p, pr[index + 1])
                                 if pi is not None:
-                                    pointList.append(projectPointToPlane(self.plane, pi))
-                    elif d >= -self.width:
+                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
+                    elif p[1] >= -self.width:
                         # The point is within the section, so add it to the list
-                        pp = projectPointToPlane(self.plane, tracePolyline[index])
-                        pointList.append(pp)
+                        pointList.append(QgsPoint(p[0], 0.0, p[2]))
                         # We still need to check if the following line segment passes out of the section
-                        if index < distlen - 1:
-                            if distance[index+1] > self.width:
+                        if index < prlen - 1:
+                            if pr[index+1][1] > self.width:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(self.plane, self.width, tracePolyline[index], tracePolyline[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, self.width, p, pr[index + 1])
                                 if pi is not None:
-                                    pointList.append(projectPointToPlane(self.plane, pi))
-                            elif distance[index+1] < -self.width:
+                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
+                            elif pr[index+1][1] < -self.width:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(self.plane, -self.width, tracePolyline[index], tracePolyline[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1][1])
                                 if pi is not None:
-                                    pointList.append(projectPointToPlane(self.plane, pi))
+                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
                     else:
                         # The point is behind the section so check if line segment passes through
                         # Check that we're not on the last point
-                        if index < distlen - 1:
-                            if distance[index+1] > -self.width:
+                        if index < prlen - 1:
+                            if p[1] > -self.width:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(self.plane, -self.width, tracePolyline[index], tracePolyline[index + 1])
+                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1][1])
                                 if pi is not None:
-                                    pointList.append(projectPointToPlane(self.plane, pi))
+                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
                 # Translate the projected points into a plane based coordinate system
-                qPointList = []
-                # Is this a west-east section
-                if self.westEast:
-                    for pt in pointList:
-                        if pt[0] >= self.minX and pt[0] <= self.maxX:
-                            qPointList.append(QgsPoint(pt[0], pt[2], pt[1]))
-                # Or maybe a south-north section
-                elif self.southNorth:
-                    for pt in pointList:
-                        # Only include if within the section limits
-                        if pt[1] >= self.minY and pt[1] <= self.maxY:
-                            qPointList.append(QgsPoint(pt[1], pt[2], pt[0]))
-                # Then it must be an oblique section
-                else:
-                    x0 = np.array([self.startX, self.startY, 0.0])
-                    for pt in pointList:
-                        -------------- wrong way
-                        v0 = pt - x0
-                        # Only include if within the section limits
-#                        if v0[0] >= 0 and v0[0] <= self.sectionLength:
-                        qPointList.append(QgsPoint(abs(v0[0]), v0[2], v0[1]))
+#                qPointList = []
+#                # Is this a west-east section
+#                if self.westEast:
+#                    for pt in pointList:
+#                        if pt[0] >= self.minX and pt[0] <= self.maxX:
+#                            qPointList.append(QgsPoint(pt[0], pt[2], pt[1]))
+#                # Or maybe a south-north section
+#                elif self.southNorth:
+#                    for pt in pointList:
+#                        # Only include if within the section limits
+#                        if pt[1] >= self.minY and pt[1] <= self.maxY:
+#                            qPointList.append(QgsPoint(pt[1], pt[2], pt[0]))
+#                # Then it must be an oblique section
+#                else:
+#                    x0 = np.array([self.startX, self.startY, 0.0])
+#                    for pt in pointList:
+#                        -------------- wrong way
+#                        v0 = pt - x0
+#                        # Only include if within the section limits
+##                        if v0[0] >= 0 and v0[0] <= self.sectionLength:
+#                        qPointList.append(QgsPoint(abs(v0[0]), v0[2], v0[1]))
                     
                 # Set the geometry for the new downhole feature
                 fvalid = False
                 if QgsWkbTypes.flatType(sectionLayer.wkbType()) == QgsWkbTypes.Point:
-                    if len(qPointList) > 0:
+                    if len(pointList) > 0:
                         fvalid = True
-                        feature.setGeometry(QgsGeometry(QgsPoint(qPointList[0].x(), qPointList[0].y(), qPointList[0].z())))
+                        feature.setGeometry(QgsGeometry(pointList))
                 else:
-                    if len(qPointList) > 1:
+                    if len(pointList) > 1:
                         fvalid = True
-                        feature.setGeometry(QgsGeometry.fromPolyline(qPointList))
+                        feature.setGeometry(QgsGeometry.fromPolyline(pointList))
 
                 if fvalid:                        
                     # Set the attributes for the new feature
