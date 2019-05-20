@@ -96,8 +96,7 @@ class Section:
         ptx = self.endX - self.startX
         pty = self.endY - self.startY
         # Anticlockwise angle from +X axis
-        angle = np.arctan2(pty, ptx)
-        
+        angle = np.arctan2(pty, ptx)  
         # Now, let's create a quaternion to represent the rotation from the real life section back to +X axis
         self.quat = Quaternion(axis=[0, 0, 1], radians=-angle)
         
@@ -271,6 +270,11 @@ class Section:
                 prlen = len(pr)
                 plane = np.array([0.0, 1.0, 0.0, 0.0])
                 for index, p in enumerate(pr):
+                    # We are in Section3D coordinates, so we can reject anything with X less than 0 or greater
+                    #   then the section length
+                    if p[0] < 0 or p[0] > self.sectionLength:
+                        continue
+                    
                     #Now, the distance from the section plane is equivalent to the Y coordinate
                     if p[1] > self.width:
                         # The point is in front of the section so check if the line segment passes through
