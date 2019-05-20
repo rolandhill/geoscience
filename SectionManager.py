@@ -280,31 +280,31 @@ class Section:
                                 # Find intersection of line segment with plane
                                 pi = lineIntersectOffsetPlane(plane, self.width, p, pr[index + 1])
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
+                                    pointList.append(QgsPoint(pi[0], pi[2], 0.0))
                     elif p[1] >= -self.width:
                         # The point is within the section, so add it to the list
-                        pointList.append(QgsPoint(p[0], 0.0, p[2]))
+                        pointList.append(QgsPoint(p[0], p[2], 0.0))
                         # We still need to check if the following line segment passes out of the section
                         if index < prlen - 1:
                             if pr[index+1][1] > self.width:
                                 # Find intersection of line segment with plane
                                 pi = lineIntersectOffsetPlane(plane, self.width, p, pr[index + 1])
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
+                                    pointList.append(QgsPoint(pi[0], pi[2], 0.0))
                             elif pr[index+1][1] < -self.width:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1][1])
+                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1])
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
+                                    pointList.append(QgsPoint(pi[0], pi[2], 0.0))
                     else:
                         # The point is behind the section so check if line segment passes through
                         # Check that we're not on the last point
                         if index < prlen - 1:
                             if p[1] > -self.width:
                                 # Find intersection of line segment with plane
-                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1][1])
+                                pi = lineIntersectOffsetPlane(plane, -self.width, p, pr[index + 1])
                                 if pi is not None:
-                                    pointList.append(QgsPoint(pi[0], 0.0, pi[2]))
+                                    pointList.append(QgsPoint(pi[0], pi[2], 0.0))
                 # Translate the projected points into a plane based coordinate system
 #                qPointList = []
 #                # Is this a west-east section
@@ -333,7 +333,7 @@ class Section:
                 if QgsWkbTypes.flatType(sectionLayer.wkbType()) == QgsWkbTypes.Point:
                     if len(pointList) > 0:
                         fvalid = True
-                        feature.setGeometry(QgsGeometry(pointList))
+                        feature.setGeometry(QgsGeometry(pointList[0]))
                 else:
                     if len(pointList) > 1:
                         fvalid = True
