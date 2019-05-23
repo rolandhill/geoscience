@@ -15,6 +15,7 @@ import math
 
 from .quaternion import Quaternion
 from .SectionWindow import *
+from .SectionGrid import *
 from .Utils import *
 
 class layerMap:
@@ -127,6 +128,12 @@ class Section:
         layers = self.sectionThroughElevation(self.sourceElevation)
         for layer in layers:
             self.sectionLayers.append(layer)
+
+        if len(self.sectionLayers) > 0:            
+            sg = SectionGrid(self, self.sectionLayers[0].crs())
+            layers = sg.create()
+            for layer in layers:
+                self.sectionLayers.append(layer)
         
     def createWindow(self):
         self.window = SectionWindow(self.sectionLayers)
@@ -201,7 +208,8 @@ class Section:
         # Total number of features for progress bar
         totalFeatures = 0
         for layer in layers:
-            totalFeatures = totalFeatures + layer.featureCount()
+            if layer != None:
+                totalFeatures = totalFeatures + layer.featureCount()
         pdInc = totalFeatures / 100
         pdVal = 0
         pdCount = 0
@@ -397,14 +405,16 @@ class Section:
         key = 'S{:02d}_SourceLayers'.format(index)
         writeProjectData(key, len(self.sourceLayers))
         for li, layer in enumerate(self.sourceLayers):
-            key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
-            writeProjectData(key, layer.name())
+            if layer != None:
+                key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
+                writeProjectData(key, layer.name())
             
         key = 'S{:02d}_ElevationLayers'.format(index)
         writeProjectData(key, len(self.sourceElevation))
         for li, layer in enumerate(self.sourceElevation):
-            key = 'S{:02d}_ElevationLayer{:02d}'.format(index, li)
-            writeProjectData(key, layer.name())
+            if layer != None:
+                key = 'S{:02d}_ElevationLayer{:02d}'.format(index, li)
+                writeProjectData(key, layer.name())
         
     
 # The SectionManager class manipulates and keeps track of all the sections
@@ -442,17 +452,6 @@ class SectionManager:
                 break
         return group
 
-    def groupExtent(self, group):
-        tLayers = group.findLayers()
-        extent = QgsRectangle()
-        for tl in tLayers:
-            l = tl.layer()
-            if l is not None:
-                rect = l.extent()
-                if rect is not None:
-                    extent.combineExtentWith(rect)
-        return extent
-                    
     #Return the root group for all sections or create it if it doesn't exist
     def sectionGroup(self):
         group = None
@@ -479,7 +478,7 @@ class SectionManager:
             else:
                 s.group.setItemVisibilityChecked( False )
                 
-        extent = self.groupExtent(section.group)
+        extent = groupExtent(section.group)
         if not extent.isEmpty():
             extent.grow(10)
             iface.mapCanvas().setExtent(extent)

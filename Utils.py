@@ -14,6 +14,39 @@ import os.path
 import math
 import platform
 
+def gridInterval(request):
+    intervals = [1, 2, 2.5, 4, 5]
+    logIntervals = []
+    for f in intervals:
+        logIntervals.append(math.log10(f))
+    
+    logReq = math.log10(request)
+    iremain = math.floor(logReq)
+    remain = logReq - iremain
+    
+    for i in range(len(intervals) - 1, -1, -1):
+        if logIntervals[i] < remain:
+            res = 10.0 ** (float(iremain) + logIntervals[i])
+            return res
+        
+def gridStart(start, interval):
+        x0 = math.floor(start / interval) * interval
+        if x0 < start:
+            x0 = x0 + interval
+        return x0
+
+def groupExtent(group):
+    tLayers = group.findLayers()
+    extent = QgsRectangle()
+    for tl in tLayers:
+        l = tl.layer()
+        if l is not None:
+            rect = l.extent()
+            if rect is not None:
+                extent.combineExtentWith(rect)
+    return extent
+                    
+    
 def getLayerByName(name):
     layer=None
     layerList = QgsProject.instance().mapLayersByName(name)

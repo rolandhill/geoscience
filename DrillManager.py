@@ -169,7 +169,7 @@ class DrillManager:
         # Set up a progress display
         pd = QProgressDialog()
         pd.setAutoReset(False)
-        pd.setWindowTitle("Build Trace Layer")
+        pd.setWindowTitle("Build Downhole Data Layer")
         pd.setMinimumWidth(500)
         pd.setMinimum(0)
         pd.setMaximum(self.dataLayer.featureCount())
