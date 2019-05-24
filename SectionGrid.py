@@ -69,11 +69,11 @@ class SectionGrid:
         layers.append(layer)
             
         if usingNewLayer:
+            self.setStyle(layer, 'E')
             QgsProject.instance().addMapLayer(layer, False)
             self.section.group.addLayer(layer)
             if dx < dy*0.25:
                 QgsProject.instance().layerTreeRoot().findLayer(layer.id()).setItemVisibilityChecked( False )
-            self.setStyle(layer)
                 
 
         # Build the Y grid
@@ -110,11 +110,11 @@ class SectionGrid:
         layers.append(layer)
             
         if usingNewLayer:
+            self.setStyle(layer, 'N')
             QgsProject.instance().addMapLayer(layer, False)
             self.section.group.addLayer(layer)
             if dy < dx*0.25:
                 QgsProject.instance().layerTreeRoot().findLayer(layer.id()).setItemVisibilityChecked( False )
-            self.setStyle(layer)
 
         # Build the Z grid
         name = self.createSectionGridLayerName(self.section.name) + 'Z'
@@ -146,29 +146,73 @@ class SectionGrid:
         layers.append(layer)
             
         if usingNewLayer:
+            self.setStyle(layer, 'RL')
             QgsProject.instance().addMapLayer(layer, False)
             self.section.group.addLayer(layer)
-            self.setStyle(layer)
+
+        # Build the Border
+        name = self.createSectionGridLayerName(self.section.name) + 'Border'
+        layer = self.section.matchLayer(name)
+        usingNewLayer = False
+        if layer == None:
+            layer = self.createSectionGridLayer(name, self.crs)
+            usingNewLayer = True
+
+        pointList = []
+        pointList.append(QgsPoint(extent.xMinimum(), extent.yMinimum(), 0.0))
+        pointList.append(QgsPoint(extent.xMinimum(), extent.yMaximum(), 0.0))
+        pointList.append(QgsPoint(extent.xMaximum(), extent.yMaximum(), 0.0))
+        pointList.append(QgsPoint(extent.xMaximum(), extent.yMinimum(), 0.0))
+        pointList.append(QgsPoint(extent.xMinimum(), extent.yMinimum(), 0.0))
+        f = QgsFeature()
+        f.setGeometry(QgsGeometry.fromPolyline(pointList))
+        
+        # Set the attributes for the new feature
+        f.setAttributes([0.0])
+
+        # Add the new feature to the new Trace_ layer
+        layer.startEditing()
+        layer.addFeature(f)
+        layer.commitChanges()
+
+        layers.append(layer)
+
+        if usingNewLayer:
+            self.setStyle(layer, labels=False)
+            QgsProject.instance().addMapLayer(layer, False)
+            self.section.group.addLayer(layer)
+
+
 
         return layers
         
         
-    def setStyle(self, layer):
+    def setStyle(self, layer, labelSuffix='', labels=True):
         # Set the line style
         r = layer.renderer()
         r.symbol().setColor(QtGui.QColor('grey'))
         r.symbol().setOpacity(0.5)
 
         #Set the label style
-        layer.triggerRepaint()
-        settings = QgsPalLayerSettings()
-        settings.fieldName = 'Label'
-        settings.formatNumbers = True
-        settings.decimals = 0
-        labeling = QgsVectorLayerSimpleLabeling(settings)
-        layer.setLabeling(labeling)
-        layer.setLabelsEnabled(True)        
-        layer.triggerRepaint()
+        if labels:
+            settings = QgsPalLayerSettings()
+            textFormat = QgsTextFormat()
+            textFormat.setFont(QtGui.QFont("Arial", 10))
+            textFormat.setColor(QtGui.QColor('grey'))
+            textFormat.setOpacity(0.5)
+            settings.setFormat(textFormat)
+            if labelSuffix == '':
+                settings.fieldName = 'Label'
+            else:
+    #            settings.fieldName = 'Label'
+                settings.fieldName = str.format("format( '%%1%%2',  format_number(Label, 0), ' %s')" % labelSuffix)
+                settings.isExpression = True
+            settings.formatNumbers = True
+            settings.decimals = 0
+            settings.placement = QgsPalLayerSettings.Line
+            labeling = QgsVectorLayerSimpleLabeling(settings)
+            layer.setLabeling(labeling)
+            layer.setLabelsEnabled(True)        
         
     def createSectionGridLayerName(self, sectionName):
         name = "S_" + sectionName + "_Grid"
