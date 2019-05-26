@@ -116,6 +116,10 @@ class Section:
 
         self.group = QgsLayerTreeGroup(self.name)
         self.group.setExpanded(False)
+        
+        self.groupDecoration = QgsLayerTreeGroup('Decorations')
+        self.groupDecoration.setExpanded(False)
+        self.group.addChildNode(self.groupDecoration)
 
         # Find equation of the plane and the normal to the plane
         self.plane = verticalPlane(startX, startY, endX, endY)

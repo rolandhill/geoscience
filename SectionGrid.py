@@ -71,7 +71,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, 'E')
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.group.addLayer(layer)
+            self.section.groupDecoration.addLayer(layer)
             if dx < dy*0.25:
                 QgsProject.instance().layerTreeRoot().findLayer(layer.id()).setItemVisibilityChecked( False )
                 
@@ -112,7 +112,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, 'N')
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.group.addLayer(layer)
+            self.section.groupDecoration.addLayer(layer)
             if dy < dx*0.25:
                 QgsProject.instance().layerTreeRoot().findLayer(layer.id()).setItemVisibilityChecked( False )
 
@@ -148,7 +148,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, 'RL')
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.group.addLayer(layer)
+            self.section.groupDecoration.addLayer(layer)
 
         # Build the Border
         name = self.createSectionGridLayerName(self.section.name) + 'Border'
@@ -180,7 +180,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, labels=False)
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.group.addLayer(layer)
+            self.section.groupDecoration.addLayer(layer)
 
 
 
