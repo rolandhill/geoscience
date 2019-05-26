@@ -76,6 +76,13 @@
            <number>0</number>
           </property>
           <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Section width</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QLineEdit" name="leSectionWidth">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -86,11 +93,17 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Section width for Map Canvas tool</string>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-           </widget>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </item>

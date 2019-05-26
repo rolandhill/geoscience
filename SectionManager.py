@@ -178,14 +178,14 @@ class Section:
                 y = y + dy
                 dist = dist + step
                 
-            # Is this a west-east section
-            if self.westEast:
-                for pt in pointList:
-                    pt.setX(pt.x() + self.minX)
-            # Or maybe a south-north section
-            elif self.southNorth:
-                for pt in pointList:
-                    pt.setX(pt.x() + self.minY)
+#            # Is this a west-east section
+#            if self.westEast:
+#                for pt in pointList:
+#                    pt.setX(pt.x() + self.minX)
+#            # Or maybe a south-north section
+#            elif self.southNorth:
+#                for pt in pointList:
+#                    pt.setX(pt.x() + self.minY)
             
             if len(pointList) > 1:
                 # Variable to hold a feature
@@ -200,6 +200,11 @@ class Section:
                 elevationLayers.append(elevLayer)
 
                 if usingNewLayer:
+                    # Set the line style
+                    r = elevLayer.renderer()
+                    r.symbol().setColor(QtGui.QColor('black'))
+                    r.symbol().setWidth(0.5)
+
                     QgsProject.instance().addMapLayer(elevLayer, False)
                     self.group.addLayer(elevLayer)
             

@@ -32,7 +32,7 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
-        self.leSectionWidth.setText(str(self.drillManager.sectionWidth))
+#        self.leSectionWidth.setText(str(self.drillManager.sectionWidth))
         
         if dirWestEast == True:
             self.leCenter.setText(str(self.drillManager.sectionNorth))
@@ -53,7 +53,7 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.leCenter.setValidator(QDoubleValidator())
         self.leLimitMin.setValidator(QDoubleValidator())
         self.leLimitMax.setValidator(QDoubleValidator())
-        self.leSectionWidth.setValidator(QDoubleValidator())
+#        self.leSectionWidth.setValidator(QDoubleValidator())
 
         fillVectorLayersForSection(self.listLayers)
         fillRasterLayersForSection(self.listElevation)

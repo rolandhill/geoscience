@@ -67,6 +67,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         iface.mapCanvas().setMapTool( self.sectionMapTool ) 
     
     def onWestEastPressed(self):
+        self.drillManager.sectionWidth = float(self.leSectionWidth.text())
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
         result = dlg.exec_()
         if result:
@@ -74,7 +75,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.drillManager.sectionLimitWest = float(dlg.leLimitMin.text())
             self.drillManager.sectionLimitEast = float(dlg.leLimitMax.text())
             self.drillManager.sectionWEName = dlg.leName.text()
-            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
+#            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             
             self.drillManager.sectionLayers = getCheckedLayers(dlg.listLayers)
             self.drillManager.elevationLayers = getCheckedLayers(dlg.listElevation)
@@ -93,6 +94,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.sectionManager.showSection(s)
         
     def onSouthNorthPressed(self):
+        self.drillManager.sectionWidth = float(self.leSectionWidth.text())
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
         result = dlg.exec_()
         if result:
@@ -100,7 +102,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.drillManager.sectionLimitSouth = float(dlg.leLimitMin.text())
             self.drillManager.sectionLimitNorth = float(dlg.leLimitMax.text())
             self.drillManager.sectionSNName = dlg.leName.text()
-            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
+#            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())
             
             self.drillManager.sectionLayers = getCheckedLayers(dlg.listLayers)
             self.drillManager.elevationLayers = getCheckedLayers(dlg.listElevation)

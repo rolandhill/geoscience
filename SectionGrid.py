@@ -33,6 +33,7 @@ class SectionGrid:
         
         # This is section2D cooridnates
         extent = groupExtent(self.section.group)
+        extent.grow(10)
 
         # Build the X grid
         name = self.createSectionGridLayerName(self.section.name) + 'X'
