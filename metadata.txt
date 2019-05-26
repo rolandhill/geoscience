@@ -10,11 +10,11 @@
 name=Geoscience
 qgisMinimumVersion=3.2
 description=Tools for Geoscience & Exploration
-version=0.7
+version=1.0
 author=Roland Hill
-email=roland.hill@mmg.com
+email=roleyhill@gmail.com
 
-about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Vector tools</li><li>Raster tools</li></ul> Send ideas & requests to roland.hill@mmg.com
+about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Drill hole sections</li><li>Vector tools</li><li>Raster tools</li></ul> Send ideas & requests to roleyhill@gmail.com
 
 tracker=https://github.com/rolandhill/geoscience/issues
 repository=https://github.com/rolandhill/geoscience
@@ -23,8 +23,11 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog= 0.7
-    -Ensure drill hole ids are strings and collar coorindates, survey data and downhole distances are numbers.
+changelog= 1.0
+	-Generate and display drill sections.
+	
+  0.7
+    -Ensure drill hole ids are strings and collar coordinates, survey data and down hole distances are numbers.
 	-Add Readme markdown and license file (Thanks KoalaGeo).
   0.62
     -Fix log file path issue on Linux.
@@ -34,7 +37,7 @@ changelog= 0.7
     -Initial Release
 
 # Tags are comma separated with spaces allowed
-tags=python, geoscience, geology, geophysics, drill, drillhole, hole, drilling, borehole, well
+tags=python, geoscience, geology, geophysics, drill, drillhole, hole, drilling, borehole, well, section
 
 homepage=https://rolandhill.github.io/geoscience/
 category=Plugins
