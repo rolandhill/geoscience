@@ -25,7 +25,6 @@ repository=https://github.com/rolandhill/geoscience
 # Uncomment the following line and add your changelog:
 changelog= 1.0
 	-Generate and display drill sections.
-	
   0.7
     -Ensure drill hole ids are strings and collar coordinates, survey data and down hole distances are numbers.
 	-Add Readme markdown and license file (Thanks KoalaGeo).

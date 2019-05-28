@@ -36,14 +36,14 @@ code {
 </style>
 </head>
 <body>
-<h1 id="qgis-Geoscience-plugin">QGIS Geoscience Plugin</h1>
+<h1 id="qgis-Geoscience-plugin">QGIS Geoscience Plugin 1.0</h1>
 <em>Roland Hill</em>
 <br>
 <em>Your name here! - Please contribute and make this a better, more comprehensive geoscience tool.</em>
 
 <p><strong><em>Geoscience</em></strong> has the following tools available from the Geoscience menu or accessible from the Geoscience toolbar.</p>
 <ul>
-<li><img src="icon/DrillSection.png" /> <strong>Drill Hole Display: </strong> Desurvey holes, project drill hole traces to surface and create surface projects of down hole data. </li>
+<li><img src="icon/DrillSection.png" /> <strong>Drill Hole Tools: </strong> Desurvey holes, project drill hole traces to surface with and without down hole data, generate & display sections. </li>
 <li><img src="icon/ReverseLine.png" /> <strong>Reverse Line Direction: </strong> Reverse the direction of lines. This is needed when using non-symmetric line symbology (eg normal faults). </li>
 <li><img src="icon/BlackTransparent.png" /> <strong>Transparent Rasters: </strong> Transparent black or white pixels for all selected images (great for EM channels, remote sensing channels etc).</li>
 </ul>
@@ -51,10 +51,9 @@ code {
 <ul>
 <li><a href="#drill-tools">Drill Hole Tools</a></li>
 	<ul>
-	<li><a href="#drill-setup"><img src="icon/DrillSetup.png"/> Drill Setup</a></li>
 	<li><a href="#drill-desurvey"><img src="icon/Desurvey.png"/>Desurvey Data</a></li>
-	<li><a href="#drill-trace"><img src="icon/DrillPlan.png"/>Display Traces</a></li>
-	<li><a href="#drill-section"><img src="icon/DrillSection.png"/>Create Section</a></li>
+	<li><a href="#drill-trace"><img src="icon/DrillPlan.png"/>Downhole Data</a></li>
+	<li><a href="#drill-section"><img src="icon/DrillSection.png"/>Section Manager</a></li>
 	</ul>
 <li><a href="#vector-tools">Vector Tools</a></li>
 	<ul>
@@ -62,24 +61,53 @@ code {
 	</ul>
 <li><a href="#raster-tools">Raster Tools</a></li>
 	<ul>
-	<li><a href="#transparent-white"><img src="icon/WhiteTransparent.png"/>Make White Transparent</a></li>
-	<li><a href="#transparent-black"><img src="icon/BlackTransparent.png"/>Make Black Transparent</a></li>
+	<li><a href="#transparent-white"><img src="icon/WhiteTransparent.png"/>Transparent White</a></li>
+	<li><a href="#transparent-black"><img src="icon/BlackTransparent.png"/>Transparent Black</a></li>
 	</ul>
 </ul>
 <h2 id="drill-tools"><a name="drill-tools"></a> <img src="icon/DrillSection.png" /> Drill Tools</h2>
 
-<p>Tools to display drill holes and down hole data in QGIS. This includes de-surveying the holes using collar azimuth and dip or a survey table if available. Prior to using Drill Tools you need to open the collar, survey (optional) and down hole data (optional) tables in QGIS. You can use any format supported by QGIS including shapefiles, MapInfo Tab files or CSV files. To open data using CSV, use the existing Delimited Text tool <img src="doc/csv.png" />. Drill Tools will only work with projected coordinate systems (ie not latitude and longitude)</p>
-<p>The workflow to display the surface projection of drill traces is:
+<p>Tools to display drill holes, down hole data and sections in QGIS. This includes de-surveying the holes using collar azimuth and dip and/or survey data. Prior to using Drill Tools you need to open the collar, survey (optional) and down hole data (optional) tables in QGIS. You can use any format supported by QGIS including shapefiles, MapInfo Tab files or CSV files (Note: Geoscience doesn't support database layers yet. If your data is in a database, first export your layers as Geopackage, Shapefile etc). To open data using CSV, use the existing Delimited Text tool <img src="doc/csv.png" />. Drill Tools will only work with projected coordinate systems (ie not latitude and longitude)</p>
+<p>Geoscience will create new layers with names based on the original file names. It's suggested to give your original files short, simple names (eg. Collar.shp, Assay.csv etc). Once Geoscience has created a file name then you shouldn't change it because Geoscience might not be able to identify the file again.</p>
+<p>The workflow to display the surface projection of drill traces follows. You will also need to do this if you want to display sections.
 <ol>
 <li>Open the <b>Collar</b> layer. If using the Delimited Text tool in QGIS, select <b>Point Geometry</b> and the appropriate columns for Easting and Northing, followed by the Coordinate Reference System.</li>
 <li>(Optional) Open the <b>Survey</b> layer. If using the Delimited Text tool in QGIS, select <b>No Geometry</b> to just import the data columns.</li>
 <li>(Optional) Open the <b>Down hole data</b> layers. You can use multiple layers (eg. lithology and assay) and if you are using the Delimited Text tool in QGIS, select <b>No Geometry</b> to just import the data columns.</li>
-<li>Choose <em>Geoscience -> Drilling -> Drill Setup</em>. Fill in the dialog with the Collar and Survey (if available) layers, then choose the appropriate attribute fields. All will be guessed by Geoscience if sensible names have been used.</li>
-<li>Choose the <b>Desurvey Length</b>. Drill holes will be reconstructed using straight line segments of this length.</li>
-<li>Choose <em>Geoscience -> Drilling -> Desurvey Data</em>. A new layer is created and loaded in QGIS. You can now see the surface projection of drill holes.</li>
-<li>Choose <em>Geoscience -> Drilling -> Display Traces</em>. Choose the source Downhole Data layer and the appropriate attribute fields. Again, these are chosen automatically if sensible names are used. Check all the attribute fields that you want to include in the downhole data layer to be created. <b>You also need to provide a brief descriptive name</b> to be appended to the layer name.</li>
+<li>Choose <em>Geoscience -> Drilling -> Desurvey Data</em> or click the <img src="icon/Desurvey.png" /> button on the toolbar. Select the appropriate fields. Note that all fields will be guessed by Geoscience if sensible names have been used. Choose the <b>Desurvey Length</b>. Drill holes will be reconstructed using straight line segments of this length. Click OK and a new layer is created and loaded in QGIS. You can now see the surface projection of drill holes.</li>
+<li>Choose <em>Geoscience -> Drilling -> Downhole Data</em> or click the <img src="icon/DrillPlan.png" /> button on the toolbar. Choose the source Downhole Data layer and the appropriate attribute fields. Again, these are chosen automatically if sensible names are used. Check all the attribute fields that you want to include in the downhole data layer to be created. <b>You also need to provide a brief descriptive name</b> to be appended to the layer name (a default is provided).</li>
 <li>The downhole trace layer is created and loaded into QGIS with each row containing one line segment for each interval from the source. You then need to Symbolise the new layer to display the attributes as you desire.</li>
 </ol>
+
+<h2 id="sections"><a name="sections"></a>Sections</h2>
+<p>Sections are generated by defining start and end coordinates, a width and which layers to include in the section. Sections will be transformed to a new coordinate system based on distance along the section from the start point and the real elevation as calculated in the <b>Desurvey</b> stage. This means that your sections are displayed on the same map canvas as the rest of your data. Usually this will be in a different part of space to your normal, plan-based spatial data and won't be a problem. If your regular data uses coordinates near 0E, 0N, then you might want to move it all to a single group in the Layer Tree so that you can switch it on and off easily. Sections will be placed in their own group.</p>
+<p>Geoscience will store all the metadata required to recreate a section in your QGIS Project file. Generated section layers are only <b>Memory Layers</b> and will be lost when QGIS is closed, however they can easily be regenerated when you open your project again. Similarly, you can remove sections from the Layer Tree and then regenerate them later. The only way to delete sections permanently is via the Section Manager.</p>
+<p>The <b>Section Manager</b> displays all sections in the box on the left. You can double click sections in the box to display them. Also, the <b>Section</b> layer tree group is set as mutually exclusive, so you can switch between sections by clicking their groups on and off.</p>
+<p>You can <b>Recreate</b> or <b>Delete</b> multiple sections by selecting their check boxes first. When you recreate a section, Geoscience will replace any existing empty Memory Layers already in the section's group in the layer tree.</p>
+<p>Geoscience will create a top level Group called <em>Sections</em>. All sections you create will be placed under this in their own Group so that you can switch all the section layers on and off together.</p>
+<p>Sections are normal QGIS layers. You can use any of the Symbology, labelling tools etc as normal. You can also create a Layout to produced scaled and annotated plots.</p>
+<p>Geoscience will generate three grids and a border with every section. These are placed in a <b>Decorations</b> group so that they can be toggled on and off together. The three grids show where lines of Easting, Northing and Elevation cross the section line. If your section is close to west-east or south-north then one of the grids will be turned off by default. You can turn any of the three grids or border on or off independently.</p>
+
+<p>To generate and display sections.
+<ol>
+<li>When a section is created, Geoscience copies the style from your down hole data layers to the new section. You should therefore make sure that you are happy with your down hole data styles before generating sections. Note that you can change the down hole data style later, then regenerate the sections to update the section styles if required, but better to get it right the first time.</li>
+<li>Open the <b>Section Manager</b> by choosing <em>Geoscience -> Drilling -> Section Manager</em> or click the <img src="icon/DrillSection.png" /> button on the toolbar.</li>
+<li>Type in your desired <b>section width</b>.</li>
+<li>You have three options to create a section:
+<ul>
+<li><b>Map Canvas</b> - Use the mouse to draw a section line on the map canvas.</li>
+<li><b>West-East</b> - Type in the Northing plus start and end Easting for the section.</li>
+<li><b>South-North</b> - Type in the Easting plus start and end Northing for the section.</li>
+</ul>
+</li>
+<li>If Map Canvas is chosen, you then click and drag a section to define the end points. Geoscience will display a moving box of defined section width to assist you. Your section is defined when you release the mouse button.</li>
+<li>Once a Map Canvas section is defined, or when you choose to define an orthogonal section, a dialog will ask you to select which vector and raster layers you want to include and choose a name for the section. Check the boxes next to the desired levels then click OK. Note that only vector layers with 3D coordinates and single band raster layers are displayed.</li>
+<li>It may take some time to generate the section depending on how many drill holes you have. Once completer, a new drill hole will be added to the Section Manager, a new group containing your section is added to the Layer Tree and the Map Canvas will zoom to your new section. (see Sections for more information)</li>
+</ol>
+
+<h2 id="section_interp"><a name="section_interp"></a>Section Interpretation</h2>
+<p>You can use QGIS' standard tools to interpret on sections. Create a new vector layer and place it in under the section group with the rest of the layers. This way it will be turned on and off with all the automatically generated layers. When you save your QGIS Project, your interpretation layers will be saved with it. When you re-open your Project and recreate your sections, the Geoscience layers will replace the empty place-holders and your section will be returned to the way you left it.</p>
+<p>Don't delete your section in the Section Manager if you have custom interpretation layers. If you do, then you will need to make the section again and move the features from your interpretation layer to match the section.</p>
 
 <h2 id="vector-tools"><a name="vector-tools"></a> <img src="icon/ReverseLine.png" /> Vector Tools</h2>
 <ul>
@@ -95,9 +123,7 @@ code {
 <h2 id="whats-next">What's Next?</h2>
 <ul>
 	<li>Better bad data handling & reporting</li>
-    <li>Drill sections</li>
 	<li>Downhole graphs</li>
-	<li>Downhole labels</li>
     <li>Easy dip symbol display</li>
 </ul>
 <p>
