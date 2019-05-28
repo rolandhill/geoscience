@@ -163,12 +163,12 @@ class Section:
             pointList = []
 
             dp = layer.dataProvider()
-            step = min(abs(layer.rasterUnitsPerPixelX()), abs(layer.rasterUnitsPerPixelY()))
+            step = min(math.fabs(layer.rasterUnitsPerPixelX()), math.fabs(layer.rasterUnitsPerPixelY()))
             steps =  math.ceil(self.sectionLength / step) + 1
-            dx = (self.maxX - self.minX) / step
-            dy = (self.maxY - self.minY) / step
-            x = self.minX
-            y = self.minY
+            dx = (self.endX - self.startX) / float(steps)
+            dy = (self.endY - self.startY) / float(steps)
+            x = self.startX
+            y = self.startY
             dist = 0.0
             for i in range(steps):
                 ht, ok = dp.sample(QgsPointXY(x, y), 1)
@@ -368,6 +368,14 @@ class Section:
                 break
         return layer
 
+    def matchDecorationLayer(self, name):
+        layer = None
+        for child in self.groupDecoration.children():
+            if child.name() == name:
+                layer = child.layer()
+                break
+        return layer
+
     def createSectionLayerName(self, baseLayer, sectionName):
         name = "S_" + sectionName + "_" + baseLayer.name()[baseLayer.name().rfind("_"):]
         return name
@@ -440,7 +448,9 @@ class SectionManager:
         # Re-assign the layerTreeGroup if a matching one already exists
         group = self.matchGroup(s)
         if group != None:
-#            iface.messageBar().pushMessage("Debug", group.name(), level=Qgis.Warning)
+            dgroup = self.matchDecorationGroup(s)
+            if dgroup != None:
+                s.groupDecoration = dgroup
             s.group = group
         else:
             sectionGroup.addChildNode(s.group)
@@ -452,6 +462,15 @@ class SectionManager:
         
         return s
 
+    def matchDecorationGroup(self, section):
+        group = None
+        for child in section.group.children():
+            if isinstance(child, QgsLayerTreeGroup) and child.name() == "Decorations":
+                group = child
+                break
+        return group
+        
+        
     def matchGroup(self, section):
         group = None
         sgroup = self.sectionGroup()

@@ -37,7 +37,7 @@ class SectionGrid:
 
         # Build the X grid
         name = self.createSectionGridLayerName(self.section.name) + 'X'
-        layer = self.section.matchLayer(name)
+        layer = self.section.matchDecorationLayer(name)
         usingNewLayer = False
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)
@@ -79,7 +79,7 @@ class SectionGrid:
 
         # Build the Y grid
         name = self.createSectionGridLayerName(self.section.name) + 'Y'
-        layer = self.section.matchLayer(name)
+        layer = self.section.matchDecorationLayer(name)
         usingNewLayer = False
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)
@@ -119,7 +119,7 @@ class SectionGrid:
 
         # Build the Z grid
         name = self.createSectionGridLayerName(self.section.name) + 'Z'
-        layer = self.section.matchLayer(name)
+        layer = self.section.matchDecorationLayer(name)
         usingNewLayer = False
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)
@@ -153,7 +153,7 @@ class SectionGrid:
 
         # Build the Border
         name = self.createSectionGridLayerName(self.section.name) + 'Border'
-        layer = self.section.matchLayer(name)
+        layer = self.section.matchDecorationLayer(name)
         usingNewLayer = False
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)

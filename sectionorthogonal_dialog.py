@@ -54,6 +54,8 @@ class SectionOrthogonalDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.leLimitMin.setValidator(QDoubleValidator())
         self.leLimitMax.setValidator(QDoubleValidator())
 #        self.leSectionWidth.setValidator(QDoubleValidator())
+        self.checkSelectAllLayers.setChecked(True)
+        self.checkSelectAllElevation.setChecked(True)
 
         fillVectorLayersForSection(self.listLayers)
         fillRasterLayersForSection(self.listElevation)

@@ -27,6 +27,9 @@ class SectionMapCanvasDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
+        self.checkSelectAllLayers.setChecked(True)
+        self.checkSelectAllElevation.setChecked(True)
+
         self.checkSelectAllLayers.toggled.connect(self.onSelectAllCheckedLayers)
         self.checkSelectAllElevation.toggled.connect(self.onSelectAllCheckedElevation)
 
