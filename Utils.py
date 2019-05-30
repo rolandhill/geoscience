@@ -39,13 +39,20 @@ def groupExtent(group):
     tLayers = group.findLayers()
     extent = QgsRectangle()
     for tl in tLayers:
+        if tl.parent().name() == 'Decorations':
+            continue
         l = tl.layer()
         if l is not None:
             rect = l.extent()
             if rect is not None:
                 extent.combineExtentWith(rect)
     return extent
-                    
+
+def clearLayer(layer):
+    with edit(layer):
+        ids = [f.id() for f in layer.getFeatures()]
+        for f in layer.getFeatures():
+            layer.deleteFeatures(ids)                    
     
 def getLayerByName(name):
     layer=None
@@ -168,7 +175,7 @@ def fillVectorLayersForSection(listWidget):
     listLayerZ = []
     layers = QgsProject.instance().mapLayers()
     for name, layer in layers.items():
-        if layer.type() == QgsMapLayer.VectorLayer and layer.name()[:2] != "S_":
+        if layer.type() == QgsMapLayer.VectorLayer and layer.name()[:2] != "S_" and layer.name() != "Section_Plan":
             if QgsWkbTypes.coordDimensions(layer.wkbType()) >= 3:
                 listLayerZ.append(layer)
     

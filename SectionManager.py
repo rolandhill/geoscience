@@ -117,10 +117,6 @@ class Section:
         self.group = QgsLayerTreeGroup(self.name)
         self.group.setExpanded(False)
         
-        self.groupDecoration = QgsLayerTreeGroup('Decorations')
-        self.groupDecoration.setExpanded(False)
-        self.group.addChildNode(self.groupDecoration)
-
         # Find equation of the plane and the normal to the plane
         self.plane = verticalPlane(startX, startY, endX, endY)
 
@@ -158,6 +154,8 @@ class Section:
             if elevLayer == None:
                 elevLayer = self.createSectionElevationLayer(layer, newName)
                 usingNewLayer = True
+            else:
+                clearLayer(elevLayer)
 
             # List of points to represent the portion of the line within the section
             pointList = []
@@ -178,15 +176,6 @@ class Section:
                 y = y + dy
                 dist = dist + step
                 
-#            # Is this a west-east section
-#            if self.westEast:
-#                for pt in pointList:
-#                    pt.setX(pt.x() + self.minX)
-#            # Or maybe a south-north section
-#            elif self.southNorth:
-#                for pt in pointList:
-#                    pt.setX(pt.x() + self.minY)
-            
             if len(pointList) > 1:
                 # Variable to hold a feature
                 feature = QgsFeature()
@@ -240,6 +229,8 @@ class Section:
             if sectionLayer == None:
                 sectionLayer = self.createSectionLayer(layer, newName)
                 usingNewLayer = True
+            else:
+                clearLayer(sectionLayer)
 
             #Loop through plan layer
             for lf in layer.getFeatures():
@@ -261,7 +252,7 @@ class Section:
                     p = vi.next()
                     tracePolyline.append(qgsToNp(p))
 
-                # Build array of points transalted to the +X axis
+                # Build array of points transalted to the +X axis (Section3D coordinates)
                 pr = []
                 for p in tracePolyline:
                     pt = p - self.origin
@@ -272,24 +263,34 @@ class Section:
                 pointList = []
                 
                 # Build new feature pointlist only for line segments that are inside or cross the section
-                # Loop through the distance array and check each point pair
                 prlen = len(pr)
+                # Equation of a plane in Section3D coordinates
                 plane = np.array([0.0, 1.0, 0.0, 0.0])
+                # We only want to go half the section width each side of the section plane
                 halfWidth = self.width/2.0
+                # Loop through the array of Section3D points
                 for index, p in enumerate(pr):
                     # We are in Section3D coordinates, so we can reject anything with X less than 0 or greater
-                    #   then the section length
-                    if p[0] < 0 or p[0] > self.sectionLength:
-                        continue
+                    #   than the section length
+#                    if p[0] < 0 or p[0] > self.sectionLength:
+#                        continue
                     
-                    #Now, the distance from the section plane is equivalent to the Y coordinate
+                    # The distance from the section plane is equivalent to the Y coordinate
                     if p[1] > halfWidth:
-                        # The point is in front of the section so check if the line segment passes through
-                        # Check that we're nopt on the last point
+                        # The point is in front of the section so check if the line segment passes through into the section
+                        # Check that we're not on the last point
                         if index < prlen - 1:
                             if pr[index+1][1] < halfWidth:
                                 # Find intersection of line segment with plane
                                 pi = lineIntersectOffsetPlane(plane, halfWidth, p, pr[index + 1])
+                                if pi is not None:
+#                                    iface.messageBar().pushMessage("Debug", "Cross front plane: %f,  %f,  %f"%(pi[0], pi[1], pi[2]), level=Qgis.Info)
+                                    pointList.append(QgsPoint(pi[0], pi[2], 0.0))
+                            # If the line pases through the entire section and out the other side, then we need to
+                            #   add a point for the far side as well, otherwise it will get missed
+                            if pr[index+1][1] <= -halfWidth:
+                                # Find intersection of line segment with plane
+                                pi = lineIntersectOffsetPlane(plane, -halfWidth, p, pr[index + 1])
                                 if pi is not None:
                                     pointList.append(QgsPoint(pi[0], pi[2], 0.0))
                     elif p[1] >= -halfWidth:
@@ -311,10 +312,20 @@ class Section:
                         # The point is behind the section so check if line segment passes through
                         # Check that we're not on the last point
                         if index < prlen - 1:
-                            if p[1] > -halfWidth:
+                            # If
+                            if pr[index+1][1] > -halfWidth:
                                 # Find intersection of line segment with plane
                                 pi = lineIntersectOffsetPlane(plane, -halfWidth, p, pr[index + 1])
                                 if pi is not None:
+#                                    iface.messageBar().pushMessage("Debug", "Cross back plane: %f,  %f,  %f"%(pi[0], pi[1], pi[2]), level=Qgis.Info)
+                                    pointList.append(QgsPoint(pi[0], pi[2], 0.0))
+                            # If the line pases through the entire section and out the other side, then we need to
+                            #   add a point for the far side as well, otherwise it will get missed
+                            if pr[index+1][1] >= halfWidth:
+                                # Find intersection of line segment with plane
+                                pi = lineIntersectOffsetPlane(plane, halfWidth, p, pr[index + 1])
+                                if pi is not None:
+#                                    iface.messageBar().pushMessage("Debug", "Cross back plane: %f,  %f,  %f"%(pi[0], pi[1], pi[2]), level=Qgis.Info)
                                     pointList.append(QgsPoint(pi[0], pi[2], 0.0))
                     
                 # Set the geometry for the new downhole feature
@@ -368,9 +379,24 @@ class Section:
                 break
         return layer
 
+    def decorationGroup(self):
+        group = None
+        for child in self.group.children():
+            if isinstance(child, QgsLayerTreeGroup) and child.name() == "Decorations":
+                group = child
+                break
+        
+        if group == None:
+            self.groupDecoration = QgsLayerTreeGroup('Decorations')
+            self.groupDecoration.setExpanded(False)
+            self.group.addChildNode(self.groupDecoration)
+            group = self.groupDecoration
+            
+        return group
+
     def matchDecorationLayer(self, name):
         layer = None
-        for child in self.groupDecoration.children():
+        for child in self.decorationGroup().children():
             if child.name() == name:
                 layer = child.layer()
                 break
@@ -448,28 +474,42 @@ class SectionManager:
         # Re-assign the layerTreeGroup if a matching one already exists
         group = self.matchGroup(s)
         if group != None:
-            dgroup = self.matchDecorationGroup(s)
-            if dgroup != None:
-                s.groupDecoration = dgroup
             s.group = group
         else:
             sectionGroup.addChildNode(s.group)
         
         self.sectionReg.append(s)
+        
+        # Add section line to SectionPlan
+        layer = self.sectionPlanLayer()
+        pointList = []
+        pointList.append(QgsPoint(startX, startY, 0.0))
+        pointList.append(QgsPoint(endX, endY, 0.0))
+        f = QgsFeature()
+        f.setGeometry(QgsGeometry.fromPolyline(pointList))
+        
+        # Set the attributes for the new feature
+        f.setAttributes([name])
+
+        # Add the new feature to the new Trace_ layer
+        layer.startEditing()
+        layer.addFeature(f)
+        layer.commitChanges()
+        
 
         if writeProjectData:
             self.drillManager.writeProjectData()
         
         return s
 
-    def matchDecorationGroup(self, section):
-        group = None
-        for child in section.group.children():
-            if isinstance(child, QgsLayerTreeGroup) and child.name() == "Decorations":
-                group = child
-                break
-        return group
-        
+    def sectionPlanLayer(self):
+        layer = getLayerByName("Section_Plan")
+        if layer == None:
+            layer = self.createSectionPlanLayer()
+            QgsProject.instance().addMapLayer(layer, False)
+            root = QgsProject.instance().layerTreeRoot()
+            root.insertLayer(0, layer)
+        return layer
         
     def matchGroup(self, section):
         group = None
@@ -538,6 +578,42 @@ class SectionManager:
     def removeSection(self, section):
         self.sectionReg.remove(section)
         
+    def createSectionPlanLayer(self):
+        #Create a new memory layer to hols the plan view of the section lines
+        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "Section_Plan", "memory")
+        crs = self.sectionReg[0].sourceLayers[0].crs()
+        layer.setCrs(crs)
+        atts = []
+        # Loop through the list of desired field names that the user checked
+        atts.append(QgsField("Name",  QVariant.String, "string", 80, 0))
+        
+        # Add all the attributes to the new layer
+        dp = layer.dataProvider()
+        dp.addAttributes(atts)
+        
+        # Tell the vector layer to fetch changes from the provider
+        layer.updateFields() 
+
+        # Set the line style
+        r = layer.renderer()
+        r.symbol().setColor(QtGui.QColor('red'))
+        r.symbol().setWidth(0.5)
+
+        #Set the label style
+        settings = QgsPalLayerSettings()
+        textFormat = QgsTextFormat()
+        textFormat.setFont(QtGui.QFont("Arial", 10))
+        textFormat.setColor(QtGui.QColor('red'))
+        textFormat.setOpacity(1.0)
+        settings.setFormat(textFormat)
+        settings.fieldName = 'Name'
+        settings.placement = QgsPalLayerSettings.Line
+        labeling = QgsVectorLayerSimpleLabeling(settings)
+        layer.setLabeling(labeling)
+        layer.setLabelsEnabled(True)        
+
+        return layer
+
     def readProjectData(self):
         self.sectionReg.clear()
 #        self.sectionGroup().removeAllChildren()

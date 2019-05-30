@@ -42,14 +42,18 @@ class SectionGrid:
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)
             usingNewLayer = True
+        else:
+            clearLayer(layer)
             
         intx = 0    
         if dx != 0:
             intx = gridInterval(dx / numGridLines)
             x = gridStart(self.section.minX, intx)
+#            msg = "dx: %f    intx: %f" % (dx, intx)
+#            iface.messageBar().pushMessage("Debug", msg, level=Qgis.Warning)
             while x < self.section.maxX:
-                y = ((x - self.section.minX)/(self.section.maxX - self.section.minX)) * (self.section.maxY - self.section.minY) + self.section.minY
-                pt = np.array([x - self.section.minX, y - self.section.minY, 0.0])
+                y = ((x - self.section.startX)/(self.section.endX - self.section.startX)) * (self.section.endY - self.section.startY) + self.section.startY
+                pt = np.array([x - self.section.startX, y - self.section.startY, 0.0])
                 rpt = self.section.quat.rotate(pt)
                 pointList = []
                 pointList.append(QgsPoint(rpt[0], extent.yMaximum(), 0.0))
@@ -72,7 +76,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, 'E')
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.groupDecoration.addLayer(layer)
+            self.section.decorationGroup().addLayer(layer)
             if dx < dy*0.25:
                 QgsProject.instance().layerTreeRoot().findLayer(layer.id()).setItemVisibilityChecked( False )
                 
@@ -84,13 +88,16 @@ class SectionGrid:
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)
             usingNewLayer = True
+        else:
+            clearLayer(layer)
+
         inty = 0    
         if dy != 0:
             inty = gridInterval(dy / numGridLines)
             y = gridStart(self.section.minY, inty)
             while y < self.section.maxY:
-                x = ((y - self.section.minY)/(self.section.maxY - self.section.minY)) * (self.section.maxX - self.section.minX) + self.section.minX
-                pt = np.array([x - self.section.minX, y - self.section.minY, 0.0])
+                x = ((y - self.section.startY)/(self.section.endY - self.section.startY)) * (self.section.endX - self.section.startX) + self.section.startX
+                pt = np.array([x - self.section.startX, y - self.section.startY, 0.0])
                 rpt = self.section.quat.rotate(pt)
                 pointList = []
                 pointList.append(QgsPoint(rpt[0], extent.yMaximum(), 0.0))
@@ -113,7 +120,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, 'N')
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.groupDecoration.addLayer(layer)
+            self.section.decorationGroup().addLayer(layer)
             if dy < dx*0.25:
                 QgsProject.instance().layerTreeRoot().findLayer(layer.id()).setItemVisibilityChecked( False )
 
@@ -124,6 +131,8 @@ class SectionGrid:
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)
             usingNewLayer = True
+        else:
+            clearLayer(layer)
             
         intz = max(intx, inty)
         z = gridStart(extent.yMinimum(), intz)
@@ -149,7 +158,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, 'RL')
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.groupDecoration.addLayer(layer)
+            self.section.decorationGroup().addLayer(layer)
 
         # Build the Border
         name = self.createSectionGridLayerName(self.section.name) + 'Border'
@@ -158,6 +167,8 @@ class SectionGrid:
         if layer == None:
             layer = self.createSectionGridLayer(name, self.crs)
             usingNewLayer = True
+        else:
+            clearLayer(layer)
 
         pointList = []
         pointList.append(QgsPoint(extent.xMinimum(), extent.yMinimum(), 0.0))
@@ -181,7 +192,7 @@ class SectionGrid:
         if usingNewLayer:
             self.setStyle(layer, labels=False)
             QgsProject.instance().addMapLayer(layer, False)
-            self.section.groupDecoration.addLayer(layer)
+            self.section.decorationGroup().addLayer(layer)
 
 
 
