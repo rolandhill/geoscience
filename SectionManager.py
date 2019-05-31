@@ -89,6 +89,7 @@ class Section:
         self.width = width
         self.sourceLayers = layerList
         self.sourceElevation = elevationList
+        self.planFeatureId = None
 
         self.origin = np.array([self.startX, self.startY, 0.0])
         
@@ -495,6 +496,7 @@ class SectionManager:
         layer.startEditing()
         layer.addFeature(f)
         layer.commitChanges()
+#        s.planFeatureId = f.id()
         
 
         if writeProjectData:
@@ -559,7 +561,7 @@ class SectionManager:
         if section.window != None:
             section.window.close()
             section.window = None
-        
+            
         try:
             if section.group != None:
                 section.group.removeAllChildren()
@@ -570,6 +572,7 @@ class SectionManager:
         
         self.removeSection(section)
         self.drillManager.writeProjectData()
+        self.buildSectionPlanLayer()
         
     def removeSections(self, sectionList):
         for s in sectionList:
@@ -577,6 +580,26 @@ class SectionManager:
         
     def removeSection(self, section):
         self.sectionReg.remove(section)
+        
+    def buildSectionPlanLayer(self):
+        l = self.sectionPlanLayer()
+        clearLayer(l)
+
+        l.startEditing()
+        for s in self.sectionReg:
+            pointList = []
+            pointList.append(QgsPoint(s.startX, s.startY, 0.0))
+            pointList.append(QgsPoint(s.endX, s.endY, 0.0))
+            f = QgsFeature()
+            f.setGeometry(QgsGeometry.fromPolyline(pointList))
+        
+            # Set the attributes for the new feature
+            f.setAttributes([s.name])
+
+            l.addFeature(f)
+            
+        l.commitChanges()
+        
         
     def createSectionPlanLayer(self):
         #Create a new memory layer to hols the plan view of the section lines
