@@ -40,7 +40,7 @@ code {
 <em>Roland Hill</em>
 <br>
 <em>Your name here! - Please contribute and make this a better, more comprehensive geoscience tool.</em>
-
+<p>Geoscience is offered 'as is' in the hope that it will be useful. No warranty is offered for its suitability for task.</p>
 <p><strong><em>Geoscience</em></strong> has the following tools available from the Geoscience menu or accessible from the Geoscience toolbar.</p>
 <ul>
 <li><img src="icon/DrillSection.png" /> <strong>Drill Hole Tools: </strong> Desurvey holes, project drill hole traces to surface with and without down hole data, generate & display sections. </li>
@@ -66,6 +66,8 @@ code {
 	</ul>
 </ul>
 <h2 id="drill-tools"><a name="drill-tools"></a> <img src="icon/DrillSection.png" /> Drill Tools</h2>
+
+<p> Note: There are collar, survey and assay csv files, plus a raster DEM in the <em>testdata</em> directory under the plugin installation directory in case you just want to test the dril hole functions of Geoscience. Some of the holes in these files aren't particularly realistic because they are used for testing unusual situations. (Hint, open the DEM raster first to set the CRS).</p>
 
 <p>Tools to display drill holes, down hole data and sections in QGIS. This includes de-surveying the holes using collar azimuth and dip and/or survey data. Prior to using Drill Tools you need to open the collar, survey (optional) and down hole data (optional) tables in QGIS. You can use any format supported by QGIS including shapefiles, MapInfo Tab files or CSV files (Note: Geoscience doesn't support database layers yet. If your data is in a database, first export your layers as Geopackage, Shapefile etc). To open data using CSV, use the existing Delimited Text tool <img src="doc/csv.png" />.</p>
 <p><b>Drill Tools will only work with projected coordinate systems (ie not latitude and longitude)</b></p>

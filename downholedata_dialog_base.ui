@@ -41,7 +41,7 @@
    <item>
     <widget class="QGroupBox" name="groupDownhole">
      <property name="title">
-      <string>Downole Data</string>
+      <string>Downhole Data</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>

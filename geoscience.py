@@ -200,7 +200,7 @@ class Geoscience:
         for feature in layer.selectedFeatures():
             geom = feature.geometry()
             wkbType = geom.wkbType()
-            if wkbType == core.MultiLineString:
+            if wkbType == QgsWkbTypes.MultiLineString:
                 for nodes in geom.asMultiPolygon():
                     nodes.reverse()
             else:
