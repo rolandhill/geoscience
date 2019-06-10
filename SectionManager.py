@@ -273,8 +273,8 @@ class Section:
                 for index, p in enumerate(pr):
                     # We are in Section3D coordinates, so we can reject anything with X less than 0 or greater
                     #   than the section length
-#                    if p[0] < 0 or p[0] > self.sectionLength:
-#                        continue
+                    if p[0] < 0 or p[0] > self.sectionLength:
+                        continue
                     
                     # The distance from the section plane is equivalent to the Y coordinate
                     if p[1] > halfWidth:
