@@ -14,6 +14,10 @@ import os.path
 import math
 import platform
 
+def refreshLayers():
+    for layer in iface.mapCanvas().layers():
+        layer.triggerRepaint()
+        
 def gridInterval(request):
     intervals = [1, 2, 2.5, 4, 5]
     logIntervals = []

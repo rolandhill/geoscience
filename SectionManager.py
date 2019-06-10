@@ -162,10 +162,10 @@ class Section:
             pointList = []
 
             dp = layer.dataProvider()
-            step = min(math.fabs(layer.rasterUnitsPerPixelX()), math.fabs(layer.rasterUnitsPerPixelY()))
-            steps =  math.ceil(self.sectionLength / step)
+            steps =  math.ceil(self.sectionLength / min(math.fabs(layer.rasterUnitsPerPixelX()), math.fabs(layer.rasterUnitsPerPixelY())))
             dx = (self.endX - self.startX) / float(steps)
             dy = (self.endY - self.startY) / float(steps)
+            step = math.sqrt(dx * dx + dy * dy)
             x = self.startX
             y = self.startY
             dist = 0.0
@@ -552,6 +552,8 @@ class SectionManager:
         if not extent.isEmpty():
             extent.grow(10)
             iface.mapCanvas().setExtent(extent)
+            
+        refreshLayers()
 
     def recreateSection(self, section):
         section.sectionLayers.clear()
