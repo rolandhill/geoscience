@@ -156,8 +156,9 @@ class Geoscience:
         
         
     def onHelp(self):
-        docDir = "file:///" + self.plugin_dir + "\index.html"
-        docDir = docDir.replace("\\", "/")
+        docDir = "https://www.spatialintegration.com/"
+#        docDir = "file:///" + self.plugin_dir + "\index.html"
+#        docDir = docDir.replace("\\", "/")
         QDesktopServices.openUrl(QUrl(docDir))
 
     def onReadProject(self):

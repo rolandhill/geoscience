@@ -163,13 +163,13 @@ class Section:
 
             dp = layer.dataProvider()
             step = min(math.fabs(layer.rasterUnitsPerPixelX()), math.fabs(layer.rasterUnitsPerPixelY()))
-            steps =  math.ceil(self.sectionLength / step) + 1
+            steps =  math.ceil(self.sectionLength / step)
             dx = (self.endX - self.startX) / float(steps)
             dy = (self.endY - self.startY) / float(steps)
             x = self.startX
             y = self.startY
             dist = 0.0
-            for i in range(steps):
+            for i in range(steps + 1):
                 ht, ok = dp.sample(QgsPointXY(x, y), 1)
                 if ok:
                     pointList.append(QgsPoint(dist, ht, 0.0))
@@ -602,7 +602,7 @@ class SectionManager:
         
         
     def createSectionPlanLayer(self):
-        #Create a new memory layer to hols the plan view of the section lines
+        #Create a new memory layer to hold the plan view of the section lines
         layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "Section_Plan", "memory")
         crs = self.sectionReg[0].sourceLayers[0].crs()
         layer.setCrs(crs)

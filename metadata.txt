@@ -25,6 +25,7 @@ repository=https://github.com/rolandhill/geoscience
 # Uncomment the following line and add your changelog:
 changelog= 1.0
 	-Generate and display drill sections.
+	-Improved workflow
   0.7
     -Ensure drill hole ids are strings and collar coordinates, survey data and down hole distances are numbers.
 	-Add Readme markdown and license file (Thanks KoalaGeo).
@@ -36,9 +37,9 @@ changelog= 1.0
     -Initial Release
 
 # Tags are comma separated with spaces allowed
-tags=python, geoscience, geology, geophysics, drill, drillhole, hole, drilling, borehole, well, section
+tags=python, geoscience, geology, geophysics, drill, drillhole, hole, drilling, borehole, well, section, desurvey
 
-homepage=https://rolandhill.github.io/geoscience/
+homepage=https://www.spatialintegration.com/
 category=Plugins
 icon=icon/Geoscience.png
 # experimental flag
