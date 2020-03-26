@@ -8,3 +8,5 @@
 *.zip
 *.yml
 plugin_upload.py
+*.gpkg
+Geoscience_DrillManager_log.txt
