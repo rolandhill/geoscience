@@ -24,8 +24,9 @@ from qgis.gui import *
 from .resources import *
 #from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 from .DrillManager import *
+from .localgrid_dialog import LocalGridDialog
 
-import os.path
+import os
 
 """ Main Class"""    
 class Geoscience:
@@ -96,19 +97,19 @@ class Geoscience:
 #        self.toolbar.addAction(action)
 #        self.actions.append(action)
 #
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\Desurvey.png"), "Desurvey Holes")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\Desurvey.png"), "Desurvey Holes...")
         action.triggered.connect(self.drillManager.onDesurveyHole)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillPlan.png"), "Downhole Data")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillPlan.png"), "Downhole Data...")
         action.triggered.connect(self.drillManager.onDownholeData)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
         
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSection.png"), "Section Manager")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSection.png"), "Section Manager...")
         action.triggered.connect(self.drillManager.onDrillSectionManager)
         action.setEnabled(True)
         self.toolbar.addAction(action)
@@ -138,6 +139,13 @@ class Geoscience:
         action.triggered.connect(self.onRasterTransparentBlack)
         action.setEnabled(True)
         self.toolbar.addAction(action)
+        self.actions.append(action)
+        
+        """Other choices."""
+        action = self.menu.addAction(QIcon(self.plugin_dir + "\icon\LocalGrid.png"), "Create Local CRS...")
+        action.triggered.connect(self.onCreateLocalCRS)
+        action.setEnabled(True)
+        # self.toolbar.addAction(action)
         self.actions.append(action)
         
 #        """Create Project menu."""
@@ -249,6 +257,14 @@ class Geoscience:
         	raster_transparency.setTransparentThreeValuePixelList(tr_list)
             # Repaint the screen
         	layer.triggerRepaint()
+
+    def onCreateLocalCRS(self):
+        self.createLocalCRS()
+
+    def createLocalCRS(self):
+        dlg = LocalGridDialog(self)
+        dlg.exec_()
+        dlg.close()
 
     def readProjectData(self):
         pass
