@@ -91,25 +91,25 @@ class Geoscience:
         """Create Drill menu."""
         self.menuDrill = self.menu.addMenu("Drilling")
 
-#        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSetup.png"), "Drill Setup")
+#        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Drill Setup")
 #        action.triggered.connect(self.drillManager.onDrillSetup)
 #        action.setEnabled(True)
 #        self.toolbar.addAction(action)
 #        self.actions.append(action)
 #
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\Desurvey.png"), "Desurvey Holes...")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/Desurvey.png"), "Desurvey Holes...")
         action.triggered.connect(self.drillManager.onDesurveyHole)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillPlan.png"), "Downhole Data...")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPlan.png"), "Downhole Data...")
         action.triggered.connect(self.drillManager.onDownholeData)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
         
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "\icon\DrillSection.png"), "Section Manager...")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSection.png"), "Section Manager...")
         action.triggered.connect(self.drillManager.onDrillSectionManager)
         action.setEnabled(True)
         self.toolbar.addAction(action)
@@ -120,7 +120,7 @@ class Geoscience:
         """Create Vector menu."""
         self.menuVector = self.menu.addMenu("Vector")
 
-        action = self.menuVector.addAction(QIcon(self.plugin_dir + "\icon\ReverseLine.png"), "Reverse Line Direction")
+        action = self.menuVector.addAction(QIcon(self.plugin_dir + "/icon/ReverseLine.png"), "Reverse Line Direction")
         action.triggered.connect(self.onReverseLine)
         action.setEnabled(True)
         self.toolbar.addAction(action)
@@ -129,20 +129,20 @@ class Geoscience:
         """Create Raster menu."""
         self.menuRaster = self.menu.addMenu("Raster")
 
-        action = self.menuRaster.addAction(QIcon(self.plugin_dir + "\icon\WhiteTransparent.png"), "Transparent White")
+        action = self.menuRaster.addAction(QIcon(self.plugin_dir + "/icon/WhiteTransparent.png"), "Transparent White")
         action.triggered.connect(self.onRasterTransparentWhite)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
         
-        action = self.menuRaster.addAction(QIcon(self.plugin_dir + "\icon\BlackTransparent.png"), "Transparent Black")
+        action = self.menuRaster.addAction(QIcon(self.plugin_dir + "/icon/BlackTransparent.png"), "Transparent Black")
         action.triggered.connect(self.onRasterTransparentBlack)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
         
         """Other choices."""
-        action = self.menu.addAction(QIcon(self.plugin_dir + "\icon\LocalGrid.png"), "Create Local CRS...")
+        action = self.menu.addAction(QIcon(self.plugin_dir + "/icon/LocalGrid.png"), "Create Local CRS...")
         action.triggered.connect(self.onCreateLocalCRS)
         action.setEnabled(True)
         # self.toolbar.addAction(action)
@@ -151,13 +151,13 @@ class Geoscience:
 #        """Create Project menu."""
 #        self.menuProject = self.menu.addMenu("Project")
 #
-#        action = self.menuProject.addAction(QIcon(self.plugin_dir + "\icon\ChangeDrive.png"), "Change drive letter")
+#        action = self.menuProject.addAction(QIcon(self.plugin_dir + "/icon/ChangeDrive.png"), "Change drive letter")
 #        action.triggered.connect(self.onProjectChangeDriveLetter)
 #        action.setEnabled(True)
 #        self.actions.append(action)
 #
         """Create Help menu."""
-        action = self.menu.addAction(QIcon(self.plugin_dir + "\icon\Help.png"), "Help")
+        action = self.menu.addAction(QIcon(self.plugin_dir + "/icon/Help.png"), "Help")
         action.triggered.connect(self.onHelp)
         action.setEnabled(True)
         self.actions.append(action)
@@ -165,7 +165,7 @@ class Geoscience:
         
     def onHelp(self):
         docDir = "https://www.spatialintegration.com/"
-#        docDir = "file:///" + self.plugin_dir + "\index.html"
+#        docDir = "file:///" + self.plugin_dir + "/index.html"
 #        docDir = docDir.replace("\\", "/")
         QDesktopServices.openUrl(QUrl(docDir))
 
