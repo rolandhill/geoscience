@@ -25,6 +25,7 @@ repository=https://github.com/rolandhill/geoscience
 # Uncomment the following line and add your changelog:
 changelog=1.2
     -Add ability to calculate affine parameters and generate WKT for local grids (with help from Gabriel de Luca)
+    -Fix icons not showing in Linux
   1.1 
 	-Fix log file creation for Mac
   1.0
