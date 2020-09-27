@@ -22,7 +22,6 @@ from qgis.gui import *
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-#from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 from .DrillManager import *
 from .localgrid_dialog import LocalGridDialog
 
