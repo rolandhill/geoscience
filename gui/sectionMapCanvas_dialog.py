@@ -8,11 +8,11 @@ Created on Wed May  8 17:45:45 2019
 from PyQt5 import QtCore, uic
 from PyQt5 import QtWidgets
 
-from .Utils import *
+from ..utils.utils import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'sectionMapCanvas_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/sectionMapCanvas_dialog_base.ui'))
 
 
 class SectionMapCanvasDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):

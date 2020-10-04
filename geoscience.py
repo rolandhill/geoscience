@@ -22,8 +22,8 @@ from qgis.gui import *
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-from .DrillManager import *
-from .localgrid_dialog import LocalGridDialog
+from .drill.DrillManager import *
+from .gui.localgrid_dialog import LocalGridDialog
 
 import os
 

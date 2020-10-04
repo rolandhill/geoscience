@@ -12,7 +12,7 @@ from PyQt5 import QtCore, Qt
 
 import numpy as np
 
-from .Utils import *
+from ..utils.utils import *
 from .sectionMapCanvas_dialog import SectionMapCanvasDialog
 
 

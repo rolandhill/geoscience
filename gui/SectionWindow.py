@@ -9,7 +9,7 @@ from qgis.gui import *
 from qgis.PyQt.QtWidgets import QAction, QMainWindow
 from qgis.PyQt.QtCore import Qt
 
-from .Utils import *
+from ..utils.utils import *
 
 class SectionWindow(QMainWindow):
     def __init__(self, layers):

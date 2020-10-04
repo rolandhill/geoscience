@@ -9,11 +9,11 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
-from .Utils import *
+from ..utils.utils import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'sectionorthogonal_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/sectionorthogonal_dialog_base.ui'))
 
 
 class SectionOrthogonalDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):

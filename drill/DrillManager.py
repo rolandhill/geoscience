@@ -18,16 +18,16 @@ from qgis.utils import *
 from qgis.gui import *
 import numpy as np
 
-from .quaternion import Quaternion
+from ..external.quaternion import Quaternion
 
 # Initialize Qt resources from file resources.py
-from .resources import *
-from .desurveyhole_dialog import DesurveyHoleDialog
-from .downholedata_dialog import DownholeDataDialog
-from .sectionmanager_dialog import SectionManagerDialog
+from ..resources import *
+from ..gui.desurveyhole_dialog import DesurveyHoleDialog
+from ..gui.downholedata_dialog import DownholeDataDialog
+from ..gui.sectionmanager_dialog import SectionManagerDialog
 
 from .SectionManager import *
-from .Utils import *
+from ..utils.utils import *
 
 import os.path
 import math

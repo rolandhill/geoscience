@@ -10,7 +10,7 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'desurveyhole_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/desurveyhole_dialog_base.ui'))
 
 
 class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):

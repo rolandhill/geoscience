@@ -13,10 +13,10 @@ from qgis.utils import *
 from qgis.gui import *
 
 from decimal import Decimal
-from .external import simil
+from ..external import simil
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'localgrid_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/localgrid_dialog_base.ui'))
 
 import numpy as np
 

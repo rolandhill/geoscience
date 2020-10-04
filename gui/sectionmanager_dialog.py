@@ -11,10 +11,10 @@ from qgis.gui import *
 from .sectionorthogonal_dialog import SectionOrthogonalDialog
 from .dialogBase import dialogBase
 from .SectionMapTool import SectionMapTool
-from .Utils import *
+from ..utils.utils import *
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'sectionmanager_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/sectionmanager_dialog_base.ui'))
 
 
 class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):

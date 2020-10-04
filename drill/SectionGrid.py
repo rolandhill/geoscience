@@ -11,7 +11,7 @@ from qgis.core import Qgis, QgsWkbTypes, QgsProject
 
 from PyQt5 import QtCore, Qt, QtGui
 
-from .Utils import *
+from ..utils.utils import *
 from .SectionManager import *
 
 

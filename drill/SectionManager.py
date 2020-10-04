@@ -13,10 +13,10 @@ from qgis.gui import *
 import numpy as np
 import math
 
-from .quaternion import Quaternion
-from .SectionWindow import *
+from ..external.quaternion import Quaternion
+from ..gui.SectionWindow import *
 from .SectionGrid import *
-from .Utils import *
+from ..utils.utils import *
 
 class layerMap:
     original = QgsVectorLayer()

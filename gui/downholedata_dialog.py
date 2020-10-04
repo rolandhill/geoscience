@@ -11,7 +11,7 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'downholedata_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/downholedata_dialog_base.ui'))
 
 
 class DownholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
