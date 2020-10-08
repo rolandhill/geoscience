@@ -14,8 +14,8 @@ import numpy as np
 import math
 
 from ..external.quaternion import Quaternion
-from ..gui.SectionWindow import *
-from .SectionGrid import *
+from ..gui.sectionWindow import *
+from .sectionGrid import *
 from ..utils.utils import *
 
 class layerMap:
@@ -78,7 +78,7 @@ def projectPointToPlane(plane, pt):
     
     return pi
 
-class Section:
+class section:
     def __init__(self, name, startX, startY, endX, endY, width, layerList, elevationList):
 #        iface.messageBar().pushMessage("Debug", "In Section Constructor", level=Qgis.Warning)
         self.name = name
@@ -131,7 +131,7 @@ class Section:
             self.sectionLayers.append(layer)
 
         if len(self.sectionLayers) > 0:            
-            sg = SectionGrid(self, self.sectionLayers[0].crs())
+            sg = sectionGrid(self, self.sectionLayers[0].crs())
             layers = sg.create()
             for layer in layers:
                 self.sectionLayers.append(layer)
@@ -462,7 +462,7 @@ class Section:
         
     
 # The SectionManager class manipulates and keeps track of all the sections
-class SectionManager:
+class sectionManager:
     def __init__(self, drillManager):
         self.drillManager = drillManager
         self.sectionReg = []

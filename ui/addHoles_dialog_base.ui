@@ -7,13 +7,32 @@
     <x>0</x>
     <y>0</y>
     <width>679</width>
-    <height>439</height>
+    <height>510</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Desurvey Hole</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label_3">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>New drill hole database</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QgsFileWidget" name="fwNewDatabase"/>
+   </item>
    <item>
     <widget class="QGroupBox" name="groupCollar">
      <property name="title">
@@ -344,61 +363,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupOptions">
-     <property name="title">
-      <string>Options</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_4">
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="sbDesurveyLength">
-        <property name="suffix">
-         <string>m</string>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QCheckBox" name="checkDownDipNegative">
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_18">
-        <property name="text">
-         <string>Down dip is negative</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_17">
-        <property name="text">
-         <string>Desurvey length</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -415,6 +379,11 @@
    <class>QgsFieldComboBox</class>
    <extends>QComboBox</extends>
    <header>qgsfieldcombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsFileWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsfilewidget.h</header>
   </customwidget>
   <customwidget>
    <class>QgsMapLayerComboBox</class>
@@ -435,8 +404,6 @@
   <tabstop>fbSurveyDepth</tabstop>
   <tabstop>fbSurveyAz</tabstop>
   <tabstop>fbSurveyDip</tabstop>
-  <tabstop>checkDownDipNegative</tabstop>
-  <tabstop>sbDesurveyLength</tabstop>
  </tabstops>
  <resources/>
  <connections>

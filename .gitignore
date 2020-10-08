@@ -1,5 +1,4 @@
-/__pycache__/
-external/__pycache__/
+__pycache__/
 /help/
 /i18n/
 /scripts/
@@ -8,6 +7,7 @@ external/__pycache__/
 *.bak
 *.zip
 *.yml
+*.py[cod]
 plugin_upload.py
 *.gpkg
 Geoscience_DrillManager_log.txt

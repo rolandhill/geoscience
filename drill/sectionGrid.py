@@ -12,11 +12,11 @@ from qgis.core import Qgis, QgsWkbTypes, QgsProject
 from PyQt5 import QtCore, Qt, QtGui
 
 from ..utils.utils import *
-from .SectionManager import *
+from .sectionManager import *
 
 
 # The DrillManager class controls all drill related data and methods 
-class SectionGrid:
+class sectionGrid:
     def __init__(self, section, crs):
         self.section = section
         self.crs = crs

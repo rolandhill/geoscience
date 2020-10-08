@@ -13,13 +13,13 @@ from ..utils.utils import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), '../ui/sectionorthogonal_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/sectionOrthogonal_dialog_base.ui'))
 
 
-class SectionOrthogonalDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class sectionOrthogonalDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, dirWestEast=True, parent=None):
         """Constructor."""
-        super(SectionOrthogonalDialog, self).__init__(parent)
+        super(sectionOrthogonalDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager

@@ -16,7 +16,7 @@ from decimal import Decimal
 from ..external import simil
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), '../ui/localgrid_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/localGrid_dialog_base.ui'))
 
 import numpy as np
 
@@ -72,10 +72,10 @@ def createAffineWkt(a0, a1, a2, b0, b1, b2):
     return txt
     
     
-class LocalGridDialog(QtWidgets.QDialog, FORM_CLASS):
+class localGridDialog(QtWidgets.QDialog, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(LocalGridDialog, self).__init__(parent)
+        super(localGridDialog, self).__init__(parent)
         self.setupUi(self)
         
         self.crsBase.setCrs(iface.mapCanvas().mapSettings().destinationCrs())

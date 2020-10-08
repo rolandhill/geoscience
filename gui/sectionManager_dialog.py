@@ -8,19 +8,19 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
-from .sectionorthogonal_dialog import SectionOrthogonalDialog
+from .sectionOrthogonal_dialog import sectionOrthogonalDialog
 from .dialogBase import dialogBase
-from .SectionMapTool import SectionMapTool
+from .sectionMapTool import sectionMapTool
 from ..utils.utils import *
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), '../ui/sectionmanager_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/sectionManager_dialog_base.ui'))
 
 
-class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class sectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, drillManager, parent=None):
         """Constructor."""
-        super(SectionManagerDialog, self).__init__(parent)
+        super(sectionManagerDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = drillManager

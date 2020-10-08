@@ -10,13 +10,13 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), '../ui/desurveyhole_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/newDb_dialog_base.ui'))
 
 
-class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class newDbDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(DesurveyHoleDialog, self).__init__(parent)
+        super(newDbDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager
@@ -28,22 +28,20 @@ class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         # Setup ComboBox filters
-        self.lbCollarLayer.setFilters(QgsMapLayerProxyModel.PointLayer)
-        self.lbSurveyLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
-
-        # Initialise local variables and ComboBoxes
-        self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
-#        self.teDefaultSectionWidth.setText(str(self.drillManager.defaultSectionWidth))
-#        self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
-        self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
-        self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
-        self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
-    
-        self.lbCollarLayer.layerChanged.connect(self.onCollarLayerChanged)
-        self.lbSurveyLayer.layerChanged.connect(self.onSurveyLayerChanged)
-
-        self.onCollarLayerChanged()
-        self.onSurveyLayerChanged()
+#        self.lbCollarLayer.setFilters(QgsMapLayerProxyModel.PointLayer)
+#        self.lbSurveyLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
+#
+#        # Initialise local variables and ComboBoxes
+##        self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
+##        self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
+#        self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
+#        self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
+#    
+#        self.lbCollarLayer.layerChanged.connect(self.onCollarLayerChanged)
+#        self.lbSurveyLayer.layerChanged.connect(self.onSurveyLayerChanged)
+#
+#        self.onCollarLayerChanged()
+#        self.onSurveyLayerChanged()
 
     def onCollarLayerChanged(self):
         layer = self.lbCollarLayer.currentLayer()

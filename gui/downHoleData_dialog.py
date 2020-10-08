@@ -11,13 +11,13 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), '../ui/downholedata_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/downHoleData_dialog_base.ui'))
 
 
-class DownholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class downholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(DownholeDataDialog, self).__init__(parent)
+        super(downholeDataDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager

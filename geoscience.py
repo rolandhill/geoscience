@@ -22,8 +22,8 @@ from qgis.gui import *
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-from .drill.DrillManager import *
-from .gui.localgrid_dialog import LocalGridDialog
+from .drill.drillManager import *
+from .gui.localGrid_dialog import localGridDialog
 
 import os
 
@@ -48,7 +48,7 @@ class Geoscience:
                 QCoreApplication.installTranslator(self.translator)
 
         # Initiate the DrillManager to handle all drill related operations
-        self.drillManager = DrillManager()
+        self.drillManager = drillManager()
 
         # Read all saved Geoscience parameters from the QGIS project file
         self.readProjectData()
@@ -90,19 +90,25 @@ class Geoscience:
         """Create Drill menu."""
         self.menuDrill = self.menu.addMenu("Drilling")
 
-#        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Drill Setup")
-#        action.triggered.connect(self.drillManager.onDrillSetup)
-#        action.setEnabled(True)
-#        self.toolbar.addAction(action)
-#        self.actions.append(action)
-#
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "New Drill Database")
+        action.triggered.connect(self.drillManager.onNewDb)
+        action.setEnabled(True)
+        self.toolbar.addAction(action)
+        self.actions.append(action)
+
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Add Holes")
+        action.triggered.connect(self.drillManager.onAddHoles)
+        action.setEnabled(True)
+        self.toolbar.addAction(action)
+        self.actions.append(action)
+
         action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/Desurvey.png"), "Desurvey Holes...")
         action.triggered.connect(self.drillManager.onDesurveyHole)
         action.setEnabled(True)
         self.toolbar.addAction(action)
         self.actions.append(action)
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPlan.png"), "Downhole Data...")
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPlan.png"), "Add Downhole Data...")
         action.triggered.connect(self.drillManager.onDownholeData)
         action.setEnabled(True)
         self.toolbar.addAction(action)
@@ -147,14 +153,6 @@ class Geoscience:
         # self.toolbar.addAction(action)
         self.actions.append(action)
         
-#        """Create Project menu."""
-#        self.menuProject = self.menu.addMenu("Project")
-#
-#        action = self.menuProject.addAction(QIcon(self.plugin_dir + "/icon/ChangeDrive.png"), "Change drive letter")
-#        action.triggered.connect(self.onProjectChangeDriveLetter)
-#        action.setEnabled(True)
-#        self.actions.append(action)
-#
         """Create Help menu."""
         action = self.menu.addAction(QIcon(self.plugin_dir + "/icon/Help.png"), "Help")
         action.triggered.connect(self.onHelp)
@@ -170,34 +168,7 @@ class Geoscience:
 
     def onReadProject(self):
         self.drillManager.readProjectData()
-        
-    # Search and replace the provided drive letters in the the provided QGIS Project file
-#    def onProjectChangeDriveLetter(self):
-#        dlg = ChangeDriveLetterDialog(self)
-#        dlg.show()
-#        result = dlg.exec_()
-#        if result:
-#            pf = dlg.cbProject.filePath()
-#            oldDrive = dlg.leOriginalDrive.text()
-#            newDrive = dlg.leNewDrive.text()
-#            data = str
-#            
-#            # Check that the user entered something
-#            if len(oldDrive) > 0 and len(newDrive) > 0:
-#                # Open the file
-#                with open(pf, 'r') as pfile:
-#                    # If the file opened OK, read the entire file
-#                    data = pfile.read()
-#                 
-#                # Search and replace. Use the file:/// string to avoid false positives
-#                data = data.replace("file:///"+oldDrive[0]+":/", "file:///"+newDrive[0]+":/")
-#                
-#                # Rewrite the new version
-#                with open(pf, 'w') as pfile:
-#                    pfile.write(data)
-#                
-#        dlg.close()
-        
+       
     # Reverse the node sequence in all selected lines on hte current layer
     # Useful if you are using a non-symmetric line style (eg Normal Fault)
     def onReverseLine(self):

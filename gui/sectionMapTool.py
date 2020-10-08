@@ -13,10 +13,10 @@ from PyQt5 import QtCore, Qt
 import numpy as np
 
 from ..utils.utils import *
-from .sectionMapCanvas_dialog import SectionMapCanvasDialog
+from .sectionMapCanvas_dialog import sectionMapCanvasDialog
 
 
-class SectionMapTool(QgsMapToolEmitPoint):
+class sectionMapTool(QgsMapToolEmitPoint):
     def __init__(self, canvas, parent):
         self.canvas = canvas
         self.sectionManagerDlg = parent

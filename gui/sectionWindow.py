@@ -11,7 +11,7 @@ from qgis.PyQt.QtCore import Qt
 
 from ..utils.utils import *
 
-class SectionWindow(QMainWindow):
+class sectionWindow(QMainWindow):
     def __init__(self, layers):
         QMainWindow.__init__(self)
 
