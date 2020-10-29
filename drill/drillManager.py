@@ -90,19 +90,7 @@ class drillManager:
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
-            self.collarLayer = dlg.lbCollarLayer.currentLayer()
-            self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
-            self.collarId = dlg.fbCollarId.currentField()
-            self.collarDepth = dlg.fbCollarDepth.currentField()
-            self.collarEast = dlg.fbCollarEast.currentField()
-            self.collarNorth = dlg.fbCollarNorth.currentField()
-            self.collarElev = dlg.fbCollarElev.currentField()
-            self.collarAz = dlg.fbCollarAz.currentField()
-            self.collarDip = dlg.fbCollarDip.currentField()
-            self.surveyId = dlg.fbSurveyId.currentField()
-            self.surveyDepth = dlg.fbSurveyDepth.currentField()
-            self.surveyAz = dlg.fbSurveyAz.currentField()
-            self.surveyDip = dlg.fbSurveyDip.currentField()
+            self.currentDb = dlg.fwNewDatabase.filePath()
 
             # Save updated values to QGIS project file            
             self.writeProjectData()
@@ -112,8 +100,7 @@ class drillManager:
         dlg.close()
 
         if result:
-            pass
-#            self.desurveyHole()
+            self.createDb()
 
     def onAddHoles(self):
         dlg = addHolesDialog(self)
@@ -736,6 +723,9 @@ class drillManager:
         fileName = uriToFile(base + "_Desurvey")
         return fileName
     
+    def createDb(self):
+        pass
+
     def createCollarLayer(self):
         #Find CRS of collar layer
         crs = self.collarLayer.crs()
@@ -801,6 +791,7 @@ class drillManager:
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
 #       Desurvey & Downhole Data
+        self.currentDb = readProjectNum("CurrentDb", '')
         self.desurveyLength = readProjectNum("DesurveyLength", 1)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.desurveyLayer = readProjectLayer("DesurveyLayer")
@@ -843,6 +834,7 @@ class drillManager:
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
 #       Desurvey & Downhole Data
+        writeProjectData("CurrentDb", self.currentDb)
         writeProjectData("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)

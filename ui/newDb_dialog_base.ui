@@ -31,7 +31,14 @@
     </widget>
    </item>
    <item>
-    <widget class="QgsFileWidget" name="fwNewDatabase"/>
+    <widget class="QgsFileWidget" name="fwNewDatabase">
+     <property name="filter">
+      <string>*.gpkg</string>
+     </property>
+     <property name="storageMode">
+      <enum>QgsFileWidget::SaveFile</enum>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
