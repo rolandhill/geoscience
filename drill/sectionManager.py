@@ -2,7 +2,8 @@
 """
 Created on Thu Mar 28 17:41:08 2019
 
-@author: HillR
+@author: Roland Hill
+roleyhill@gmail.com
 """
 
 from PyQt5.QtWidgets import QProgressDialog, qApp
