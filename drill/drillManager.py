@@ -23,7 +23,9 @@ from ..external.quaternion import Quaternion
 # Initialize Qt resources from file resources.py
 from ..resources import *
 from ..gui.newDb_dialog import newDbDialog
-from ..gui.addHoles_dialog import addHolesDialog
+from ..gui.addCollars_dialog import addCollarsDialog
+from ..gui.addSurveys_dialog import addSurveysDialog
+#from ..gui.addDownhole import addDownholeDialog
 from ..gui.desurveyHole_dialog import desurveyHoleDialog
 from ..gui.downHoleData_dialog import downholeDataDialog
 from ..gui.sectionManager_dialog import sectionManagerDialog
@@ -108,13 +110,20 @@ class drillManager:
         if result:
             self.dbManager.createDb(filePath)
 
-    def onAddHoles(self):
-        dlg = addHolesDialog(self)
+    # Setup and run the Drill Setup dialog        
+    def onOpenDb(self):
+        pass
+
+            # Setup and run the Drill Setup dialog        
+    def onCloseDb(self):
+        pass
+
+    def onAddCollars(self):
+        dlg = addCollarsDialog(self)
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
-            self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
             self.collarId = dlg.fbCollarId.currentField()
             self.collarDepth = dlg.fbCollarDepth.currentField()
             self.collarEast = dlg.fbCollarEast.currentField()
@@ -122,6 +131,25 @@ class drillManager:
             self.collarElev = dlg.fbCollarElev.currentField()
             self.collarAz = dlg.fbCollarAz.currentField()
             self.collarDip = dlg.fbCollarDip.currentField()
+
+            # Save updated values to QGIS project file            
+            self.writeProjectData()
+            
+            # The collar layer might have changed, so re-open log file
+            self.openLogFile()
+        dlg.close()
+
+        if result:
+            pass
+#            self.desurveyHole()
+
+
+    def onAddSurveys(self):
+        dlg = addSurveysDialog(self)
+        result = dlg.exec_()
+        # If OK button clicked then retrieve and update values
+        if result:
+            self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
             self.surveyId = dlg.fbSurveyId.currentField()
             self.surveyDepth = dlg.fbSurveyDepth.currentField()
             self.surveyAz = dlg.fbSurveyAz.currentField()
@@ -138,8 +166,10 @@ class drillManager:
             pass
 #            self.desurveyHole()
 
-
-    # Setup and run the Drill Desurvey dialog        
+    def onAddDownhole(self):
+        pass
+    
+        # Setup and run the Drill Desurvey dialog        
     def onDesurveyHole(self):
         dlg = desurveyHoleDialog(self)
 #        dlg.show()
@@ -176,7 +206,7 @@ class drillManager:
 
 
     # Setup and run the Drill Trace dialog
-    def onDownholeData(self):
+    def onAddDownhole(self):
         dlg = downholeDataDialog(self)
 #        dlg.show()
         result = dlg.exec_()

@@ -90,17 +90,37 @@ class Geoscience:
         """Create Drill menu."""
         self.menuDrill = self.menu.addMenu("Drilling")
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "New Drill Database")
+        self.menuDb = self.menuDrill.addMenu("Database")
+        self.menuAdd = self.menuDrill.addMenu("Add")
+
+        action = self.menuDb.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "New")
         action.triggered.connect(self.drillManager.onNewDb)
         action.setEnabled(True)
-        self.toolbar.addAction(action)
-        self.actions.append(action)
+#        self.toolbar.addAction(action)
+#        self.actions.append(action)
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Add Holes")
-        action.triggered.connect(self.drillManager.onAddHoles)
+        action = self.menuDb.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Open")
+        action.triggered.connect(self.drillManager.onOpenDb)
         action.setEnabled(True)
-        self.toolbar.addAction(action)
-        self.actions.append(action)
+
+        action = self.menuDb.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Close")
+        action.triggered.connect(self.drillManager.onCloseDb)
+        action.setEnabled(True)
+
+
+        action = self.menuAdd.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Collars")
+        action.triggered.connect(self.drillManager.onAddCollars)
+        action.setEnabled(True)
+#        self.toolbar.addAction(action)
+#        self.actions.append(action)
+
+        action = self.menuAdd.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Surveys")
+        action.triggered.connect(self.drillManager.onAddSurveys)
+        action.setEnabled(True)
+
+        action = self.menuAdd.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Downhole")
+        action.triggered.connect(self.drillManager.onAddDownhole)
+        action.setEnabled(True)
 
         action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/Desurvey.png"), "Desurvey Holes...")
         action.triggered.connect(self.drillManager.onDesurveyHole)
@@ -108,11 +128,11 @@ class Geoscience:
         self.toolbar.addAction(action)
         self.actions.append(action)
 
-        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPlan.png"), "Add Downhole Data...")
-        action.triggered.connect(self.drillManager.onDownholeData)
-        action.setEnabled(True)
-        self.toolbar.addAction(action)
-        self.actions.append(action)
+#        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPlan.png"), "Add Downhole Data...")
+#        action.triggered.connect(self.drillManager.onDownholeData)
+#        action.setEnabled(True)
+#        self.toolbar.addAction(action)
+#        self.actions.append(action)
         
         action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillSection.png"), "Section Manager...")
         action.triggered.connect(self.drillManager.onDrillSectionManager)

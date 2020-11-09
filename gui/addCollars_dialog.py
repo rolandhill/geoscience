@@ -10,13 +10,13 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), '../ui/addHoles_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/addCollars_dialog_base.ui'))
 
 
-class addHolesDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class addCollarsDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(addHolesDialog, self).__init__(parent)
+        super(addCollarsDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager
@@ -27,21 +27,16 @@ class addHolesDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
         # Setup ComboBox filters
         self.lbCollarLayer.setFilters(QgsMapLayerProxyModel.PointLayer)
-        self.lbSurveyLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
 
         # Initialise local variables and ComboBoxes
-#        self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
-#        self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
-        self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
     
         self.lbCollarLayer.layerChanged.connect(self.onCollarLayerChanged)
-        self.lbSurveyLayer.layerChanged.connect(self.onSurveyLayerChanged)
 
         self.onCollarLayerChanged()
-        self.onSurveyLayerChanged()
 
     def onCollarLayerChanged(self):
         layer = self.lbCollarLayer.currentLayer()
@@ -67,21 +62,4 @@ class addHolesDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.fbCollarElev.setCurrentIndex(-1)
             self.fbCollarAz.setCurrentIndex(-1)
             self.fbCollarDip.setCurrentIndex(-1)
-        
-    def onSurveyLayerChanged(self):
-        layer = self.lbSurveyLayer.currentLayer()
-        if layer is not None and layer.isValid():
-            self.fbSurveyId.setLayer(layer)
-            self.initField(self.drillManager.surveyId, self.fbSurveyId, ["holeid", "bhid", "id", "hole", "name"])
-            self.fbSurveyDepth.setLayer(layer)
-            self.initField(self.drillManager.surveyDepth, self.fbSurveyDepth, ["depth", "at"])
-            self.fbSurveyAz.setLayer(layer)
-            self.initField(self.drillManager.surveyAz, self.fbSurveyAz, ["azimuth", "az"])
-            self.fbSurveyDip.setLayer(layer)
-            self.initField(self.drillManager.surveyDip, self.fbSurveyDip, ["dip", "incl"])
-        else:
-            self.fbSurveyId.setCurrentIndex(-1)
-            self.fbSurveyDepth.setCurrentIndex(-1)
-            self.fbSurveyAz.setCurrentIndex(-1)
-            self.fbSurveyDip.setCurrentIndex(-1)
         
