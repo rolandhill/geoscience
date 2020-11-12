@@ -23,6 +23,7 @@ from ..external.quaternion import Quaternion
 # Initialize Qt resources from file resources.py
 from ..resources import *
 from ..gui.newDb_dialog import newDbDialog
+from ..gui.openDb_dialog import openDbDialog
 from ..gui.addCollars_dialog import addCollarsDialog
 from ..gui.addSurveys_dialog import addSurveysDialog
 #from ..gui.addDownhole import addDownholeDialog
@@ -96,15 +97,8 @@ class drillManager:
     def onNewDb(self):
         dlg = newDbDialog(self)
         result = dlg.exec_()
-        # If OK button clicked then retrieve and update values
         if result:
             filePath = dlg.fwNewDatabase.filePath()
-
-            # Save updated values to QGIS project file            
-#            self.writeProjectData()
-            
-            # The collar layer might have changed, so re-open log file
-            self.openLogFile()
         dlg.close()
 
         if result:
@@ -112,7 +106,19 @@ class drillManager:
 
     # Setup and run the Drill Setup dialog        
     def onOpenDb(self):
-        pass
+        dlg = openDbDialog(self)
+        result = dlg.exec_()
+        if result:
+            filePath = dlg.fwDatabase.filePath()
+        dlg.close()
+
+        if result:
+            self.dbManager.openDb(filePath)
+            if self.dbManager.currentDb != '':
+                pass
+                # Create the group
+                # Load collars, traces etc
+                # Load sectionPlan
 
             # Setup and run the Drill Setup dialog        
     def onCloseDb(self):
@@ -123,6 +129,7 @@ class drillManager:
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
+            self.dbManager.setCurrentDbFromIndex(dlg.cbCurrentDb.currentIndex())
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
             self.collarId = dlg.fbCollarId.currentField()
             self.collarDepth = dlg.fbCollarDepth.currentField()

@@ -14,11 +14,15 @@ Created on Thu Mar 28 17:41:08 2019
 roleyhill@gmail.com
 """
 
+import os
+
 from PyQt5.QtWidgets import QProgressDialog, qApp
 
 from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
+
+from ..utils.utils import *
 
 # The SectionManager class manipulates and keeps track of all the sections
 class dbManager:
@@ -27,6 +31,9 @@ class dbManager:
         self.dbReg = [] #FilePath of registered databases
         self.currentDb = '' # FilePath of currently selected DB
         self.currentParameterLayer = None
+        
+    def currentDbIndex(self):
+        return self.dbReg.index(self.currentDb)
         
     def createDb(self, filePath):
         l = QgsVectorLayer('None?field=name:string&field=value:string','Parameters', 'memory')
@@ -42,20 +49,32 @@ class dbManager:
             #Write basic data
             self.setParameter('VersionMajor', str(self.drillManager.dbVersionMajor) )
             self.setParameter('VersionMinor', str(self.drillManager.dbVersionMinor) )
+
+            iface.messageBar().pushMessage("Geoscience", "New drill hole database created: %s"%(filePath), level=Qgis.Info)
             
         else:
             iface.messageBar().pushMessage("Error", "Failed to create new database: %s"%(error_message), level=Qgis.Critical)
 
     
+    def openDb(self, filePath):
+        self.dbReg.append(filePath)
+        self.setCurrentDb(filePath)
+
+    def setCurrentDbFromIndex(self, regIndex):
+        filePath = self.dbReg[regIndex]
+        self.setCurrentDb(filePath)
+
     def setCurrentDb(self, filePath):
-        
-        l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
-        if l.isValid():
-            self.currentDb = filePath
-            self.currentParameterLayer = l
-        else:
-            self.currentDb = ''
-            self.currentParameterLayer = None
+        if filePath != self.currentDb:
+            l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
+            if l.isValid():
+                if self.currentParameterLayer is not None and self.currentParameterLayer.isValid():
+                    QgsProject.instance().removeMapLayers( [self.currentParameterLayer.id()] )
+                self.currentDb = filePath
+                self.currentParameterLayer = l
+            else:
+                self.currentDb = ''
+                self.currentParameterLayer = None
         
     def setParameter(self, name, val):
         if self.currentParameterLayer is not None:
@@ -82,6 +101,12 @@ class dbManager:
         else:
             return default
         
+    def getParameterInt(self, name, default):
+        return int(self.getParameter(name, default))
+
+    def getParameterFloat(self, name, default):
+        return float(self.getParameter(name, default))
+
     def getParameterFeature(self, name):
         sel = self.currentParameterLayer.selectByExpression( '"name"=%s'%(name) )
         if sel is not None:
@@ -89,3 +114,11 @@ class dbManager:
         else:
             return None
             
+    def dbRelPaths(self):
+        rp = []
+        projPath = projectPath()
+        
+        for path in self.dbReg:
+            rp.append(os.path.relpath(path, projPath))
+
+        return rp

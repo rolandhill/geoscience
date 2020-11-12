@@ -215,3 +215,6 @@ def layersExtent(layers):
         if rect is not None:
             extent.combineExtentWith(rect)
     return extent
+
+def projectPath():
+    return os.path.split(QgsProject.instance().fileName())[0]
