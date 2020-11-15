@@ -80,18 +80,19 @@ class drillManager:
 
     # Open a log file in the Collar Layer's directory
     def openLogFile(self):
+        pass
         # Maintain a log file in case of data errors
-        if self.collarLayer and self.collarLayer.isValid():
-            fileName = uriToFile(self.collarLayer.dataProvider().dataSourceUri())
-#            fileName = Path(fileName)
-            self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
-            if not self.logFile:
-                self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
-            self.logFile.write("Geoscience - DrillManager log file\n")
-            self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
-            self.logFile.write("  Make a copy if you want to keep the results.\n")
-            # We flush the buffers in case the plugin crashes without writing the message to the file
-            self.logFile.flush()
+#        if self.collarLayer and self.collarLayer.isValid():
+#            fileName = uriToFile(self.collarLayer.dataProvider().dataSourceUri())
+##            fileName = Path(fileName)
+#            self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
+#            if not self.logFile:
+#                self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
+#            self.logFile.write("Geoscience - DrillManager log file\n")
+#            self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
+#            self.logFile.write("  Make a copy if you want to keep the results.\n")
+#            # We flush the buffers in case the plugin crashes without writing the message to the file
+#            self.logFile.flush()
 
     # Setup and run the Drill Setup dialog        
     def onNewDb(self):
@@ -99,10 +100,11 @@ class drillManager:
         result = dlg.exec_()
         if result:
             filePath = dlg.fwNewDatabase.filePath()
+            crs = dlg.wCrs.crs()
         dlg.close()
 
         if result:
-            self.dbManager.createDb(filePath)
+            self.dbManager.createDb(filePath, crs)
 
     # Setup and run the Drill Setup dialog        
     def onOpenDb(self):
@@ -130,20 +132,19 @@ class drillManager:
         # If OK button clicked then retrieve and update values
         if result:
             self.dbManager.setCurrentDbFromIndex(dlg.cbCurrentDb.currentIndex())
-            self.collarLayer = dlg.lbCollarLayer.currentLayer()
-            self.collarId = dlg.fbCollarId.currentField()
-            self.collarDepth = dlg.fbCollarDepth.currentField()
-            self.collarEast = dlg.fbCollarEast.currentField()
-            self.collarNorth = dlg.fbCollarNorth.currentField()
-            self.collarElev = dlg.fbCollarElev.currentField()
-            self.collarAz = dlg.fbCollarAz.currentField()
-            self.collarDip = dlg.fbCollarDip.currentField()
-
-            # Save updated values to QGIS project file            
-            self.writeProjectData()
+            self.setCollarFields(
+            dlg.lbCollarLayer.currentLayer(), 
+            dlg.fbCollarId.currentField(), 
+            dlg.fbCollarDepth.currentField(), 
+            dlg.fbCollarEast.currentField(), 
+            dlg.fbCollarNorth.currentField(), 
+            dlg.fbCollarElev.currentField(), 
+            dlg.fbCollarAz.currentField(), 
+            dlg.fbCollarDip.currentField()
+            )
             
             # The collar layer might have changed, so re-open log file
-            self.openLogFile()
+#            self.openLogFile()
         dlg.close()
 
         if result:
@@ -426,6 +427,12 @@ class drillManager:
         layer = QgsVectorLayer(fileName+".gpkg", label)
         QgsProject.instance().addMapLayer(layer)
         
+    def addCollars(self):
+        pass
+        
+    def getOrCreateCollarLayer(self):
+        pass
+    
     def desurveyHole(self):
         # Write to the log file
         self.logFile.write("\nDesurveying data.\n")
@@ -828,23 +835,51 @@ class drillManager:
 
         return layer
 
+    def setCollarFields(self, id, depth, east, north, elev, az, dip):
+        self.collarId = id
+        self.collarDepth = depth
+        self.collarEast = east
+        self.collarNorth = north
+        self.collarElev = elev
+        self.collarAz = az
+        self.collarDip = dip
+
+        self.dbManager.setParameter('CollarId', self.collarId)
+        self.dbManager.setParameter('CollarDepth', self.collarDepth)
+        self.dbManager.setParameter('CollarEast', self.collarEast)
+        self.dbManager.setParameter('CollarNorth', self.collarNorth)
+        self.dbManager.setParameter('CollarElev', self.collarElev)
+        self.dbManager.setParameter('CollarAz', self.collarAz)
+        self.dbManager.setParameter('CollarDip', self.collarDip)
+        
+    def readParameters(self):
+        self.collarId = self.dbManager.parameter('CollarId')
+        self.collarDepth = self.dbManager.parameter('CollarDepth')
+        self.collarEast = self.dbManager.parameter('CollarEast')
+        self.collarNorth = self.dbManager.parameter('CollarNorth')
+        self.collarElev = self.dbManager.parameter('CollarElev')
+        self.collarAz = self.dbManager.parameter('CollarAz')
+        self.collarDip = self.dbManager.parameter('CollarDip')
+        
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
+        self.dbManager.readProjectData()
+        
 #       Desurvey & Downhole Data
 #        self.currentDb = readProjectNum("CurrentDb", '')
         self.desurveyLength = readProjectNum("DesurveyLength", 1)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
-        self.desurveyLayer = readProjectLayer("DesurveyLayer")
-        self.collarLayer = readProjectLayer("CollarLayer")
-        self.surveyLayer = readProjectLayer("SurveyLayer")
-        self.dataLayer = readProjectLayer("DataLayer")
-        self.collarId = readProjectField("CollarID")
-        self.collarDepth = readProjectField("CollarDepth")
-        self.collarEast = readProjectField("CollarEast")
-        self.collarNorth = readProjectField("CollarNorth")
-        self.collarElev = readProjectField("CollarElev")
-        self.collarAz = readProjectField("CollarAz")
-        self.collarDip = readProjectField("CollarDip")
+#        self.desurveyLayer = readProjectLayer("DesurveyLayer")
+#        self.collarLayer = readProjectLayer("CollarLayer")
+#        self.surveyLayer = readProjectLayer("SurveyLayer")
+#        self.dataLayer = readProjectLayer("DataLayer")
+#        self.collarId = readProjectField("CollarID")
+#        self.collarDepth = readProjectField("CollarDepth")
+#        self.collarEast = readProjectField("CollarEast")
+#        self.collarNorth = readProjectField("CollarNorth")
+#        self.collarElev = readProjectField("CollarElev")
+#        self.collarAz = readProjectField("CollarAz")
+#        self.collarDip = readProjectField("CollarDip")
         self.surveyId = readProjectField("SurveyID")
         self.surveyDepth = readProjectField("SurveyDepth")
         self.surveyAz = readProjectField("SurveyAz")
@@ -873,21 +908,22 @@ class drillManager:
 
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
+        self.dbManager.writeProjectData()
+        
 #       Desurvey & Downhole Data
-#        writeProjectData("CurrentDb", self.currentDb)
         writeProjectData("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
-        writeProjectLayer("DesurveyLayer", self.desurveyLayer)
-        writeProjectLayer("CollarLayer", self.collarLayer)
-        writeProjectLayer("SurveyLayer", self.surveyLayer)
-        writeProjectLayer("DataLayer", self.dataLayer)
-        writeProjectField("CollarID", self.collarId)
-        writeProjectField("CollarDepth", self.collarDepth)
-        writeProjectField("CollarEast", self.collarEast)
-        writeProjectField("CollarNorth", self.collarNorth)
-        writeProjectField("CollarElev", self.collarElev)
-        writeProjectField("CollarAz", self.collarAz)
-        writeProjectField("CollarDip", self.collarDip)
+#        writeProjectLayer("DesurveyLayer", self.desurveyLayer)
+#        writeProjectLayer("CollarLayer", self.collarLayer)
+#        writeProjectLayer("SurveyLayer", self.surveyLayer)
+#        writeProjectLayer("DataLayer", self.dataLayer)
+#        writeProjectField("CollarID", self.collarId)
+#        writeProjectField("CollarDepth", self.collarDepth)
+#        writeProjectField("CollarEast", self.collarEast)
+#        writeProjectField("CollarNorth", self.collarNorth)
+#        writeProjectField("CollarElev", self.collarElev)
+#        writeProjectField("CollarAz", self.collarAz)
+#        writeProjectField("CollarDip", self.collarDip)
         writeProjectField("SurveyID", self.surveyId)
         writeProjectField("SurveyDepth", self.surveyDepth)
         writeProjectField("SurveyAz", self.surveyAz)

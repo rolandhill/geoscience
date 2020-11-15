@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>desurveyHole_dialog</class>
- <widget class="QDialog" name="desurveyHole_dialog">
+ <class>newDb_dialog</class>
+ <widget class="QDialog" name="newDb_dialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>663</width>
-    <height>124</height>
+    <width>579</width>
+    <height>215</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Desurvey Hole</string>
+   <string>New Drill Hole Database</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -41,6 +41,19 @@
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Coordinate Reference System</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QgsProjectionSelectionWidget" name="wCrs"/>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -58,13 +71,18 @@
    <extends>QWidget</extends>
    <header>qgsfilewidget.h</header>
   </customwidget>
+  <customwidget>
+   <class>QgsProjectionSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsprojectionselectionwidget.h</header>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>desurveyHole_dialog</receiver>
+   <receiver>newDb_dialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -80,7 +98,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>desurveyHole_dialog</receiver>
+   <receiver>newDb_dialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

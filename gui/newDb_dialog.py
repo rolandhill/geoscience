@@ -25,3 +25,4 @@ class newDbDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.setupUi(self)
 
         self.fwNewDatabase.setFilter('GeoPackage (*.gpkg)')
+        self.wCrs.setCrs(QgsProject.instance().crs())
