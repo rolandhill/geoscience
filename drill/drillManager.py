@@ -773,27 +773,27 @@ class drillManager:
         fileName = uriToFile(base + "_Desurvey")
         return fileName
     
-    def createCollarLayer(self):
-        #Find CRS of collar layer
-        crs = self.collarLayer.crs()
-        
-        #Create a new memory layer
-        layer = QgsVectorLayer("PointZ?crs=EPSG:4326", "geoscience_Temp", "memory")
-        layer.setCrs(crs)
-
-        atts = []
-        # Loop through the list of desired field names that the user checked
-        for field in self.collarLayer.fields():
-            atts.append(field)
-        
-        # Add all the attributes to the new layer
-        dp = layer.dataProvider()
-        dp.addAttributes(atts)
-        
-        # Tell the vector layer to fetch changes from the provider
-        layer.updateFields() 
-        return layer
-    
+#    def createCollarLayer(self):
+#        #Find CRS of collar layer
+#        crs = self.collarLayer.crs()
+#        
+#        #Create a new memory layer
+#        layer = QgsVectorLayer("PointZ?crs=EPSG:4326", "geoscience_Temp", "memory")
+#        layer.setCrs(crs)
+#
+#        atts = []
+#        # Loop through the list of desired field names that the user checked
+#        for field in self.collarLayer.fields():
+#            atts.append(field)
+#        
+#        # Add all the attributes to the new layer
+#        dp = layer.dataProvider()
+#        dp.addAttributes(atts)
+#        
+#        # Tell the vector layer to fetch changes from the provider
+#        layer.updateFields() 
+#        return layer
+#    
     def createDesurveyLayer(self):
         #Find CRS of collar layer
         crs = self.collarLayer.crs()

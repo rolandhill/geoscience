@@ -16,6 +16,7 @@ roleyhill@gmail.com
 
 import os
 
+from PyQt5.QtCore import QVariant
 from PyQt5.QtWidgets import QProgressDialog, qApp
 
 from qgis.core import *
@@ -45,7 +46,8 @@ class dbManager:
         write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,filePath,options)
         if write_result == QgsVectorFileWriter.NoError:
             self.dbReg.append(filePath)
-            self.setCurrentDb(filePath)
+            self.currentCrs = crs
+            self.setCurrentDb(filePath, force=True)
             
             #Write basic data
             self.setParameter('VersionMajor', str(self.drillManager.dbVersionMajor) )
@@ -66,19 +68,24 @@ class dbManager:
         filePath = self.dbReg[regIndex]
         self.setCurrentDb(filePath)
 
-    def setCurrentDb(self, filePath):
-        if filePath != self.currentDb:
+    def setCurrentDb(self, filePath, force=False):
+        if filePath != self.currentDb or force == True:
             l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
             if l.isValid():
 #                if self.currentParameterLayer is not None and self.currentParameterLayer.isValid():
 #                    QgsProject.instance().removeMapLayers( [self.currentParameterLayer.id()] )
                 self.currentDb = filePath
                 self.currentParameterLayer = l
+#                crs = self.parameter('CRS', '')
                 self.currentCrs = QgsCoordinateReferenceSystem.fromWkt(self.parameter('CRS', ''))
+#                if not self.currentCrs.isValid():
+#                    iface.messageBar().pushMessage("Error", "CRS is invalid: %s"%(crs), level=Qgis.Critical)
+                self.drillManager.collarLayer = self.getOrCreateCollarLayer()
                 self.drillManager.readParameters()
             else:
                 self.currentDb = ''
                 self.currentParameterLayer = None
+                self.drillManager.collarLayer = None
         
     def setParameter(self, name, val):
         if self.currentParameterLayer is not None:
@@ -95,6 +102,39 @@ class dbManager:
                 self.currentParameterLayer.dataProvider().addFeature(f)
             self.currentParameterLayer.commitChanges()
 
+    def getOrCreateCollarLayer(self):
+        l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
+        if not l.isValid():
+            l = QgsVectorLayer('PointZ?crs=EPSG:4326','Collar', 'memory')
+            l.setCrs(self.currentCrs)
+            
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+            options.layerName = 'Collar'
+
+            write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
+            if write_result == QgsVectorFileWriter.NoError:
+                atts = []
+                atts.append(QgsField("Id",  QVariant.String, "string", 12, 3))
+                atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
+                atts.append(QgsField("North",  QVariant.Double, "double", 12, 3))
+                atts.append(QgsField("Elev",  QVariant.Double, "double", 8, 3))
+                atts.append(QgsField("Depth",  QVariant.Double, "double", 8, 3))
+                atts.append(QgsField("Az",  QVariant.Double, "double", 6, 2))
+                atts.append(QgsField("Dip",  QVariant.Double, "double", 6, 2))
+                
+                # Add all the attributes to the new layer
+                dp = l.dataProvider()
+                dp.addAttributes(atts)
+                
+                # Tell the vector layer to fetch changes from the provider
+                l.updateFields() 
+            else:
+                l = None
+                iface.messageBar().pushMessage("Error", "Failed to create collar layer", level=Qgis.Critical)
+
+        return l
+        
 #    def setParameterLayer(self, name, layer):
 #        val = 'None'
 #        try:
