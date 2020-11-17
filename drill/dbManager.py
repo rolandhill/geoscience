@@ -44,15 +44,21 @@ class dbManager:
         options.driverName = 'GPKG'
         options.layerName = 'Parameters'
         write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,filePath,options)
+#        QgsProject.instance().removeMapLayer(l)
         if write_result == QgsVectorFileWriter.NoError:
             self.dbReg.append(filePath)
             self.currentCrs = crs
-            self.setCurrentDb(filePath, force=True)
+            
+            l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
+            self.currentParameterLayer = l
             
             #Write basic data
             self.setParameter('VersionMajor', str(self.drillManager.dbVersionMajor) )
             self.setParameter('VersionMinor', str(self.drillManager.dbVersionMinor) )
             self.setParameter('CRS', crs.toWkt(variant=QgsCoordinateReferenceSystem.WktVariant.WKT2_2018))
+
+            # Force the current DB to refresh incase the user has written over the same filename with the new one
+            self.setCurrentDb(filePath, force=True)
 
             iface.messageBar().pushMessage("Geoscience", "New drill hole database created: %s"%(filePath), level=Qgis.Info)
             
@@ -114,6 +120,7 @@ class dbManager:
 
             write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
             if write_result == QgsVectorFileWriter.NoError:
+                l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
                 atts = []
                 atts.append(QgsField("Id",  QVariant.String, "string", 12, 3))
                 atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
@@ -174,8 +181,9 @@ class dbManager:
         return val
 
     def parameterFeature(self, name):
-        sel = self.currentParameterLayer.selectByExpression( '"name"=%s'%(name) )
-        if sel is not None:
+        self.currentParameterLayer.selectByExpression( '"name"=\'%s\''%(name) )
+        sel = self.currentParameterLayer.selectedFeatures()
+        if sel is not None and len(sel)>0:
             return sel[0]
         else:
             return None
