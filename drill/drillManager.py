@@ -132,16 +132,13 @@ class drillManager:
         # If OK button clicked then retrieve and update values
         if result:
             self.dbManager.setCurrentDbFromIndex(dlg.cbCurrentDb.currentIndex())
-            self.setCollarFields(
-            dlg.lbCollarLayer.currentLayer(), 
-            dlg.fbCollarId.currentField(), 
-            dlg.fbCollarDepth.currentField(), 
-            dlg.fbCollarEast.currentField(), 
-            dlg.fbCollarNorth.currentField(), 
-            dlg.fbCollarElev.currentField(), 
-            dlg.fbCollarAz.currentField(), 
-            dlg.fbCollarDip.currentField()
-            )
+            self.collarId = dlg.fbCollarId.currentField()
+            self.collarDepth = dlg.fbCollarDepth.currentField()
+            self.collarEast = dlg.fbCollarEast.currentField()
+            self.collarNorth = dlg.fbCollarNorth.currentField()
+            self.collarElev = dlg.fbCollarElev.currentField()
+            self.collarAz = dlg.fbCollarAz.currentField()
+            self.collarDip = dlg.fbCollarDip.currentField()
             
             # The collar layer might have changed, so re-open log file
 #            self.openLogFile()
@@ -835,31 +832,32 @@ class drillManager:
 
         return layer
 
-    def setCollarFields(self, id, depth, east, north, elev, az, dip):
-        self.collarId = id
-        self.collarDepth = depth
-        self.collarEast = east
-        self.collarNorth = north
-        self.collarElev = elev
-        self.collarAz = az
-        self.collarDip = dip
-
-        self.dbManager.setParameter('CollarId', self.collarId)
-        self.dbManager.setParameter('CollarDepth', self.collarDepth)
-        self.dbManager.setParameter('CollarEast', self.collarEast)
-        self.dbManager.setParameter('CollarNorth', self.collarNorth)
-        self.dbManager.setParameter('CollarElev', self.collarElev)
-        self.dbManager.setParameter('CollarAz', self.collarAz)
-        self.dbManager.setParameter('CollarDip', self.collarDip)
+#    def setCollarFields(self, id, depth, east, north, elev, az, dip):
+#        self.collarId = id
+#        self.collarDepth = depth
+#        self.collarEast = east
+#        self.collarNorth = north
+#        self.collarElev = elev
+#        self.collarAz = az
+#        self.collarDip = dip
+#
+#        self.dbManager.setParameter('CollarId', self.collarId)
+#        self.dbManager.setParameter('CollarDepth', self.collarDepth)
+#        self.dbManager.setParameter('CollarEast', self.collarEast)
+#        self.dbManager.setParameter('CollarNorth', self.collarNorth)
+#        self.dbManager.setParameter('CollarElev', self.collarElev)
+#        self.dbManager.setParameter('CollarAz', self.collarAz)
+#        self.dbManager.setParameter('CollarDip', self.collarDip)
         
     def readParameters(self):
-        self.collarId = self.dbManager.parameter('CollarId')
-        self.collarDepth = self.dbManager.parameter('CollarDepth')
-        self.collarEast = self.dbManager.parameter('CollarEast')
-        self.collarNorth = self.dbManager.parameter('CollarNorth')
-        self.collarElev = self.dbManager.parameter('CollarElev')
-        self.collarAz = self.dbManager.parameter('CollarAz')
-        self.collarDip = self.dbManager.parameter('CollarDip')
+        pass
+#        self.collarId = self.dbManager.parameter('CollarId')
+#        self.collarDepth = self.dbManager.parameter('CollarDepth')
+#        self.collarEast = self.dbManager.parameter('CollarEast')
+#        self.collarNorth = self.dbManager.parameter('CollarNorth')
+#        self.collarElev = self.dbManager.parameter('CollarElev')
+#        self.collarAz = self.dbManager.parameter('CollarAz')
+#        self.collarDip = self.dbManager.parameter('CollarDip')
         
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):

@@ -109,9 +109,9 @@ class dbManager:
             self.currentParameterLayer.commitChanges()
 
     def getOrCreateCollarLayer(self):
-        l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
+        l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'gs_Collar', 'ogr')
         if not l.isValid():
-            l = QgsVectorLayer('PointZ?crs=EPSG:4326','Collar', 'memory')
+            l = QgsVectorLayer('PointZ?crs=EPSG:4326','gs_Collar', 'memory')
             l.setCrs(self.currentCrs)
             
             options = QgsVectorFileWriter.SaveVectorOptions()
@@ -120,7 +120,7 @@ class dbManager:
 
             write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
             if write_result == QgsVectorFileWriter.NoError:
-                l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
+                l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'gs_Collar', 'ogr')
                 atts = []
                 atts.append(QgsField("Id",  QVariant.String, "string", 12, 3))
                 atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
