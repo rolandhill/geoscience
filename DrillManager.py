@@ -71,7 +71,7 @@ class DrillManager:
     def openLogFile(self):
         # Maintain a log file in case of data errors
         if self.collarLayer and self.collarLayer.isValid():
-            fileName = uriToFile(self.collarLayer.dataProvider().dataSourceUri())
+            fileName = uriToFile(self.collarLayer.name())
 #            fileName = Path(fileName)
             self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
             if not self.logFile:
@@ -314,7 +314,7 @@ class DrillManager:
         self.logFile.flush()
         
         # Build the new filename for saving to disk. We are using GeoPackages
-        base, ext = os.path.splitext(self.desurveyLayer.dataProvider().dataSourceUri())
+        base, ext = os.path.splitext(self.desurveyLayer.name())
         base = base.replace("_Desurvey","_Downhole")
         fileName = uriToFile(base + "_%s" % (self.dataSuffix))
 
@@ -662,13 +662,13 @@ class DrillManager:
         
     def createCollarFilename(self):
         # Build the new filename
-        base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
+        base, ext = os.path.splitext(self.collarLayer.name())
         fileName = uriToFile(base + "_3D")
         return fileName
     
     def createDesurveyFilename(self):
         # Build the new filename
-        base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
+        base, ext = os.path.splitext(self.collarLayer.name())
         fileName = uriToFile(base + "_Desurvey")
         return fileName
     
