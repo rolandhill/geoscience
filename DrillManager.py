@@ -71,9 +71,9 @@ class DrillManager:
     def openLogFile(self):
         # Maintain a log file in case of data errors
         if self.collarLayer and self.collarLayer.isValid():
-            fileName = uriToFile(self.collarLayer.name())
-#            fileName = Path(fileName)
-            self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
+            path=self.collarLayer.dataProvider().dataSourceUri()
+            fileName = uriToFile(os.path.join(os.path.split(path)[0], 'Geoscience_DrillManager_log.txt'))
+            self.logFile = open(fileName,'w')
             if not self.logFile:
                 self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
             self.logFile.write("Geoscience - DrillManager log file\n")
@@ -314,9 +314,10 @@ class DrillManager:
         self.logFile.flush()
         
         # Build the new filename for saving to disk. We are using GeoPackages
-        base, ext = os.path.splitext(self.desurveyLayer.name())
-        base = base.replace("_Desurvey","_Downhole")
-        fileName = uriToFile(base + "_%s" % (self.dataSuffix))
+        path=self.desurveyLayer.dataProvider().dataSourceUri()
+        fileName=os.path.join(os.path.split(path)[0], self.desurveyLayer.name())
+        fileName = fileName.replace("_Desurvey","_Downhole")
+        fileName = uriToFile(fileName + "_%s" % (self.dataSuffix))
 
         # Generate a layer label
         label = os.path.splitext(os.path.basename(fileName))[0]
@@ -662,14 +663,14 @@ class DrillManager:
         
     def createCollarFilename(self):
         # Build the new filename
-        base, ext = os.path.splitext(self.collarLayer.name())
-        fileName = uriToFile(base + "_3D")
+        path=self.collarLayer.dataProvider().dataSourceUri()
+        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_3D'))
         return fileName
     
     def createDesurveyFilename(self):
         # Build the new filename
-        base, ext = os.path.splitext(self.collarLayer.name())
-        fileName = uriToFile(base + "_Desurvey")
+        path=self.collarLayer.dataProvider().dataSourceUri()
+        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_Desurvey'))
         return fileName
     
     def createCollarLayer(self):
