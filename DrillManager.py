@@ -294,13 +294,16 @@ class DrillManager:
             for idx in idxAttList:
                 attList.append(attrs[idx])
 
-            # Also append the 3D desurveyed From and To points
+            # Also append the 3D desurveyed From, To and Mid points
             attList.append(pointList[0].x())
             attList.append(pointList[0].y())
             attList.append(pointList[0].z())
             attList.append(pointList[1].x())
             attList.append(pointList[1].y())
             attList.append(pointList[1].z())
+            attList.append((pointList[0].x()+pointList[1].x())*0.5)
+            attList.append((pointList[0].y()+pointList[1].y())*0.5)
+            attList.append((pointList[0].z()+pointList[1].z())*0.5)
 
             # Set the attributes for the new feature
             feature.setAttributes(attList)
@@ -725,6 +728,9 @@ class DrillManager:
         atts.append(QgsField("_To_x",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_To_y",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_To_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_z",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
