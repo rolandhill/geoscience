@@ -82,17 +82,17 @@ class drillManager:
     def openLogFile(self):
         pass
         # Maintain a log file in case of data errors
-#        if self.collarLayer and self.collarLayer.isValid():
-#            fileName = uriToFile(self.collarLayer.dataProvider().dataSourceUri())
-##            fileName = Path(fileName)
-#            self.logFile = open(os.path.join(os.path.dirname(fileName), "Geoscience_DrillManager_log.txt"),'w')
-#            if not self.logFile:
-#                self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
-#            self.logFile.write("Geoscience - DrillManager log file\n")
-#            self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
-#            self.logFile.write("  Make a copy if you want to keep the results.\n")
-#            # We flush the buffers in case the plugin crashes without writing the message to the file
-#            self.logFile.flush()
+        if self.collarLayer and self.collarLayer.isValid():
+            path=self.collarLayer.dataProvider().dataSourceUri()
+            fileName = uriToFile(os.path.join(os.path.split(path)[0], 'Geoscience_DrillManager_log.txt'))
+            self.logFile = open(fileName,'w')
+            if not self.logFile:
+                self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
+            self.logFile.write("Geoscience - DrillManager log file\n")
+            self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
+            self.logFile.write("  Make a copy if you want to keep the results.\n")
+            # We flush the buffers in case the plugin crashes without writing the message to the file
+            self.logFile.flush()
 
     # Setup and run the Drill Setup dialog        
     def onNewDb(self):
@@ -386,13 +386,16 @@ class drillManager:
             for idx in idxAttList:
                 attList.append(attrs[idx])
 
-            # Also append the 3D desurveyed From and To points
+            # Also append the 3D desurveyed From, To and Mid points
             attList.append(pointList[0].x())
             attList.append(pointList[0].y())
             attList.append(pointList[0].z())
             attList.append(pointList[1].x())
             attList.append(pointList[1].y())
             attList.append(pointList[1].z())
+            attList.append((pointList[0].x()+pointList[1].x())*0.5)
+            attList.append((pointList[0].y()+pointList[1].y())*0.5)
+            attList.append((pointList[0].z()+pointList[1].z())*0.5)
 
             # Set the attributes for the new feature
             feature.setAttributes(attList)
@@ -406,9 +409,10 @@ class drillManager:
         self.logFile.flush()
         
         # Build the new filename for saving to disk. We are using GeoPackages
-        base, ext = os.path.splitext(self.desurveyLayer.dataProvider().dataSourceUri())
-        base = base.replace("_Desurvey","_Downhole")
-        fileName = uriToFile(base + "_%s" % (self.dataSuffix))
+        path=self.desurveyLayer.dataProvider().dataSourceUri()
+        fileName=os.path.join(os.path.split(path)[0], self.desurveyLayer.name())
+        fileName = fileName.replace("_Desurvey","_Downhole")
+        fileName = uriToFile(fileName + "_%s" % (self.dataSuffix))
 
         # Generate a layer label
         label = os.path.splitext(os.path.basename(fileName))[0]
@@ -760,14 +764,14 @@ class drillManager:
         
     def createCollarFilename(self):
         # Build the new filename
-        base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
-        fileName = uriToFile(base + "_3D")
+        path=self.collarLayer.dataProvider().dataSourceUri()
+        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_3D'))
         return fileName
     
     def createDesurveyFilename(self):
         # Build the new filename
-        base, ext = os.path.splitext(self.collarLayer.dataProvider().dataSourceUri())
-        fileName = uriToFile(base + "_Desurvey")
+        path=self.collarLayer.dataProvider().dataSourceUri()
+        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_Desurvey'))
         return fileName
     
 #    def createCollarLayer(self):
@@ -822,6 +826,9 @@ class drillManager:
         atts.append(QgsField("_To_x",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_To_y",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_To_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_z",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
