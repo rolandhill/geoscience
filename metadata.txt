@@ -1,16 +1,8 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
-# is no longer supported since version 2.0.
-
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=Geoscience
 qgisMinimumVersion=3.2
 description=Tools for Geoscience & Exploration
-version=1.2
+version=1.3
 author=Roland Hill
 email=roleyhill@gmail.com
 
@@ -23,7 +15,10 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=1.2
+changelog=1.3
+	-Fix problem with created filenames using decorated Uri of the original collar file
+	-Add mid point to downhole data
+  1.2
     -Add ability to calculate affine parameters and generate WKT for local grids (with help from Gabriel de Luca)
     -Fix icons not showing in Linux
   1.1 
