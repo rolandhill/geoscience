@@ -28,6 +28,9 @@ class addSurveysDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
 
+        self.cbCurrentDb.addItems(manager.dbManager.dbRelPaths())
+        self.cbCurrentDb.setCurrentIndex(self.drillManager.dbManager.currentDbIndex())
+
         # Setup ComboBox filters
         self.lbSurveyLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
 

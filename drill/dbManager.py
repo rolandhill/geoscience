@@ -78,20 +78,13 @@ class dbManager:
         if filePath != self.currentDb or force == True:
             l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
             if l.isValid():
-#                if self.currentParameterLayer is not None and self.currentParameterLayer.isValid():
-#                    QgsProject.instance().removeMapLayers( [self.currentParameterLayer.id()] )
                 self.currentDb = filePath
                 self.currentParameterLayer = l
-#                crs = self.parameter('CRS', '')
                 self.currentCrs = QgsCoordinateReferenceSystem.fromWkt(self.parameter('CRS', ''))
-#                if not self.currentCrs.isValid():
-#                    iface.messageBar().pushMessage("Error", "CRS is invalid: %s"%(crs), level=Qgis.Critical)
-                self.drillManager.collarLayer = self.getOrCreateCollarLayer()
                 self.drillManager.readParameters()
             else:
                 self.currentDb = ''
                 self.currentParameterLayer = None
-                self.drillManager.collarLayer = None
         
     def setParameter(self, name, val):
         if self.currentParameterLayer is not None:
@@ -100,7 +93,6 @@ class dbManager:
             if f is not None:
                 f["value"] = val
                 self.currentParameterLayer.updateFeature(f)
-#                f.setAttribute(1, val)
             else:
                 f = QgsFeature(self.currentParameterLayer.fields())
 
@@ -124,7 +116,7 @@ class dbManager:
             if write_result == QgsVectorFileWriter.NoError:
                 l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'gs_Collar', 'ogr')
                 atts = []
-                atts.append(QgsField("Id",  QVariant.String, "string", 12, 3))
+                atts.append(QgsField("Id",  QVariant.String, "string", 0, 3))
                 atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
                 atts.append(QgsField("North",  QVariant.Double, "double", 12, 3))
                 atts.append(QgsField("Elev",  QVariant.Double, "double", 8, 3))
@@ -141,6 +133,37 @@ class dbManager:
             else:
                 l = None
                 iface.messageBar().pushMessage("Error", "Failed to create collar layer", level=Qgis.Critical)
+
+        return l
+        
+    def getOrCreateSurveyLayer(self):
+        l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'gs_Survey', 'ogr')
+        if not l.isValid():
+#        l = QgsVectorLayer('None?field=name:string&field=value:string','Parameters', 'memory')
+            l = QgsVectorLayer('None','gs_Survey', 'memory')
+            
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+            options.layerName = 'Survey'
+
+            write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
+            if write_result == QgsVectorFileWriter.NoError:
+                l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'gs_Survey', 'ogr')
+                atts = []
+                atts.append(QgsField("Id",  QVariant.String, "string", 0, 3))
+                atts.append(QgsField("Depth",  QVariant.Double, "double", 8, 3))
+                atts.append(QgsField("Az",  QVariant.Double, "double", 6, 2))
+                atts.append(QgsField("Dip",  QVariant.Double, "double", 6, 2))
+                
+                # Add all the attributes to the new layer
+                dp = l.dataProvider()
+                dp.addAttributes(atts)
+                
+                # Tell the vector layer to fetch changes from the provider
+                l.updateFields() 
+            else:
+                l = None
+                iface.messageBar().pushMessage("Error", "Failed to create survey layer", level=Qgis.Critical)
 
         return l
         

@@ -161,26 +161,27 @@ class drillManager:
 
 
     def onAddSurveys(self):
+        self.checkValidDb()
         dlg = addSurveysDialog(self)
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
+            self.dbManager.setCurrentDbFromIndex(dlg.cbCurrentDb.currentIndex())
             self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
             self.surveyId = dlg.fbSurveyId.currentField()
             self.surveyDepth = dlg.fbSurveyDepth.currentField()
             self.surveyAz = dlg.fbSurveyAz.currentField()
             self.surveyDip = dlg.fbSurveyDip.currentField()
-
-            # Save updated values to QGIS project file            
-            self.writeProjectData()
-            
-            # The collar layer might have changed, so re-open log file
-#            self.openLogFile()
         dlg.close()
 
         if result:
-            pass
-#            self.desurveyHole()
+            self.dbManager.setParameter('SurveyLayer', self.surveyLayer.name())
+            self.dbManager.setParameter('SurveyId', self.surveyId)
+            self.dbManager.setParameter('SurveyDepth', self.surveyDepth)
+            self.dbManager.setParameter('SurveyAz', self.surveyAz)
+            self.dbManager.setParameter('SurveyDip', self.surveyDip)
+            
+            self.addSurveys()
 
     def onAddDownhole(self):
         pass
@@ -464,15 +465,14 @@ class drillManager:
         arrCollar = []
 
         # Update the progress bar
-        pd.setWindowTitle("Add Collars")
+        pd.setWindowTitle("Adding Collars")
         pd.setMaximum(numCollars)
         pd.setValue(0)
         
         floatConvError = False
         nullDataError = False
 
-        # Create a new Collar 3D layer to hold 3D points. This will be used for section creation.
-        lc = self.dbManager.getOrCreateCollarLayer()
+        l = self.dbManager.getOrCreateCollarLayer()
         
         # Loop through the collar layer and build list of collars
         for index, feature in enumerate(self.collarLayer.getFeatures()):
@@ -506,7 +506,7 @@ class drillManager:
             arrCollar.append(c)
             
             #Create a new 3D point feature and copy the attributes
-            f = QgsFeature(lc.fields())
+            f = QgsFeature(l.fields())
 #            p = QPointF(c.east, c.north, c.elev)
             f.setGeometry(QgsGeometry(QgsPoint(c.east, c.north, c.elev, wkbType = QgsWkbTypes.PointZ)))
             # Add in the field attributes
@@ -520,9 +520,9 @@ class drillManager:
                 f.setAttribute('Dip', c.dip)
 #            f.setAttribute(attrs)
             # Add the feature to the layer
-            lc.startEditing()
-            lc.addFeature(f)
-            lc.commitChanges()
+            l.startEditing()
+            l.addFeature(f)
+            l.commitChanges()
             
             
         if (floatConvError):
@@ -531,54 +531,73 @@ class drillManager:
             iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'East', 'North', 'Collar' or 'Depth' values are NULL. These have been skipped", level=Qgis.Warning)
 
         
+    def addSurveys(self):
+        # Set up a progress bar
+        pd = QProgressDialog()
+        pd.setAutoReset(False)
+        pd.setMinimumWidth(500)
+        pd.setMinimum(0)
+        
+        # Get the attribute indices
+        dp = self.surveyLayer.dataProvider()
+        idxSurveyId = dp.fieldNameIndex(self.surveyId)
+        idxSurveyDepth = dp.fieldNameIndex(self.surveyDepth)
+        idxSurveyAz = dp.fieldNameIndex(self.surveyAz)
+        idxSurveyDip = dp.fieldNameIndex(self.surveyDip)
+
+        # Build Survey array (Id, depth, az, dip)
+        numSurveys = self.surveyLayer.featureCount()
+        arrSurvey = []
+        l = self.dbManager.getOrCreateSurveyLayer()
+            
+        # Update progress bar
+        pd.setWindowTitle("Adding Surveys")
+        pd.setMaximum(numSurveys)
+        pd.setValue(0)
+        
+        floatConvError = False
+        nullDataError = False
+        
+        #Loop through Survey layer and build list of surveys
+        for index, feature in enumerate(self.surveyLayer.getFeatures()):
+            pd.setValue(index)
+            
+            # get the feature's attributes
+            attrs = feature.attributes()
+            s = Survey()
+            s.id = str(attrs[idxSurveyId])
+            try:
+                s.depth = float(attrs[idxSurveyDepth])
+                s.az = float(attrs[idxSurveyAz])
+                s.dip = float(attrs[idxSurveyDip])
+            except:
+                floatConvError = True
+                
+            if (s.id==NULL) or (s.depth==NULL) or (s.az==NULL) or (s.dip==NULL):
+                nullDataError = True
+                continue
+            s.id = s.id.strip()
+            arrSurvey.append(s)
+    
+            #Create a new 3D point feature and copy the attributes
+            f = QgsFeature(l.fields())
+            # Add in the field attributes
+            f.setAttribute('Id', s.id)
+            f.setAttribute('Depth', s.depth)
+            f.setAttribute('Az', s.az)
+            f.setAttribute('Dip', s.dip)
+            # Add the feature to the layer
+            l.startEditing()
+            l.addFeature(f)
+            l.commitChanges()
+            
+        if (floatConvError):
+            iface.messageBar().pushMessage("Warning", "Some survey 'Depth', 'Azimuth' or 'Dip' values are not numbers", level=Qgis.Warning)
+        if (nullDataError):
+            iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'Depth', 'Azimuth' or 'Dip' values are NULL. These have been skipped", level=Qgis.Warning)
+            
     def desurveyHole(self):
         
-            
-        # Build Survey array (Id, depth, az, dip)
-        arrSurvey = []
-        if self.surveyLayer is not None and self.surveyLayer.isValid():
-            numSurveys = self.surveyLayer.featureCount()
-    
-            # Get the attribute indices
-            dp = self.surveyLayer.dataProvider()
-            idxSurveyId = dp.fieldNameIndex(self.surveyId)
-            idxSurveyDepth = dp.fieldNameIndex(self.surveyDepth)
-            idxSurveyAz = dp.fieldNameIndex(self.surveyAz)
-            idxSurveyDip = dp.fieldNameIndex(self.surveyDip)
-            
-            # Update progress bar
-            pd.setWindowTitle("Build Survey Array")
-            pd.setMaximum(numSurveys)
-            pd.setValue(0)
-            
-            floatConvError = False
-            nullDataError = False
-            
-            #Loop through Survey layer and buils list of surveys
-            for index, feature in enumerate(self.surveyLayer.getFeatures()):
-                pd.setValue(index)
-                
-                # get the feature's attributes
-                attrs = feature.attributes()
-                s = Survey()
-                s.id = str(attrs[idxSurveyId])
-                try:
-                    s.depth = float(attrs[idxSurveyDepth])
-                    s.az = float(attrs[idxSurveyAz])
-                    s.dip = float(attrs[idxSurveyDip])
-                except:
-                    floatConvError = True
-                    
-                if (s.id==NULL) or (s.depth==NULL) or (s.az==NULL) or (s.dip==NULL):
-                    nullDataError = True
-                    continue
-                s.id = s.id.strip()
-                arrSurvey.append(s)
-
-            if (floatConvError):
-                iface.messageBar().pushMessage("Warning", "Some survey 'Depth', 'Azimuth' or 'Dip' values are not numbers", level=Qgis.Warning)
-            if (nullDataError):
-                iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'Depth', 'Azimuth' or 'Dip' values are NULL. These have been skipped", level=Qgis.Warning)
             
         # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 2 attribute (Id, Segment Length)
         self.createDesurveyLayer()
@@ -869,6 +888,7 @@ class drillManager:
 #        self.dbManager.setParameter('CollarDip', self.collarDip)
         
     def readParameters(self):
+        self.collarLayer = self.dbManager.parameter('CollarLayer')
         self.collarId = self.dbManager.parameter('CollarId')
         self.collarDepth = self.dbManager.parameter('CollarDepth')
         self.collarEast = self.dbManager.parameter('CollarEast')
@@ -876,6 +896,12 @@ class drillManager:
         self.collarElev = self.dbManager.parameter('CollarElev')
         self.collarAz = self.dbManager.parameter('CollarAz')
         self.collarDip = self.dbManager.parameter('CollarDip')
+
+        self.surveyLayer = self.dbManager.parameter('SurveyLayer')
+        self.surveyId = self.dbManager.parameter('SurveyId')
+        self.surveyDepth = self.dbManager.parameter('SurveyDepth')
+        self.surveyAz = self.dbManager.parameter('SurveyAz')
+        self.surveyDip = self.dbManager.parameter('SurveyDip')
         
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
@@ -896,10 +922,10 @@ class drillManager:
 #        self.collarElev = readProjectField("CollarElev")
 #        self.collarAz = readProjectField("CollarAz")
 #        self.collarDip = readProjectField("CollarDip")
-        self.surveyId = readProjectField("SurveyID")
-        self.surveyDepth = readProjectField("SurveyDepth")
-        self.surveyAz = readProjectField("SurveyAz")
-        self.surveyDip = readProjectField("SurveyDip")
+#        self.surveyId = readProjectField("SurveyID")
+#        self.surveyDepth = readProjectField("SurveyDepth")
+#        self.surveyAz = readProjectField("SurveyAz")
+#        self.surveyDip = readProjectField("SurveyDip")
         self.dataId = readProjectField("DataID")
         self.dataFrom = readProjectField("DataFrom")
         self.dataTo = readProjectField("DataTo")
@@ -940,10 +966,10 @@ class drillManager:
 #        writeProjectField("CollarElev", self.collarElev)
 #        writeProjectField("CollarAz", self.collarAz)
 #        writeProjectField("CollarDip", self.collarDip)
-        writeProjectField("SurveyID", self.surveyId)
-        writeProjectField("SurveyDepth", self.surveyDepth)
-        writeProjectField("SurveyAz", self.surveyAz)
-        writeProjectField("SurveyDip", self.surveyDip)
+#        writeProjectField("SurveyID", self.surveyId)
+#        writeProjectField("SurveyDepth", self.surveyDepth)
+#        writeProjectField("SurveyAz", self.surveyAz)
+#        writeProjectField("SurveyDip", self.surveyDip)
         writeProjectField("DataID", self.dataId)
         writeProjectField("DataFrom", self.dataFrom)
         writeProjectField("DataTo", self.dataTo)
