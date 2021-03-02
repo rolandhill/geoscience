@@ -125,13 +125,19 @@ class drillManager:
             # Setup and run the Drill Setup dialog        
     def onCloseDb(self):
         pass
-
+    
+    def checkValidDb(self):
+        if self.dbManager.currentDb == '':
+            self.onOpenDb();
+            
     def onAddCollars(self):
+        self.checkValidDb()
         dlg = addCollarsDialog(self)
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
             self.dbManager.setCurrentDbFromIndex(dlg.cbCurrentDb.currentIndex())
+            self.collarLayer = dlg.lbCollarLayer.currentLayer()
             self.collarId = dlg.fbCollarId.currentField()
             self.collarDepth = dlg.fbCollarDepth.currentField()
             self.collarEast = dlg.fbCollarEast.currentField()
@@ -139,14 +145,19 @@ class drillManager:
             self.collarElev = dlg.fbCollarElev.currentField()
             self.collarAz = dlg.fbCollarAz.currentField()
             self.collarDip = dlg.fbCollarDip.currentField()
-            
-            # The collar layer might have changed, so re-open log file
-#            self.openLogFile()
         dlg.close()
-
+            
         if result:
-            pass
-#            self.desurveyHole()
+            self.dbManager.setParameter('CollarLayer', self.collarLayer.name())
+            self.dbManager.setParameter('CollarId', self.collarId)
+            self.dbManager.setParameter('CollarDepth', self.collarDepth)
+            self.dbManager.setParameter('CollarEast', self.collarEast)
+            self.dbManager.setParameter('CollarNorth', self.collarNorth)
+            self.dbManager.setParameter('CollarElev', self.collarElev)
+            self.dbManager.setParameter('CollarAz', self.collarAz)
+            self.dbManager.setParameter('CollarDip', self.collarDip)
+
+            self.addCollars()
 
 
     def onAddSurveys(self):
@@ -429,16 +440,6 @@ class drillManager:
         QgsProject.instance().addMapLayer(layer)
         
     def addCollars(self):
-        pass
-        
-    def getOrCreateCollarLayer(self):
-        pass
-    
-    def desurveyHole(self):
-        # Write to the log file
-#        self.logFile.write("\nDesurveying data.\n")
-#        self.logFile.flush()
-        
         # Set up a progress bar
         pd = QProgressDialog()
         pd.setAutoReset(False)
@@ -457,13 +458,13 @@ class drillManager:
 
         # Are we using azimuths and dips from the collar file?
         useCollarAzDip = (idxCollarAz > -1) and (idxCollarDip > -1)
-        
+
         # Build Collar array (Id, east, north, elev, eoh, az, dip)
         numCollars = self.collarLayer.featureCount()
         arrCollar = []
 
         # Update the progress bar
-        pd.setWindowTitle("Build Collar Array")
+        pd.setWindowTitle("Add Collars")
         pd.setMaximum(numCollars)
         pd.setValue(0)
         
@@ -471,7 +472,7 @@ class drillManager:
         nullDataError = False
 
         # Create a new Collar 3D layer to hold 3D points. This will be used for section creation.
-        collar3D = self.createCollarLayer()
+        lc = self.dbManager.getOrCreateCollarLayer()
         
         # Loop through the collar layer and build list of collars
         for index, feature in enumerate(self.collarLayer.getFeatures()):
@@ -505,15 +506,23 @@ class drillManager:
             arrCollar.append(c)
             
             #Create a new 3D point feature and copy the attributes
-            f = QgsFeature()
+            f = QgsFeature(lc.fields())
 #            p = QPointF(c.east, c.north, c.elev)
             f.setGeometry(QgsGeometry(QgsPoint(c.east, c.north, c.elev, wkbType = QgsWkbTypes.PointZ)))
             # Add in the field attributes
-            f.setAttributes(attrs)
+            f.setAttribute('Id', c.id)
+            f.setAttribute('East', c.east)
+            f.setAttribute('North', c.north)
+            f.setAttribute('Elev', c.elev)
+            f.setAttribute('Depth', c.depth)
+            if useCollarAzDip:
+                f.setAttribute('Az', c.az)
+                f.setAttribute('Dip', c.dip)
+#            f.setAttribute(attrs)
             # Add the feature to the layer
-            collar3D.startEditing()
-            collar3D.addFeature(f)
-            collar3D.commitChanges()
+            lc.startEditing()
+            lc.addFeature(f)
+            lc.commitChanges()
             
             
         if (floatConvError):
@@ -521,6 +530,9 @@ class drillManager:
         if (nullDataError):
             iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'East', 'North', 'Collar' or 'Depth' values are NULL. These have been skipped", level=Qgis.Warning)
 
+        
+    def desurveyHole(self):
+        
             
         # Build Survey array (Id, depth, az, dip)
         arrSurvey = []
@@ -857,14 +869,13 @@ class drillManager:
 #        self.dbManager.setParameter('CollarDip', self.collarDip)
         
     def readParameters(self):
-        pass
-#        self.collarId = self.dbManager.parameter('CollarId')
-#        self.collarDepth = self.dbManager.parameter('CollarDepth')
-#        self.collarEast = self.dbManager.parameter('CollarEast')
-#        self.collarNorth = self.dbManager.parameter('CollarNorth')
-#        self.collarElev = self.dbManager.parameter('CollarElev')
-#        self.collarAz = self.dbManager.parameter('CollarAz')
-#        self.collarDip = self.dbManager.parameter('CollarDip')
+        self.collarId = self.dbManager.parameter('CollarId')
+        self.collarDepth = self.dbManager.parameter('CollarDepth')
+        self.collarEast = self.dbManager.parameter('CollarEast')
+        self.collarNorth = self.dbManager.parameter('CollarNorth')
+        self.collarElev = self.dbManager.parameter('CollarElev')
+        self.collarAz = self.dbManager.parameter('CollarAz')
+        self.collarDip = self.dbManager.parameter('CollarDip')
         
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):

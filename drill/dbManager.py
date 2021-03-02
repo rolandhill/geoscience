@@ -98,7 +98,9 @@ class dbManager:
             f = self.parameterFeature(name)
             self.currentParameterLayer.startEditing()
             if f is not None:
-                f.setAttribute('value', val)
+                f["value"] = val
+                self.currentParameterLayer.updateFeature(f)
+#                f.setAttribute(1, val)
             else:
                 f = QgsFeature(self.currentParameterLayer.fields())
 
