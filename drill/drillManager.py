@@ -17,6 +17,7 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 import numpy as np
+import pickle
 
 from ..external.quaternion import Quaternion
 
@@ -40,25 +41,134 @@ import math
 import platform
 
 class Collar:
-    id = ''
-    east = 0.0
-    north = 0.0
-    elev = 0.0
-    depth = 0.0
-    az = 0.0
-    dip = 0.0
+#    def __init__(self, id, east, north, elev, depth, az=None, dip=None): 
+    def __init__(self, id=None, east=None, north=None, elev=None, depth=None, az=None, dip=None): 
+        self._id = id
+        self._east = east
+        self._north = north
+        self._elev = elev
+        self._depth = depth
+        self._az = az
+        self._dip = dip
+        
+    _id = ''
+    _east = 0.0
+    _north = 0.0
+    _elev = 0.0
+    _depth = 0.0
+    _az = 0.0
+    _dip = 0.0
 
 class Survey:
-    id = ''
-    depth = 0.0
-    az = 0.0
-    dip = 0.0
+    def __init__(self, depth=None, az=None, dip=None):
+        self._depth = depth
+        self._az = az
+        self._dip = dip
+        
+    _depth = 0.0
+    _az = 0.0
+    _dip = 0.0
     
-class Surveys:
-    depth = 0.0
-    az = 0.0
-    dip = 0.0
+class DesurveyedPt:
+    def __init__(self, depth, x, y, z):
+        self._depth = depth
+        self._x = x
+        self._y = y
+        self._z = z
+        
+class Drillhole:
     
+    def __init__(self, collar, surveys = [], desurveyPts = [], desurveyLength = 1.0):
+        self._collar = collar
+        self._surveys = surveys
+        self._desurveyPts = desurveyPts
+        self._desurveyLength = desurveyLength
+        
+    def desurvey(self, desurveyLength):
+        self._desurveyLength = desurveyLength
+        self._desurveyPts.clear()
+        
+        # Create a quaternion for each survey
+        quat = []
+        for j, s in enumerate(self._surveys):
+            # Rotate about positive X axis by dip degrees (depends on downDipNegative flag)
+            qdip = Quaternion(axis=[1, 0, 0], degrees=s._dip)
+
+            # Rotate about positive Z axis by -Az degrees                        
+            qaz = Quaternion(axis=[0, 0, 1], degrees=-s._az)
+            
+            # Combine the dip and azimuth (order is important!)
+            q = qaz * qdip
+            
+            #Ensure the quaternion rotates the shortest way around. This can go wrong when we cross 0/360 deg.
+            # If the dot product of the quats is negative then it's the wrong way,
+            # so we negate the quat.
+            # But, don't do it on the first one
+            if j > 0:
+                if np.dot(quat[j-1].elements, q.elements) < 0.0:
+                    q = -q
+            quat.append(q)
+            
+        # Is the hole straight? If so, we can take short cuts
+        holeStraight = (len(self._surveys) == 1)
+
+        #Build drill trace every desurveyLength to EOH
+        xs = []
+        if holeStraight:
+            xs.append(0.0)
+        else:
+            sz = int(self._collar._depth / self._desurveyLength) + 1
+            depth = 0.0
+            for d in range(0, sz):
+                xs.append(depth)
+                depth += self._desurveyLength
+            if xs[-1] > self._collar._depth:
+                xs[-1] = self._collar._depth
+            if xs[-1] < self._collar._depth:
+                xs.append(self._collar._depth)
+            
+        # We'll create a pointlist to hold all the 3D points
+#        pointList = []
+        # We start by adding the collar coordinates
+        self._desurveyPts.append([0.0, self._collar._east, self._collar._north, self._collar._elev])
+        # It's easier with a straight hole
+        if holeStraight:
+            # Calculate the offset of the bottom of hole from the top of hole in a single segment
+            offset = quat[0].rotate(np.array([0.0, 1.0, 0.0])) * self._collar._depth
+            # Add the offset to the collar
+            p0 = self._desurveyPts[0]
+            self._desurveyPts.append([self._collar._depth, p0[1] + offset[0], p0[2] + offset[1], p0[3] + offset[2]])
+        else:
+            # We're going to keep iterating through the survey list looking for the bracketing surveys.
+            # We therefore record the start point of the iteration as it will only go up. Saves time.
+            idx0 = 0
+            # We already added the location at point0 (the collar) so start from 1
+            for i in range(1, len(xs)):
+                q = Quaternion()
+                # Find the lowest survey equal or less than xs
+                for j in range(idx0, len(self._surveys)):
+                    # Is there a survey exactly at this point?
+                    if self._surveys[j]._depth == xs[i]:
+                        # Update the iteration start point
+                        idx0 = j
+                        q = quat[j]
+                        break
+                    # Are there surveys bracketing this depth? If so, interpolate point
+                    if self._surveys[j]._depth < xs[i] and self._surveys[j+1]._depth >= xs[i]:
+                        # Update the iteration start point
+                        idx0 = j
+                        # How far are we between bracketing surveys?
+                        ratio = (xs[i] - self._surveys[j]._depth) / (self._surveys[j+1]._depth - self._surveys[j]._depth)
+                        # Interpolate between bracketing survey rotations
+                        q = Quaternion.slerp(quat[j], quat[j+1], ratio)
+                        break
+
+                # Calculate the deviation of this segment of the hole
+                offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self._desurveyLength
+                # Calculate the new point by adding the offset to the old point
+                p0 = self._desurveyPts[i-1]
+                self._desurveyPts.append([xs[i], p0[0] + offset[0], p0[1] + offset[1], p0[2] + offset[2]])
+       
 # The DrillManager class controls all drill related data and methods 
 class drillManager:
     def __init__(self):
@@ -114,7 +224,7 @@ class drillManager:
             filePath = dlg.fwDatabase.filePath()
         dlg.close()
 
-        if result:
+        if result and filePath:
             self.dbManager.openDb(filePath)
             if self.dbManager.currentDb != '':
                 pass
@@ -189,37 +299,18 @@ class drillManager:
         # Setup and run the Drill Desurvey dialog        
     def onDesurveyHole(self):
         dlg = desurveyHoleDialog(self)
-#        dlg.show()
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
         if result:
             self.downDipNegative = dlg.checkDownDipNegative.isChecked()
             self.desurveyLength = dlg.sbDesurveyLength.value()
-#            self.defaultSectionWidth = dlg.teDefaultSectionWidth.text()
-#            self.defaultSectionStep = dlg.teDefaultSectionStep.text()
-            self.collarLayer = dlg.lbCollarLayer.currentLayer()
-            self.surveyLayer = dlg.lbSurveyLayer.currentLayer()
-            self.collarId = dlg.fbCollarId.currentField()
-            self.collarDepth = dlg.fbCollarDepth.currentField()
-            self.collarEast = dlg.fbCollarEast.currentField()
-            self.collarNorth = dlg.fbCollarNorth.currentField()
-            self.collarElev = dlg.fbCollarElev.currentField()
-            self.collarAz = dlg.fbCollarAz.currentField()
-            self.collarDip = dlg.fbCollarDip.currentField()
-            self.surveyId = dlg.fbSurveyId.currentField()
-            self.surveyDepth = dlg.fbSurveyDepth.currentField()
-            self.surveyAz = dlg.fbSurveyAz.currentField()
-            self.surveyDip = dlg.fbSurveyDip.currentField()
-
-            # Save updated values to QGIS project file            
-            self.writeProjectData()
-            
-            # The collar layer might have changed, so re-open log file
-#            self.openLogFile()
         dlg.close()
 
         if result:
-            self.desurveyHole()
+            self.dbManager.setParameterFloat('DesurveyLength', self.desurveyLength)
+            self.dbManager.setParameterBool('DownDipNegative', self.downDipNegative)
+
+            self.desurveyHoles()
 
 
     # Setup and run the Drill Trace dialog
@@ -462,7 +553,7 @@ class drillManager:
 
         # Build Collar array (Id, east, north, elev, eoh, az, dip)
         numCollars = self.collarLayer.featureCount()
-        arrCollar = []
+#        arrCollar = []
 
         # Update the progress bar
         pd.setWindowTitle("Adding Collars")
@@ -483,41 +574,41 @@ class drillManager:
             attrs = feature.attributes()
             c = Collar()
             # Check all the data is valid
-            c.id = str(attrs[idxCollarId])
+            c._id = str(attrs[idxCollarId])
             try:
-                c.east = float(attrs[idxCollarEast])
-                c.north = float(attrs[idxCollarNorth])
-                c.elev = float(attrs[idxCollarElev])
-                c.depth = float(attrs[idxCollarDepth])
+                c._east = float(attrs[idxCollarEast])
+                c._north = float(attrs[idxCollarNorth])
+                c._elev = float(attrs[idxCollarElev])
+                c._depth = float(attrs[idxCollarDepth])
             except:
                 floatConvError = True
                 
-            if (c.id==NULL) or (c.east==NULL) or (c.north==NULL) or (c.elev==NULL) or (c.depth==NULL):
+            if (c._id==NULL) or (c._east==NULL) or (c._north==NULL) or (c._elev==NULL) or (c._depth==NULL):
                 nullDataError = True
                 continue
-            c.id = c.id.strip()
+            c._id = c._id.strip()
             if useCollarAzDip:
-                c.az = attrs[idxCollarAz]
-                if c.az==NULL:
-                    c.az = 0.0
-                c.dip = attrs[idxCollarDip]
-                if c.dip==NULL:
-                    c.dip = -90 if self.downDipNegative else 90
-            arrCollar.append(c)
+                az = attrs[idxCollarAz]
+                if az==NULL:
+                    az = 0.0
+                dip = attrs[idxCollarDip]
+                if dip==NULL:
+                    dip = -90 if self.downDipNegative else 90
+#            arrCollar.append(c)
             
             #Create a new 3D point feature and copy the attributes
             f = QgsFeature(l.fields())
 #            p = QPointF(c.east, c.north, c.elev)
-            f.setGeometry(QgsGeometry(QgsPoint(c.east, c.north, c.elev, wkbType = QgsWkbTypes.PointZ)))
+            f.setGeometry(QgsGeometry(QgsPoint(c._east, c._north, c._elev, wkbType = QgsWkbTypes.PointZ)))
             # Add in the field attributes
-            f.setAttribute('Id', c.id)
-            f.setAttribute('East', c.east)
-            f.setAttribute('North', c.north)
-            f.setAttribute('Elev', c.elev)
-            f.setAttribute('Depth', c.depth)
+            f.setAttribute('Id', c._id)
+            f.setAttribute('East', c._east)
+            f.setAttribute('North', c._north)
+            f.setAttribute('Elev', c._elev)
+            f.setAttribute('Depth', c._depth)
             if useCollarAzDip:
-                f.setAttribute('Az', c.az)
-                f.setAttribute('Dip', c.dip)
+                f.setAttribute('Az', az)
+                f.setAttribute('Dip', dip)
 #            f.setAttribute(attrs)
             # Add the feature to the layer
             l.startEditing()
@@ -565,27 +656,27 @@ class drillManager:
             # get the feature's attributes
             attrs = feature.attributes()
             s = Survey()
-            s.id = str(attrs[idxSurveyId])
+            id = str(attrs[idxSurveyId])
             try:
-                s.depth = float(attrs[idxSurveyDepth])
-                s.az = float(attrs[idxSurveyAz])
-                s.dip = float(attrs[idxSurveyDip])
+                s._depth = float(attrs[idxSurveyDepth])
+                s._az = float(attrs[idxSurveyAz])
+                s._dip = float(attrs[idxSurveyDip])
             except:
                 floatConvError = True
                 
-            if (s.id==NULL) or (s.depth==NULL) or (s.az==NULL) or (s.dip==NULL):
+            if (id==NULL) or (s._depth==NULL) or (s._az==NULL) or (s._dip==NULL):
                 nullDataError = True
                 continue
-            s.id = s.id.strip()
+            id = id.strip()
             arrSurvey.append(s)
     
             #Create a new 3D point feature and copy the attributes
             f = QgsFeature(l.fields())
             # Add in the field attributes
-            f.setAttribute('Id', s.id)
-            f.setAttribute('Depth', s.depth)
-            f.setAttribute('Az', s.az)
-            f.setAttribute('Dip', s.dip)
+            f.setAttribute('Id', id)
+            f.setAttribute('Depth', s._depth)
+            f.setAttribute('Az', s._az)
+            f.setAttribute('Dip', s._dip)
             # Add the feature to the layer
             l.startEditing()
             l.addFeature(f)
@@ -596,181 +687,180 @@ class drillManager:
         if (nullDataError):
             iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'Depth', 'Azimuth' or 'Dip' values are NULL. These have been skipped", level=Qgis.Warning)
             
-    def desurveyHole(self):
+    def surveysForHole(self, curr, collar):
+        #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
+        surveys = []
         
+        curr.execute("SELECT * FROM Survey WHERE id = '%s'" % collar._id)
+        for row in curr:
+            s = Survey(row[2], row[3], row[4] if self.downDipNegative else -row[4])
+            surveys.append(s)
+
+#            if len(arrSurvey) > 0:
+#                # Harvest surveys for this collar from Survey layer list
+#                for survey in arrSurvey:
+#                    if survey.id == collar.id:
+#                        s = Surveys()
+#                        s.depth = survey.depth
+#                        s.az = survey.az
+#                        s.dip = survey.dip
+#                        surveys.append(s)
+#
+        # If the az and dip from the collar are to be used, then insert them at depth 0.0
+        # We only do this if there are no surveys from the Survey layer
+        if len(surveys) == 0 and collar._az is not None and collar._dip is not None:
+            s = Survey(0.0, collar._az, collar._dip)
+            surveys.append(s)
+        
+        # If there are no surveys, then the assume hole is vertical
+        if len(surveys) == 0:
+            s = Survey(0.0, 0.0, -90.0)
+            surveys.append(s)
             
+        # Is the hole straight? If so, we can take short cuts
+        holeStraight = (len(surveys) == 1)
+
+        # We only replicate survey to the beginning and end if the hole is not straight
+        if not holeStraight:
+            # Sort the surveys array by depth
+            surveys.sort(key = lambda x: x._depth)                        
+        
+            # If surveys exist, but there isn't one at 0.0, then replicate first survey at 0.0
+            if not surveys[0]._depth == 0.0:
+                s = Survey()
+                surveys.insert(0, s)
+                s._depth = 0.0
+                surveys[0]._az = surveys[1]._az
+                surveys[0]._dip = surveys[1]._dip
+                
+            # If the last survey isn't at the end of hole, then repeat the last one at eoh
+            if len(surveys) > 0 and surveys[-1]._depth < collar._depth:
+                s = Survey()
+                s._depth = collar._depth
+                s._az = surveys[-1]._az
+                s._dip = surveys[-1]._dip
+                surveys.append(s)
+                
+        return surveys
+
+        
+    def desurveyHoles(self):
+        # Set up a progress bar
+        pd = QProgressDialog()
+        pd.setAutoReset(False)
+        pd.setMinimumWidth(500)
+        pd.setMinimum(0)
+        
+        lc = self.dbManager.getOrCreateCollarLayer()
+        ls = self.dbManager.getOrCreateSurveyLayer()
+        
+        self.dbManager.createDrillholeTable()
+        conn = self.dbManager.getDbConnection()
+        curr = conn.cursor()
+        
         # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 2 attribute (Id, Segment Length)
-        self.createDesurveyLayer()
+#        self.createDesurveyLayer()
         
         #Loop through collar list and desurvey each one
         # Update Progress bar
         pd.setWindowTitle("Desurvey Progress")
-        pd.setMaximum(len(arrCollar))
+        pd.setMaximum(lc.featureCount())
         pd.setValue(0)
         #Calculate optimum update interval
-        updateInt = max(100, int(len(arrCollar)/100))
+        updateInt = max(100, int(lc.featureCount()/100))
         
+        dp = lc.dataProvider()
+        iId = dp.fieldNameIndex('Id')
+        iEast = dp.fieldNameIndex('East')
+        iNorth = dp.fieldNameIndex('North')
+        iElev = dp.fieldNameIndex('Elev')
+        iDepth = dp.fieldNameIndex('Depth')
+        iAz = dp.fieldNameIndex('Az')
+        iDip = dp.fieldNameIndex('Dip')
+
         # Enter collar loop
-        for index, collar in enumerate(arrCollar):
+        for index, feature in enumerate(lc.getFeatures()):
             pd.setValue(index)
             # Force update the progress bar visualisation every 1% as it normally only happens in idle time
             if index%updateInt == 0:
                 qApp.processEvents()
 
+            att = feature.attributes()
+            collar = Collar(att[iId], att[iEast], att[iNorth], att[iElev], att[iDepth], att[iAz], att[iDip])
+#            az = att[iAz]
+#            dip = att[iDip]
+            
             # Check the id exists                
-            if not collar.id:
+            if not collar._id:
                 continue
+
+            surveys = self.surveysForHole(curr, collar)            
+            d = Drillhole(collar, surveys)
+            d.desurvey(self.desurveyLength)
             
-            #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
-            surveys = []
+            self.dbManager.insertDrillhole(curr, d)
+        conn.commit()
+        conn.close()        
 
-            if len(arrSurvey) > 0:
-                # Harvest surveys for this collar from Survey layer list
-                for survey in arrSurvey:
-                    if survey.id == collar.id:
-                        s = Surveys()
-                        s.depth = survey.depth
-                        s.az = survey.az
-                        s.dip = survey.dip
-                        surveys.append(s)
-
-            # If the az and dip from the collar are to be used, then insert them at depth 0.0
-            # We only do this if there are no surveys from the Survey layer
-            if len(surveys) == 0 and useCollarAzDip:
-                s = Surveys()
-                s.depth = 0.0
-                s.az = collar.az
-                s.dip = collar.dip
-                surveys.append(s)
-            
-            # If there are no surveys, then the assume hole is vertical
-            if len(surveys) == 0:
-                s = Surveys()
-                s.depth = 0.0
-                s.az = 0.0
-                s.dip = -90 if self.downDipNegative else 90
-                surveys.append(s)
-                
-            # Is the hole straight? If so, we can take short cuts
-            holeStraight = False
-            if len(surveys) == 1:
-                holeStraight = True
-
-            # We only replicate survey to the beginning and end if the hole is not straight
-            if not holeStraight:
-                # Sort the surveys array by depth
-                surveys.sort(key = lambda x: x.depth)                        
-            
-                # If surveys exist, but there isn't one at 0.0, then replicate first survey at 0.0
-                if not surveys[0].depth == 0.0:
-                    s = Surveys()
-                    surveys.insert(0, s)
-                    s.depth = 0.0
-                    surveys[0].az = surveys[1].az
-                    surveys[0].dip = surveys[1].dip
-                    
-                # If the last survey isn't at the end of hole, then repeat the last one at eoh
-                if len(surveys) > 0 and surveys[-1].depth < collar.depth:
-                    s = Surveys()
-                    s.depth = collar.depth
-                    s.az = surveys[-1].az
-                    s.dip = surveys[-1].dip
-                    surveys.append(s)
-                
-            # Create a quaternion for each survey
-            quat = []
-            for j, s in enumerate(surveys):
-                # Rotate about positive X axis by dip degrees (depends on downDipNegative flag)
-                qdip = Quaternion(axis=[1, 0, 0], degrees=(s.dip  if self.downDipNegative else -s.dip))
-
-                # Rotate about positive Z axis by -Az degrees                        
-                qaz = Quaternion(axis=[0, 0, 1], degrees=-s.az)
-                
-                # Combine the dip and azimuth (order is important!)
-                q = qaz * qdip
-                
-                #Ensure the quaternion rotates the shortest way around. This can go wrong when we cross 0/360 deg.
-                # If the dot product of the quats is negative then it's the wrong way,
-                # so we negate the quat.
-                # But, don't do it on the first one
-                if j > 0:
-                    if np.dot(quat[j-1].elements, q.elements) < 0.0:
-                        q = -q
-                quat.append(q)
-                
-            #Build drill trace every desurveyLength to EOH
-            xs = []
-            if not holeStraight:
-                sz = int(collar.depth / self.desurveyLength) + 1
-                depth = 0.0
-                for d in range(0, sz):
-                    xs.append(depth)
-                    depth += self.desurveyLength
-                if xs[-1] > collar.depth:
-                    xs[-1] = collar.depth
-                if xs[-1] < collar.depth:
-                    xs.append(collar.depth)
-            else:
-                xs.append(0.0)
-                
-            # Create linestring to record the desurveyed points every Segment Length
-            # This can then be used to interpolate intervening points
-            feature = QgsFeature()
-            # We'll create a pointlist to hold all the 3D points
-            pointList = []
-            # We start by adding the collar coordinates
-            pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
-            # It's easier with a straight hole
-            if not holeStraight:
-                # We're going to keep iterating through the survey list looking for the bracketing surveys.
-                # We therefore record the start point of the iteration as it will only go up. Saves time.
-                idx0 = 0
-                # We already added the location at point0 (the collar) so start from 1
-                for i in range(1, len(xs)):
-                    q = Quaternion()
-                    # Find the lowest survey equal or less than xs
-                    for j in range(idx0, len(surveys)):
-                        # Is there a survey exactly at this point?
-                        if surveys[j].depth == xs[i]:
-                            # Update the iteration start point
-                            idx0 = j
-                            q = quat[j]
-                            break
-                        # Are there surveys bracketing this depth? If so, interpolate point
-                        if surveys[j].depth < xs[i] and surveys[j+1].depth >= xs[i]:
-                            # Update the iteration start point
-                            idx0 = j
-                            # How far are we between bracketing surveys?
-                            ratio = (xs[i] - surveys[j].depth) / (surveys[j+1].depth - surveys[j].depth)
-                            # Interpolate between bracketing survey rotations
-                            q = Quaternion.slerp(quat[j], quat[j+1], ratio)
-                            break
-
-                    # Calculate the deviation of this segment of the hole
-                    offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self.desurveyLength
-                    # Calculate the new point by adding the offset to the old point
-                    p0 = pointList[i-1]
-                    pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
-            else:
-                # Calculate the offset of the bottom of hole from the top of hole in a single segment
-                offset = quat[0].rotate(np.array([0.0, 1.0, 0.0])) * collar.depth
-                # Add the offset to the collar
-                p0 = pointList[0]
-                pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
-                
-            # Create new geometry (Polyline) for the feature
-            feature.setGeometry(QgsGeometry.fromPolyline(pointList))
-            # Add in the field attributes
-            feature.setAttributes([collar.id, collar.depth if holeStraight else self.desurveyLength])
-            
-            # Add the feature to the layer
-            self.desurveyLayer.startEditing()
-            self.desurveyLayer.addFeature(feature)
-            self.desurveyLayer.commitChanges()
-
-        self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.crs())
-        self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.crs())
-#        QgsProject.instance().addMapLayer(collar3D)
+#    def drillTrace():                
+#        # Create linestring to record the desurveyed points every Segment Length
+#        # This can then be used to interpolate intervening points
+#        feature = QgsFeature()
+#        # We'll create a pointlist to hold all the 3D points
+#        pointList = []
+#        # We start by adding the collar coordinates
+#        pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
+#        # It's easier with a straight hole
+#        if not holeStraight:
+#            # We're going to keep iterating through the survey list looking for the bracketing surveys.
+#            # We therefore record the start point of the iteration as it will only go up. Saves time.
+#            idx0 = 0
+#            # We already added the location at point0 (the collar) so start from 1
+#            for i in range(1, len(xs)):
+#                q = Quaternion()
+#                # Find the lowest survey equal or less than xs
+#                for j in range(idx0, len(surveys)):
+#                    # Is there a survey exactly at this point?
+#                    if surveys[j].depth == xs[i]:
+#                        # Update the iteration start point
+#                        idx0 = j
+#                        q = quat[j]
+#                        break
+#                    # Are there surveys bracketing this depth? If so, interpolate point
+#                    if surveys[j].depth < xs[i] and surveys[j+1].depth >= xs[i]:
+#                        # Update the iteration start point
+#                        idx0 = j
+#                        # How far are we between bracketing surveys?
+#                        ratio = (xs[i] - surveys[j].depth) / (surveys[j+1].depth - surveys[j].depth)
+#                        # Interpolate between bracketing survey rotations
+#                        q = Quaternion.slerp(quat[j], quat[j+1], ratio)
+#                        break
+#
+#                # Calculate the deviation of this segment of the hole
+#                offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self.desurveyLength
+#                # Calculate the new point by adding the offset to the old point
+#                p0 = pointList[i-1]
+#                pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
+#        else:
+#            # Calculate the offset of the bottom of hole from the top of hole in a single segment
+#            offset = quat[0].rotate(np.array([0.0, 1.0, 0.0])) * collar.depth
+#            # Add the offset to the collar
+#            p0 = pointList[0]
+#            pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
+#            
+#        # Create new geometry (Polyline) for the feature
+#        feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+#        # Add in the field attributes
+#        feature.setAttributes([collar.id, collar.depth if holeStraight else self.desurveyLength])
+#        
+#        # Add the feature to the layer
+#        self.desurveyLayer.startEditing()
+#        self.desurveyLayer.addFeature(feature)
+#        self.desurveyLayer.commitChanges()
+#
+#    self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.crs())
+#    self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.crs())
+##        QgsProject.instance().addMapLayer(collar3D)
 
 
     def writeVectorLayerFromMemory(self, memLayer, fileBaseName, crs):
@@ -903,14 +993,17 @@ class drillManager:
         self.surveyAz = self.dbManager.parameter('SurveyAz')
         self.surveyDip = self.dbManager.parameter('SurveyDip')
         
+        self.desurveyLength = self.dbManager.parameterFloat('DesurveyLength', 1.0)
+        self.downDipNegative = self.dbManager.parameterBool('DownDipNegative', True)
+
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
         self.dbManager.readProjectData()
         
 #       Desurvey & Downhole Data
 #        self.currentDb = readProjectNum("CurrentDb", '')
-        self.desurveyLength = readProjectNum("DesurveyLength", 1)
-        self.downDipNegative = readProjectBool("DownDipNegative", True)
+#        self.desurveyLength = readProjectNum("DesurveyLength", 1)
+#        self.downDipNegative = readProjectBool("DownDipNegative", True)
 #        self.desurveyLayer = readProjectLayer("DesurveyLayer")
 #        self.collarLayer = readProjectLayer("CollarLayer")
 #        self.surveyLayer = readProjectLayer("SurveyLayer")

@@ -15,6 +15,8 @@ roleyhill@gmail.com
 """
 
 import os
+import sqlite3
+import pickle
 
 from PyQt5.QtCore import QVariant
 from PyQt5.QtWidgets import QProgressDialog, qApp
@@ -35,7 +37,16 @@ class dbManager:
         self.currentCrs = None
         
     def currentDbIndex(self):
-        return self.dbReg.index(self.currentDb)
+        try:
+            index = self.dbReg.index(self.currentDb)
+        except:
+            if len(self.dbReg) > 0:
+                self.setCurrentDbFromIndex(0)
+                index = 0
+            else:
+                index = -1
+                
+        return index
         
     def createDb(self, filePath, crs):
         l = QgsVectorLayer('None?field=name:string&field=value:string','Parameters', 'memory')
@@ -166,6 +177,26 @@ class dbManager:
                 iface.messageBar().pushMessage("Error", "Failed to create survey layer", level=Qgis.Critical)
 
         return l
+
+    def createDrillholeTable(self):
+        conn = self.getDbConnection()
+        c = conn.cursor()
+        c.execute("drop table if exists 'gs_drillhole'")
+        c.execute("CREATE TABLE 'gs_drillhole' ('Id' TEXT NOT NULL UNIQUE, 'East' REAL, 'North' REAL, 'Elev' REAL, 'Depth' REAL, 'DesurveyLength' REAL, 'Surveys' BLOB, 'DesurveyPts' BLOB, PRIMARY KEY('Id'))")
+
+        conn.commit()
+        conn.close()        
+
+    def insertDrillhole(self, curr, d):
+            sdata = pickle.dumps(d._surveys, pickle.HIGHEST_PROTOCOL)
+            dsdata = pickle.dumps(d._desurveyPts, pickle.HIGHEST_PROTOCOL)
+            curr.execute("insert into gs_drillhole('Id', 'East', 'North', 'Elev', 'Depth', 'DesurveyLength', 'Surveys', 'DesurveyPts') values (?,?,?,?,?,?,?,?)", (d._collar._id, d._collar._east, d._collar._north, d._collar._elev, d._collar._depth, d._desurveyLength, sqlite3.Binary(sdata), sqlite3.Binary(dsdata)))
+#            curr.execute("insert into gs_drillhole('Id', 'East', 'North', 'Elev', 'Depth') values (?,?,?,?,?)", (collar._id, collar._east, collar._north, collar._elev, collar._depth))
+
+        
+    def getDbConnection(self):
+        conn = sqlite3.connect(self.currentDb)
+        return conn
         
 #    def setParameterLayer(self, name, layer):
 #        val = 'None'
@@ -178,6 +209,9 @@ class dbManager:
     def setParameterInt(self, name, val):
         self.setParameter(name, str(val))
         
+    def setParameterBool(self, name, val):
+        self.setParameterInt(name, 0 if val==False else 1)
+
     def setParameterFloat(self, name, val):
         self.setParameter(name, str(val))
         
@@ -197,6 +231,10 @@ class dbManager:
         if res != '':
             val = int(res)
         return val
+
+    def parameterBool(self, name, default):
+        val = self.parameterInt(name, 0 if default==False else 1)
+        return val != 0
 
     def parameterFloat(self, name, default):
         val = default

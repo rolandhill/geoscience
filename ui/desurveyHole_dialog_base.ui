@@ -19,19 +19,12 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Drill hole database </string>
+        <string>Current Database</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QgsMapLayerComboBox" name="lbDrillDatabase">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
+      <widget class="QComboBox" name="cbCurrentDb"/>
      </item>
     </layout>
    </item>
@@ -102,13 +95,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QgsMapLayerComboBox</class>
-   <extends>QComboBox</extends>
-   <header>qgsmaplayercombobox.h</header>
-  </customwidget>
- </customwidgets>
  <tabstops>
   <tabstop>checkDownDipNegative</tabstop>
   <tabstop>sbDesurveyLength</tabstop>
