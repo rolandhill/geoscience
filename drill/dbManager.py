@@ -127,7 +127,7 @@ class dbManager:
             if write_result == QgsVectorFileWriter.NoError:
                 l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'gs_Collar', 'ogr')
                 atts = []
-                atts.append(QgsField("Id",  QVariant.String, "string", 0, 3))
+                atts.append(QgsField("Id",  QVariant.String, "string", 16))
                 atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
                 atts.append(QgsField("North",  QVariant.Double, "double", 12, 3))
                 atts.append(QgsField("Elev",  QVariant.Double, "double", 8, 3))
@@ -161,7 +161,7 @@ class dbManager:
             if write_result == QgsVectorFileWriter.NoError:
                 l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'gs_Survey', 'ogr')
                 atts = []
-                atts.append(QgsField("Id",  QVariant.String, "string", 0, 3))
+                atts.append(QgsField("Id",  QVariant.String, "string", 16))
                 atts.append(QgsField("Depth",  QVariant.Double, "double", 8, 3))
                 atts.append(QgsField("Az",  QVariant.Double, "double", 6, 2))
                 atts.append(QgsField("Dip",  QVariant.Double, "double", 6, 2))
@@ -178,6 +178,34 @@ class dbManager:
 
         return l
 
+    def getOrCreateTraceLayer(self):
+        l = QgsVectorLayer(self.currentDb + "|layername=Trace", 'gs_Trace', 'ogr')
+        if not l.isValid():
+            l = QgsVectorLayer('LineStringZ?crs=EPSG:4326','gs_Trace', 'memory')
+            l.setCrs(self.currentCrs)
+            
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+            options.layerName = 'Trace'
+
+            write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
+            if write_result == QgsVectorFileWriter.NoError:
+                l = QgsVectorLayer(self.currentDb + "|layername=Trace", 'gs_Trace', 'ogr')
+                atts = []
+                atts.append(QgsField("Id",  QVariant.String, "string", 16))
+                
+                # Add all the attributes to the new layer
+                dp = l.dataProvider()
+                dp.addAttributes(atts)
+                
+                # Tell the vector layer to fetch changes from the provider
+                l.updateFields() 
+            else:
+                l = None
+                iface.messageBar().pushMessage("Error", "Failed to create trace layer", level=Qgis.Critical)
+
+        return l
+        
     def createDrillholeTable(self):
         conn = self.getDbConnection()
         c = conn.cursor()

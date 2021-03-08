@@ -758,9 +758,6 @@ class drillManager:
         conn = self.dbManager.getDbConnection()
         curr = conn.cursor()
         
-        # Create new layer for the desurveyed 3D coordinates. PolyLine, 1 row per collar, 2 attribute (Id, Segment Length)
-#        self.createDesurveyLayer()
-        
         #Loop through collar list and desurvey each one
         # Update Progress bar
         pd.setWindowTitle("Desurvey Progress")
@@ -778,6 +775,9 @@ class drillManager:
         iAz = dp.fieldNameIndex('Az')
         iDip = dp.fieldNameIndex('Dip')
 
+        # We count how many drill holes are inserted so we can use the value later
+        # It's not efficient to read it from SQLite3 tables
+        self.numDrillholes = 0
         # Enter collar loop
         for index, feature in enumerate(lc.getFeatures()):
             pd.setValue(index)
@@ -799,68 +799,99 @@ class drillManager:
             d.desurvey(self.desurveyLength)
             
             self.dbManager.insertDrillhole(curr, d)
+            self.numDrillholes += 1
+        conn.commit()
+        conn.close()      
+        
+        self.dbManager.setParameterInt('NumDrillholes', self.numDrillholes)
+
+    def drillTrace():
+        # Set up a progress bar
+        pd = QProgressDialog()
+        pd.setAutoReset(False)
+        pd.setMinimumWidth(500)
+        pd.setMinimum(0)
+        
+        # Update Progress bar
+        pd.setWindowTitle("Create Trace Layer Progress")
+        pd.setMaximum(self.numDrillholes)
+        pd.setValue(0)
+        #Calculate optimum update interval
+        updateInt = max(100, int(self.numDrillholes/100.0))
+
+        lt = self.dbManager.getOrCreateTraceLayer()
+        
+        conn = self.dbManager.getDbConnection()
+        curr = conn.cursor()
+        
+        curr.execute("SELECT * FROM gs_drillhole")
+
+        #Loop through collar list and desurvey each one
+        for row in curr:
+<--------------------------------------
+            
         conn.commit()
         conn.close()        
 
-#    def drillTrace():                
-#        # Create linestring to record the desurveyed points every Segment Length
-#        # This can then be used to interpolate intervening points
-#        feature = QgsFeature()
-#        # We'll create a pointlist to hold all the 3D points
-#        pointList = []
-#        # We start by adding the collar coordinates
-#        pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
-#        # It's easier with a straight hole
-#        if not holeStraight:
-#            # We're going to keep iterating through the survey list looking for the bracketing surveys.
-#            # We therefore record the start point of the iteration as it will only go up. Saves time.
-#            idx0 = 0
-#            # We already added the location at point0 (the collar) so start from 1
-#            for i in range(1, len(xs)):
-#                q = Quaternion()
-#                # Find the lowest survey equal or less than xs
-#                for j in range(idx0, len(surveys)):
-#                    # Is there a survey exactly at this point?
-#                    if surveys[j].depth == xs[i]:
-#                        # Update the iteration start point
-#                        idx0 = j
-#                        q = quat[j]
-#                        break
-#                    # Are there surveys bracketing this depth? If so, interpolate point
-#                    if surveys[j].depth < xs[i] and surveys[j+1].depth >= xs[i]:
-#                        # Update the iteration start point
-#                        idx0 = j
-#                        # How far are we between bracketing surveys?
-#                        ratio = (xs[i] - surveys[j].depth) / (surveys[j+1].depth - surveys[j].depth)
-#                        # Interpolate between bracketing survey rotations
-#                        q = Quaternion.slerp(quat[j], quat[j+1], ratio)
-#                        break
-#
-#                # Calculate the deviation of this segment of the hole
-#                offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self.desurveyLength
-#                # Calculate the new point by adding the offset to the old point
-#                p0 = pointList[i-1]
-#                pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
-#        else:
-#            # Calculate the offset of the bottom of hole from the top of hole in a single segment
-#            offset = quat[0].rotate(np.array([0.0, 1.0, 0.0])) * collar.depth
-#            # Add the offset to the collar
-#            p0 = pointList[0]
-#            pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
-#            
-#        # Create new geometry (Polyline) for the feature
-#        feature.setGeometry(QgsGeometry.fromPolyline(pointList))
-#        # Add in the field attributes
-#        feature.setAttributes([collar.id, collar.depth if holeStraight else self.desurveyLength])
-#        
-#        # Add the feature to the layer
-#        self.desurveyLayer.startEditing()
-#        self.desurveyLayer.addFeature(feature)
-#        self.desurveyLayer.commitChanges()
-#
-#    self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.crs())
-#    self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.crs())
-##        QgsProject.instance().addMapLayer(collar3D)
+
+        # Create linestring to record the desurveyed points every Segment Length
+        # This can then be used to interpolate intervening points
+        feature = QgsFeature()
+        # We'll create a pointlist to hold all the 3D points
+        pointList = []
+        # We start by adding the collar coordinates
+        pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
+        # It's easier with a straight hole
+        if not holeStraight:
+            # We're going to keep iterating through the survey list looking for the bracketing surveys.
+            # We therefore record the start point of the iteration as it will only go up. Saves time.
+            idx0 = 0
+            # We already added the location at point0 (the collar) so start from 1
+            for i in range(1, len(xs)):
+                q = Quaternion()
+                # Find the lowest survey equal or less than xs
+                for j in range(idx0, len(surveys)):
+                    # Is there a survey exactly at this point?
+                    if surveys[j].depth == xs[i]:
+                        # Update the iteration start point
+                        idx0 = j
+                        q = quat[j]
+                        break
+                    # Are there surveys bracketing this depth? If so, interpolate point
+                    if surveys[j].depth < xs[i] and surveys[j+1].depth >= xs[i]:
+                        # Update the iteration start point
+                        idx0 = j
+                        # How far are we between bracketing surveys?
+                        ratio = (xs[i] - surveys[j].depth) / (surveys[j+1].depth - surveys[j].depth)
+                        # Interpolate between bracketing survey rotations
+                        q = Quaternion.slerp(quat[j], quat[j+1], ratio)
+                        break
+
+                # Calculate the deviation of this segment of the hole
+                offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self.desurveyLength
+                # Calculate the new point by adding the offset to the old point
+                p0 = pointList[i-1]
+                pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
+        else:
+            # Calculate the offset of the bottom of hole from the top of hole in a single segment
+            offset = quat[0].rotate(np.array([0.0, 1.0, 0.0])) * collar.depth
+            # Add the offset to the collar
+            p0 = pointList[0]
+            pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
+            
+        # Create new geometry (Polyline) for the feature
+        feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+        # Add in the field attributes
+        feature.setAttributes([collar.id, collar.depth if holeStraight else self.desurveyLength])
+        
+        # Add the feature to the layer
+        self.desurveyLayer.startEditing()
+        self.desurveyLayer.addFeature(feature)
+        self.desurveyLayer.commitChanges()
+
+    self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.crs())
+    self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.crs())
+#        QgsProject.instance().addMapLayer(collar3D)
 
 
     def writeVectorLayerFromMemory(self, memLayer, fileBaseName, crs):
@@ -916,21 +947,6 @@ class drillManager:
 #        layer.updateFields() 
 #        return layer
 #    
-    def createDesurveyLayer(self):
-        #Find CRS of collar layer
-        crs = self.collarLayer.crs()
-        
-        #Create a new memory layer
-        layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "geoscience_Temp", "memory")
-        layer.setCrs(crs)
-        dp = layer.dataProvider()
-        dp.addAttributes([
-            QgsField("CollarID",  QVariant.String, "string", 16),
-            QgsField("SegLength",  QVariant.Double, "double", 5, 2)
-            ])
-        layer.updateFields() # tell the vector layer to fetch changes from the provider
-        self.desurveyLayer = layer
-    
     def createDownholeLayer(self):
         #Create a new memory layer
         layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "geoscience_Temp", "memory")
@@ -992,6 +1008,8 @@ class drillManager:
         self.surveyDepth = self.dbManager.parameter('SurveyDepth')
         self.surveyAz = self.dbManager.parameter('SurveyAz')
         self.surveyDip = self.dbManager.parameter('SurveyDip')
+        
+        self.numDrillholes = self.dbManager.parameterInt('NumDrillholes')
         
         self.desurveyLength = self.dbManager.parameterFloat('DesurveyLength', 1.0)
         self.downDipNegative = self.dbManager.parameterBool('DownDipNegative', True)
