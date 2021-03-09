@@ -113,9 +113,14 @@ class dbManager:
                 self.currentParameterLayer.dataProvider().addFeature(f)
             self.currentParameterLayer.commitChanges()
 
-    def getOrCreateCollarLayer(self):
+    def getOrCreateCollarLayer(self, clear = False):
         l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'gs_Collar', 'ogr')
-        if not l.isValid():
+        if l.isValid():
+            if clear:
+                with edit(l):
+                    listOfIds = [feat.id() for feat in l.getFeatures()]
+                    l.deleteFeatures( listOfIds )
+        else:
             l = QgsVectorLayer('PointZ?crs=EPSG:4326','gs_Collar', 'memory')
             l.setCrs(self.currentCrs)
             
@@ -147,9 +152,14 @@ class dbManager:
 
         return l
         
-    def getOrCreateSurveyLayer(self):
+    def getOrCreateSurveyLayer(self, clear = False):
         l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'gs_Survey', 'ogr')
-        if not l.isValid():
+        if l.isValid():
+            if clear:
+                with edit(l):
+                    listOfIds = [feat.id() for feat in l.getFeatures()]
+                    l.deleteFeatures( listOfIds )
+        else:
 #        l = QgsVectorLayer('None?field=name:string&field=value:string','Parameters', 'memory')
             l = QgsVectorLayer('None','gs_Survey', 'memory')
             
@@ -178,9 +188,15 @@ class dbManager:
 
         return l
 
-    def getOrCreateTraceLayer(self):
+    def getOrCreateTraceLayer(self, clear = False):
+            
         l = QgsVectorLayer(self.currentDb + "|layername=Trace", 'gs_Trace', 'ogr')
-        if not l.isValid():
+        if l.isValid():
+            if clear:
+                with edit(l):
+                    listOfIds = [feat.id() for feat in l.getFeatures()]
+                    l.deleteFeatures( listOfIds )
+        else:
             l = QgsVectorLayer('LineStringZ?crs=EPSG:4326','gs_Trace', 'memory')
             l.setCrs(self.currentCrs)
             

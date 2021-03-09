@@ -833,7 +833,7 @@ class drillManager:
         #Calculate optimum update interval
         updateInt = max(100, int(self.numDrillholes/100.0))
 
-        lt = self.dbManager.getOrCreateTraceLayer()
+        lt = self.dbManager.getOrCreateTraceLayer(True)
         
         conn = self.dbManager.getDbConnection()
         curr = conn.cursor()
@@ -848,7 +848,7 @@ class drillManager:
 
             # Create linestring to record the desurveyed points every Segment Length
             # This can then be used to interpolate intervening points
-            feature = QgsFeature()
+            feature = QgsFeature(lt.fields())
             # We'll create a pointlist to hold all the 3D points
             pointList = []
 
@@ -856,16 +856,16 @@ class drillManager:
 #                iface.messageBar().pushMessage("Debug", "%f  %f  %f"%(pt[1], pt[2], pt[3]), level=Qgis.Warning)
                 pointList.append(QgsPoint(pt[1], pt[2], pt[3]))
                 
-                # Create new geometry (Polyline) for the feature
-                feature.setGeometry(QgsGeometry.fromPolyline(pointList))
-                # Add in the field attributes
-                feature.setAttributes([d._collar._id])
-            
-                # Add the feature to the layer
-                lt.startEditing()
-                lt.addFeature(feature)
-                lt.commitChanges()
-    
+            # Create new geometry (Polyline) for the feature
+            feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+            # Add in the field attributes
+            feature.setAttribute('Id', d._collar._id)
+#                feature.setAttributes([d._collar._id])
+        
+            # Add the feature to the layer
+            lt.startEditing()
+            lt.addFeature(feature)
+            lt.commitChanges()
 
         conn.close()        
 
