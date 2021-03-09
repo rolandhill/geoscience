@@ -217,7 +217,9 @@ class dbManager:
 
     def insertDrillhole(self, curr, d):
             sdata = pickle.dumps(d._surveys, pickle.HIGHEST_PROTOCOL)
+#            sdata = marshal.dumps(d._surveys)
             dsdata = pickle.dumps(d._desurveyPts, pickle.HIGHEST_PROTOCOL)
+#            dsdata = marshal.dumps(d._desurveyPts)
             curr.execute("insert into gs_drillhole('Id', 'East', 'North', 'Elev', 'Depth', 'DesurveyLength', 'Surveys', 'DesurveyPts') values (?,?,?,?,?,?,?,?)", (d._collar._id, d._collar._east, d._collar._north, d._collar._elev, d._collar._depth, d._desurveyLength, sqlite3.Binary(sdata), sqlite3.Binary(dsdata)))
 #            curr.execute("insert into gs_drillhole('Id', 'East', 'North', 'Elev', 'Depth') values (?,?,?,?,?)", (collar._id, collar._east, collar._north, collar._elev, collar._depth))
 
