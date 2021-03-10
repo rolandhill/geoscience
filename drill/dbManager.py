@@ -78,9 +78,18 @@ class dbManager:
 
     
     def openDb(self, filePath):
-        self.dbReg.append(filePath)
+        if not (filePath in self.dbReg):
+            self.dbReg.append(filePath)
         self.setCurrentDb(filePath)
+        
+        self.writeProjectData()
 
+    def closeDb():
+        self.dbReg.remove(self.currentDb)
+        if len(self.dbReg) > 0:
+            self.setCurrentDbFromIndex(0)
+        self.writeProjectData()
+        
     def setCurrentDbFromIndex(self, regIndex):
         filePath = self.dbReg[regIndex]
         self.setCurrentDb(filePath)
@@ -97,31 +106,15 @@ class dbManager:
                 self.currentDb = ''
                 self.currentParameterLayer = None
         
-    def setParameter(self, name, val):
-        if self.currentParameterLayer is not None:
-            f = self.parameterFeature(name)
-            self.currentParameterLayer.startEditing()
-            if f is not None:
-                f["value"] = val
-                self.currentParameterLayer.updateFeature(f)
-            else:
-                f = QgsFeature(self.currentParameterLayer.fields())
-
-                # Set the attributes for the new feature
-                f.setAttribute('name', name)
-                f.setAttribute('value', val)
-                self.currentParameterLayer.dataProvider().addFeature(f)
-            self.currentParameterLayer.commitChanges()
-
     def getOrCreateCollarLayer(self, clear = False):
-        l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'gs_Collar', 'ogr')
+        l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
         if l.isValid():
             if clear:
                 with edit(l):
                     listOfIds = [feat.id() for feat in l.getFeatures()]
                     l.deleteFeatures( listOfIds )
         else:
-            l = QgsVectorLayer('PointZ?crs=EPSG:4326','gs_Collar', 'memory')
+            l = QgsVectorLayer('PointZ?crs=EPSG:4326','Collar', 'memory')
             l.setCrs(self.currentCrs)
             
             options = QgsVectorFileWriter.SaveVectorOptions()
@@ -130,7 +123,7 @@ class dbManager:
 
             write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
             if write_result == QgsVectorFileWriter.NoError:
-                l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'gs_Collar', 'ogr')
+                l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
                 atts = []
                 atts.append(QgsField("Id",  QVariant.String, "string", 16))
                 atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
@@ -153,7 +146,7 @@ class dbManager:
         return l
         
     def getOrCreateSurveyLayer(self, clear = False):
-        l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'gs_Survey', 'ogr')
+        l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'Survey', 'ogr')
         if l.isValid():
             if clear:
                 with edit(l):
@@ -161,7 +154,7 @@ class dbManager:
                     l.deleteFeatures( listOfIds )
         else:
 #        l = QgsVectorLayer('None?field=name:string&field=value:string','Parameters', 'memory')
-            l = QgsVectorLayer('None','gs_Survey', 'memory')
+            l = QgsVectorLayer('None','Survey', 'memory')
             
             options = QgsVectorFileWriter.SaveVectorOptions()
             options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
@@ -169,7 +162,7 @@ class dbManager:
 
             write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
             if write_result == QgsVectorFileWriter.NoError:
-                l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'gs_Survey', 'ogr')
+                l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'Survey', 'ogr')
                 atts = []
                 atts.append(QgsField("Id",  QVariant.String, "string", 16))
                 atts.append(QgsField("Depth",  QVariant.Double, "double", 8, 3))
@@ -190,14 +183,14 @@ class dbManager:
 
     def getOrCreateTraceLayer(self, clear = False):
             
-        l = QgsVectorLayer(self.currentDb + "|layername=Trace", 'gs_Trace', 'ogr')
+        l = QgsVectorLayer(self.currentDb + "|layername=Trace", 'Trace', 'ogr')
         if l.isValid():
             if clear:
                 with edit(l):
                     listOfIds = [feat.id() for feat in l.getFeatures()]
                     l.deleteFeatures( listOfIds )
         else:
-            l = QgsVectorLayer('LineStringZ?crs=EPSG:4326','gs_Trace', 'memory')
+            l = QgsVectorLayer('LineStringZ?crs=EPSG:4326','Trace', 'memory')
             l.setCrs(self.currentCrs)
             
             options = QgsVectorFileWriter.SaveVectorOptions()
@@ -206,7 +199,7 @@ class dbManager:
 
             write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
             if write_result == QgsVectorFileWriter.NoError:
-                l = QgsVectorLayer(self.currentDb + "|layername=Trace", 'gs_Trace', 'ogr')
+                l = QgsVectorLayer(self.currentDb + "|layername=Trace", 'Trace', 'ogr')
                 atts = []
                 atts.append(QgsField("Id",  QVariant.String, "string", 16))
                 
@@ -252,6 +245,25 @@ class dbManager:
 #            val = 'None'
 #        self.setParameter(name, val)
 #        
+    def currentDbName(self):
+        return os.path.splitext(os.path.basename(self.currentDb))[0]
+
+    def setParameter(self, name, val):
+        if self.currentParameterLayer is not None:
+            f = self.parameterFeature(name)
+            self.currentParameterLayer.startEditing()
+            if f is not None:
+                f["value"] = val
+                self.currentParameterLayer.updateFeature(f)
+            else:
+                f = QgsFeature(self.currentParameterLayer.fields())
+
+                # Set the attributes for the new feature
+                f.setAttribute('name', name)
+                f.setAttribute('value', val)
+                self.currentParameterLayer.dataProvider().addFeature(f)
+            self.currentParameterLayer.commitChanges()
+
     def setParameterInt(self, name, val):
         self.setParameter(name, str(val))
         
@@ -309,7 +321,7 @@ class dbManager:
     def writeProjectData(self):
         #We first need to remove excess section entries
         numDb = readProjectNum("DrillDBCount", 0)
-        if numDb> len(self.dbReg):
+        if numDb > len(self.dbReg):
             for index in range( len(self.dbReg), numDb):
                 key = 'DB{:02d}_Name'.format(index)
                 removeProjectEntry(key)
@@ -332,6 +344,8 @@ class dbManager:
             key = 'DB{:02d}_Name'.format(index)
 #            iface.messageBar().pushMessage("Debug", key, level=Qgis.Info)
             name = readProjectText(key, '')
+            if not (name in self.dbReg):
+                self.dbReg.append(name)
             
         # Read the name of the current DB
         self.setCurrentDb(readProjectText('CurrentDB', ''))

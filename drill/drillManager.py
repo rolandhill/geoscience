@@ -227,21 +227,39 @@ class drillManager:
         if result and filePath:
             self.dbManager.openDb(filePath)
             if self.dbManager.currentDb != '':
-                pass
-                # Create the group
                 # Load collars, traces etc
+                g = self.dbGroup()
+                self.addLayerToGroup(self.dbManager.getOrCreateCollarLayer(), g)
+                self.addLayerToGroup(self.dbManager.getOrCreateTraceLayer(), g)
+                self.addLayerToGroup(self.dbManager.getOrCreateSurveyLayer(), g)
+                g.setExpanded(True)
+
                 # Load sectionPlan
 
             # Setup and run the Drill Setup dialog        
     def onCloseDb(self):
-        pass
+        dlg = closeDbDialog(self)
+        result = dlg.exec_()
+        if result:
+            filePath = dlg.fwDatabase.filePath()
+        dlg.close()
+
+        if result and filePath:
+            label = 'Drilling_' + os.path.splitext(os.path.basename(filePath))[0]
+            root = QgsProject.instance().layerTreeRoot()
+            group = self.findGroup(label, root)
+            if group is not None:
+                root.removeGroup(group)
     
     def checkValidDb(self):
         if self.dbManager.currentDb == '':
             self.onOpenDb();
+        
+        return self.dbManager.currentDb != ''
             
     def onAddCollars(self):
-        self.checkValidDb()
+        if not self.checkValidDb():
+            return
         dlg = addCollarsDialog(self)
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
@@ -271,7 +289,8 @@ class drillManager:
 
 
     def onAddSurveys(self):
-        self.checkValidDb()
+        if not self.checkValidDb():
+            return
         dlg = addSurveysDialog(self)
         result = dlg.exec_()
         # If OK button clicked then retrieve and update values
@@ -294,7 +313,8 @@ class drillManager:
             self.addSurveys()
 
     def onAddDownhole(self):
-        pass
+        if not self.checkValidDb():
+            return
     
         # Setup and run the Drill Desurvey dialog        
     def onDesurveyHole(self):
@@ -313,6 +333,13 @@ class drillManager:
             self.desurveyHoles()
             self.drillTrace()
 
+            # Get the group
+            dbg = self.dbGroup()
+            
+            # Load collars, traces etc
+            l = self.dbManager.getOrCreateTraceLayer()
+            QgsProject.instance().addMapLayer(l, False)
+            dbg.addLayer(l)
 
     # Setup and run the Drill Trace dialog
     def onAddDownhole(self):
@@ -616,6 +643,7 @@ class drillManager:
             l.addFeature(f)
             l.commitChanges()
             
+        self.addLayerToGroup(l, self.dbGroup())
             
         if (floatConvError):
             iface.messageBar().pushMessage("Warning", "Some 'East', 'North', 'Collar' or 'Depth' values are not numbers", level=Qgis.Warning)
@@ -682,6 +710,8 @@ class drillManager:
             l.startEditing()
             l.addFeature(f)
             l.commitChanges()
+
+        self.addLayerToGroup(l, self.dbGroup())
             
         if (floatConvError):
             iface.messageBar().pushMessage("Warning", "Some survey 'Depth', 'Azimuth' or 'Dip' values are not numbers", level=Qgis.Warning)
@@ -833,7 +863,7 @@ class drillManager:
         #Calculate optimum update interval
         updateInt = max(100, int(self.numDrillholes/100.0))
 
-        lt = self.dbManager.getOrCreateTraceLayer(True)
+        l = self.dbManager.getOrCreateTraceLayer(True)
         
         conn = self.dbManager.getDbConnection()
         curr = conn.cursor()
@@ -863,9 +893,11 @@ class drillManager:
 #                feature.setAttributes([d._collar._id])
         
             # Add the feature to the layer
-            lt.startEditing()
-            lt.addFeature(feature)
-            lt.commitChanges()
+            l.startEditing()
+            l.addFeature(feature)
+            l.commitChanges()
+
+        self.addLayerToGroup(l, self.dbGroup())
 
         conn.close()        
 
@@ -890,18 +922,18 @@ class drillManager:
         QgsProject.instance().addMapLayer(fileLayer)
         return fileLayer
         
-    def createCollarFilename(self):
-        # Build the new filename
-        path=self.collarLayer.dataProvider().dataSourceUri()
-        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_3D'))
-        return fileName
-    
-    def createDesurveyFilename(self):
-        # Build the new filename
-        path=self.collarLayer.dataProvider().dataSourceUri()
-        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_Desurvey'))
-        return fileName
-    
+#    def createCollarFilename(self):
+#        # Build the new filename
+#        path=self.collarLayer.dataProvider().dataSourceUri()
+#        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_3D'))
+#        return fileName
+#    
+#    def createDesurveyFilename(self):
+#        # Build the new filename
+#        path=self.collarLayer.dataProvider().dataSourceUri()
+#        fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_Desurvey'))
+#        return fileName
+#    
 #    def createCollarLayer(self):
 #        #Find CRS of collar layer
 #        crs = self.collarLayer.crs()
@@ -969,6 +1001,53 @@ class drillManager:
 #        self.dbManager.setParameter('CollarAz', self.collarAz)
 #        self.dbManager.setParameter('CollarDip', self.collarDip)
         
+    #Return the root group for all sections or create it if it doesn't exist
+    def findGroup(self, label, root = None):
+        if root == None:
+            root = QgsProject.instance().layerTreeRoot()
+        group = None
+        for child in root.children():
+            if isinstance(child, QgsLayerTreeGroup) and child.name() == label:
+                group = child
+                break
+
+        return group
+
+    #Return the root group for all sections or create it if it doesn't exist
+    def dbGroup(self):
+        label = 'Drilling_' + self.dbManager.currentDbName()
+        root = QgsProject.instance().layerTreeRoot()
+        group = self.findGroup(label, root)
+        
+        if group == None:
+            group = root.insertGroup(0, label)
+#            group = QgsLayerTreeGroup(label)
+            group.setExpanded(True)
+#            root.insertChildNode(0, group)
+            
+        return group
+
+    def sectionGroup(self):
+        root = self.dbGroup()
+        label = 'Sections'
+        group = self.findGroup(label, root)
+        
+        if group == None:
+            group = dbGroup.insertGroup(0, label)
+#            group = QgsLayerTreeGroup(label)
+            group.setExpanded(True)
+            group.setIsMutuallyExclusive(True)
+#            root.addChildNode(group)
+            
+        return group
+
+    def addLayerToGroup(self, l, g):
+        res = g.findLayer(l)
+        if res is None:
+            QgsProject.instance().addMapLayer(l, False)
+            g.addLayer(l)
+        
+
     def readParameters(self):
         self.collarLayer = self.dbManager.parameter('CollarLayer')
         self.collarId = self.dbManager.parameter('CollarId')

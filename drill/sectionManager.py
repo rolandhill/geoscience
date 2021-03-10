@@ -524,20 +524,20 @@ class sectionManager:
         return group
 
     #Return the root group for all sections or create it if it doesn't exist
-    def sectionGroup(self):
-        group = None
-        root = QgsProject.instance().layerTreeRoot()
-        for child in root.children():
-            if isinstance(child, QgsLayerTreeGroup) and child.name() == "Sections":
-                group = child
-                break
-        
-        if group == None:
-            group = root.insertGroup(0, "Sections")
-            group.setIsMutuallyExclusive(True)
-            
-        return group
-
+#    def sectionGroup(self):
+#        group = None
+#        root = QgsProject.instance().layerTreeRoot()
+#        for child in root.children():
+#            if isinstance(child, QgsLayerTreeGroup) and child.name() == "Sections":
+#                group = child
+#                break
+#        
+#        if group == None:
+#            group = root.insertGroup(0, "Sections")
+#            group.setIsMutuallyExclusive(True)
+#            
+#        return group
+#
     def showSection(self, section):
         # Generate the section data if it hasn't already been done (ie it has no sectionLayers).
         if len(section.sectionLayers) == 0:
