@@ -29,7 +29,7 @@ from ..gui.addCollars_dialog import addCollarsDialog
 from ..gui.addSurveys_dialog import addSurveysDialog
 #from ..gui.addDownhole import addDownholeDialog
 from ..gui.desurveyHole_dialog import desurveyHoleDialog
-from ..gui.downHoleData_dialog import downholeDataDialog
+from ..gui.addIntervals_dialog import addIntervalsDialog
 from ..gui.sectionManager_dialog import sectionManagerDialog
 
 from .sectionManager import *
@@ -312,9 +312,34 @@ class drillManager:
             
             self.addSurveys()
 
-    def onAddDownhole(self):
+    def onAddDownholeIntervals(self):
         if not self.checkValidDb():
             return
+        dlg = addIntervalsDialog(self)
+        result = dlg.exec_()
+        # If OK button clicked then retrieve and update values
+        if result:
+            self.dbManager.setCurrentDbFromIndex(dlg.cbCurrentDb.currentIndex())
+            self.intervalLayer = dlg.lbDataLayer.currentLayer()
+            self.intervalId = dlg.fbDataId.currentField()
+            self.intervalFrom = dlg.fbDataFrom.currentField()
+            self.intervalTo = dlg.fbDataTo.currentField()
+            self.intervalName = dlg.teSuffix.text()
+            # Save the name of each checked attribute field in a list
+            self.intervalFields = []
+            for index in range(dlg.listFields.count()):
+                if dlg.listFields.item(index).checkState():
+                    self.intervalFields.append(dlg.listFields.item(index).text())
+        dlg.close()
+
+        if result:
+            self.dbManager.setParameter('IntervalLayer', self.intervalLayer.name())
+            self.dbManager.setParameter('IntervalId', self.intervalId)
+            self.dbManager.setParameter('IntervalFrom', self.intervalFrom)
+            self.dbManager.setParameter('IntervalTo', self.intervalTo)
+            self.dbManager.setParameter('IntervalName', self.intervalName)
+            
+            self.addIntervals()
     
         # Setup and run the Drill Desurvey dialog        
     def onDesurveyHole(self):
@@ -342,30 +367,30 @@ class drillManager:
             dbg.addLayer(l)
 
     # Setup and run the Drill Trace dialog
-    def onAddDownhole(self):
-        dlg = downholeDataDialog(self)
-#        dlg.show()
-        result = dlg.exec_()
-        if result:
-            self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
-            self.dataLayer = dlg.lbDataLayer.currentLayer()
-            self.dataId = dlg.fbDataId.currentField()
-            self.dataFrom = dlg.fbDataFrom.currentField()
-            self.dataTo = dlg.fbDataTo.currentField()
-            self.dataSuffix = dlg.teSuffix.text()
-            # Save the name of each checked attribute field in a list
-            self.dataFields = []
-            for index in range(dlg.listFields.count()):
-                if dlg.listFields.item(index).checkState():
-                    self.dataFields.append(dlg.listFields.item(index).text())
-                    
-            self.writeProjectData()
-
-        dlg.close()
-
-        if result:
-            # Create the down hole traces        
-            self.createDownholeData()
+#    def onAddDownhole(self):
+#        dlg = downholeDataDialog(self)
+##        dlg.show()
+#        result = dlg.exec_()
+#        if result:
+#            self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
+#            self.dataLayer = dlg.lbDataLayer.currentLayer()
+#            self.dataId = dlg.fbDataId.currentField()
+#            self.dataFrom = dlg.fbDataFrom.currentField()
+#            self.dataTo = dlg.fbDataTo.currentField()
+#            self.dataSuffix = dlg.teSuffix.text()
+#            # Save the name of each checked attribute field in a list
+#            self.dataFields = []
+#            for index in range(dlg.listFields.count()):
+#                if dlg.listFields.item(index).checkState():
+#                    self.dataFields.append(dlg.listFields.item(index).text())
+#                    
+#            self.writeProjectData()
+#
+#        dlg.close()
+#
+#        if result:
+#            # Create the down hole traces        
+#            self.createDownholeData()
 
 #    # Desurvey the data        
 #    def onDesurveyHole(self):
@@ -381,7 +406,7 @@ class drillManager:
         self.sectionManagerDlg.fillSectionList()
 
     # Create the down hole traces    
-    def createDownholeData(self):
+    def addIntervals(self):
 #        self.logFile.write("\nCreating Downhole Data Layer.\n")
 #        self.logFile.flush()
         

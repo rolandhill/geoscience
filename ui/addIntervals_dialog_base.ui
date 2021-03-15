@@ -22,26 +22,22 @@
      <item>
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Desurveyed Hole Layer</string>
+        <string>Current Database</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QgsMapLayerComboBox" name="lbDesurveyLayer">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
+      <widget class="QComboBox" name="cbCurrentDb"/>
      </item>
     </layout>
    </item>
    <item>
     <widget class="QGroupBox" name="groupDownhole">
      <property name="title">
-      <string>Downhole Data</string>
+      <string>Downhole Interval Data</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
@@ -116,14 +112,14 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>Filename suffix</string>
+           <string>Interval Layer Name</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLineEdit" name="teSuffix">
           <property name="placeholderText">
-           <string>eg. Lith, Assay, MagSusc</string>
+           <string>eg. Lith, Lithology, Assay, MagSusc</string>
           </property>
          </widget>
         </item>

@@ -14,10 +14,10 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), '../ui/downHoleData_dialog_base.ui'))
 
 
-class downholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+class addIntervalsDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
         """Constructor."""
-        super(downholeDataDialog, self).__init__(parent)
+        super(addIntervalsDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
         self.drillManager = manager
@@ -29,11 +29,11 @@ class downholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
     
-        self.lbDesurveyLayer.setFilters(QgsMapLayerProxyModel.LineLayer)
-        self.initLayer(self.drillManager.desurveyLayer, self.lbDesurveyLayer, ["desurvey"])
-
+        self.cbCurrentDb.addItems(manager.dbManager.dbRelPaths())
+        self.cbCurrentDb.setCurrentIndex(self.drillManager.dbManager.currentDbIndex())
+        
         self.lbDataLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
-        self.initLayer(self.drillManager.dataLayer, self.lbDataLayer, ["lith", "geol"])
+        self.initLayer(self.drillManager.dataLayer, self.lbDataLayer, ["lith", "geol", "assay"])
         self.checkSelectAll.setChecked(True)
         
         self.lbDataLayer.layerChanged.connect(self.onDataLayerChanged)

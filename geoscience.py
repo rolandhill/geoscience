@@ -118,8 +118,8 @@ class Geoscience:
         action.triggered.connect(self.drillManager.onAddSurveys)
         action.setEnabled(True)
 
-        action = self.menuAdd.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Downhole")
-        action.triggered.connect(self.drillManager.onAddDownhole)
+        action = self.menuAdd.addAction(QIcon(self.plugin_dir + "/icon/DrillSetup.png"), "Downhole Intervals")
+        action.triggered.connect(self.drillManager.onAddDownholeIntervals)
         action.setEnabled(True)
 
         action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/Desurvey.png"), "Desurvey Holes...")
@@ -128,7 +128,7 @@ class Geoscience:
         self.toolbar.addAction(action)
         self.actions.append(action)
 
-#        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPlan.png"), "Add Downhole Data...")
+#        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPlan.png"), "Add Downhole Intervals...")
 #        action.triggered.connect(self.drillManager.onDownholeData)
 #        action.setEnabled(True)
 #        self.toolbar.addAction(action)
