@@ -215,6 +215,8 @@ class drillManager:
 
         if result:
             self.dbManager.createDb(filePath, crs)
+            self.dbManager.openDb(filePath)
+            self.loadLayers()
 
     # Setup and run the Drill Setup dialog        
     def onOpenDb(self):
@@ -228,12 +230,7 @@ class drillManager:
             self.dbManager.openDb(filePath)
             if self.dbManager.currentDb != '':
                 # Load collars, traces etc
-                g = self.dbGroup()
-                self.addLayerToGroup(self.dbManager.getOrCreateCollarLayer(), g)
-                self.addLayerToGroup(self.dbManager.getOrCreateTraceLayer(), g)
-                self.addLayerToGroup(self.dbManager.getOrCreateSurveyLayer(), g)
-                g.setExpanded(True)
-
+                self.loadLayers()
                 # Load sectionPlan
 
             # Setup and run the Drill Setup dialog        
@@ -251,6 +248,13 @@ class drillManager:
             if group is not None:
                 root.removeGroup(group)
     
+    def loadLayers(self):
+        g = self.dbGroup()
+        self.addLayerToGroup(self.dbManager.getOrCreateCollarLayer(), g)
+        self.addLayerToGroup(self.dbManager.getOrCreateTraceLayer(), g)
+        self.addLayerToGroup(self.dbManager.getOrCreateSurveyLayer(), g)
+        g.setExpanded(True)
+        
     def checkValidDb(self):
         if self.dbManager.currentDb == '':
             self.onOpenDb();

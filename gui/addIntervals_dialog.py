@@ -11,7 +11,7 @@ from qgis.gui import *
 from .dialogBase import dialogBase
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), '../ui/downHoleData_dialog_base.ui'))
+    os.path.dirname(__file__), '../ui/addIntervals_dialog_base.ui'))
 
 
 class addIntervalsDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):

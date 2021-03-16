@@ -49,32 +49,56 @@ class dbManager:
         return index
         
     def createDb(self, filePath, crs):
-        l = QgsVectorLayer('None?field=name:string&field=value:string','Parameters', 'memory')
+        if os.path.isfile(filePath):
+            try:
+                os.remove(filePath)
+            except:
+                iface.messageBar().pushMessage("Error", "Failed to delete existing file: %s"%(filePath), level=Qgis.Critical)
+            
+        lc = self.createCollarLayer(filePath, crs)
+        if lc is None:
+            iface.messageBar().pushMessage("Error", "Failed to create new database: %s"%(filePath), level=Qgis.Critical)
+        else:    
+            temp = self.currentDb
+            self.currentDb = filePath
+            conn = self.getDbConnection()
+            c = conn.cursor()
+            c.execute("CREATE TABLE Parameters (name TEXT NOT NULL UNIQUE, value TEXT, PRIMARY KEY(name))")
+            c.execute("CREATE TABLE dhIntervals (name TEXT NOT NULL UNIQUE, PRIMARY KEY(name))")
+            c.execute("CREATE TABLE dhPoints (name TEXT NOT NULL UNIQUE, PRIMARY KEY(name))")
+    
+            conn.commit()
+            conn.close()        
+            
         
-        options = QgsVectorFileWriter.SaveVectorOptions()
-        options.driverName = 'GPKG'
-        options.layerName = 'Parameters'
-        write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,filePath,options)
-#        QgsProject.instance().removeMapLayer(l)
-        if write_result == QgsVectorFileWriter.NoError:
-            self.dbReg.append(filePath)
-            self.currentCrs = crs
-            
-            l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
-            self.currentParameterLayer = l
-            
-            #Write basic data
+#        l = QgsVectorLayer('None?field=name:string&field=value:string','Parameters', 'memory')
+#        
+#        options = QgsVectorFileWriter.SaveVectorOptions()
+#        options.driverName = 'GPKG'
+#        options.layerName = 'Parameters'
+#        write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,filePath,options)
+##        QgsProject.instance().removeMapLayer(l)
+#        if write_result == QgsVectorFileWriter.NoError:
+#            self.dbReg.append(filePath)
+#            self.currentCrs = crs
+#            
+#            l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
+#            self.currentParameterLayer = l
+#            
+#            #Write basic data
             self.setParameter('VersionMajor', str(self.drillManager.dbVersionMajor) )
             self.setParameter('VersionMinor', str(self.drillManager.dbVersionMinor) )
             self.setParameter('CRS', crs.toWkt(variant=QgsCoordinateReferenceSystem.WktVariant.WKT2_2018))
 
-            # Force the current DB to refresh incase the user has written over the same filename with the new one
-            self.setCurrentDb(filePath, force=True)
-
-            iface.messageBar().pushMessage("Geoscience", "New drill hole database created: %s"%(filePath), level=Qgis.Info)
-            
-        else:
-            iface.messageBar().pushMessage("Error", "Failed to create new database: %s"%(error_message), level=Qgis.Critical)
+            self.currentDb = temp
+#
+#            # Force the current DB to refresh incase the user has written over the same filename with the new one
+#            self.setCurrentDb(filePath, force=True)
+#
+#            iface.messageBar().pushMessage("Geoscience", "New drill hole database created: %s"%(filePath), level=Qgis.Info)
+#            
+#        else:
+#            iface.messageBar().pushMessage("Error", "Failed to create new database: %s"%(error_message), level=Qgis.Critical)
 
     
     def openDb(self, filePath):
@@ -96,15 +120,17 @@ class dbManager:
 
     def setCurrentDb(self, filePath, force=False):
         if filePath != self.currentDb or force == True:
-            l = QgsVectorLayer(filePath + "|layername=Parameters", 'Parameters', 'ogr')
-            if l.isValid():
-                self.currentDb = filePath
-                self.currentParameterLayer = l
+            # Test if the new DB is valid
+            oldDb = self.currentDb
+            self.currentDb = filePath
+            ver = self.parameter('VersionMajor')
+            if ver:
+#                self.currentDb = filePath
                 self.currentCrs = QgsCoordinateReferenceSystem.fromWkt(self.parameter('CRS', ''))
                 self.drillManager.readParameters()
             else:
-                self.currentDb = ''
-                self.currentParameterLayer = None
+                self.currentDb = oldDb
+                iface.messageBar().pushMessage("Error", "Attempt to open invalid database: %s"%(filePath), level=Qgis.Critical)
         
     def getOrCreateCollarLayer(self, clear = False):
         l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
@@ -114,37 +140,71 @@ class dbManager:
                     listOfIds = [feat.id() for feat in l.getFeatures()]
                     l.deleteFeatures( listOfIds )
         else:
-            l = QgsVectorLayer('PointZ?crs=EPSG:4326','Collar', 'memory')
-            l.setCrs(self.currentCrs)
-            
-            options = QgsVectorFileWriter.SaveVectorOptions()
-            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-            options.layerName = 'Collar'
-
-            write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
-            if write_result == QgsVectorFileWriter.NoError:
-                l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
-                atts = []
-                atts.append(QgsField("Id",  QVariant.String, "string", 16))
-                atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
-                atts.append(QgsField("North",  QVariant.Double, "double", 12, 3))
-                atts.append(QgsField("Elev",  QVariant.Double, "double", 8, 3))
-                atts.append(QgsField("Depth",  QVariant.Double, "double", 8, 3))
-                atts.append(QgsField("Az",  QVariant.Double, "double", 6, 2))
-                atts.append(QgsField("Dip",  QVariant.Double, "double", 6, 2))
-                
-                # Add all the attributes to the new layer
-                dp = l.dataProvider()
-                dp.addAttributes(atts)
-                
-                # Tell the vector layer to fetch changes from the provider
-                l.updateFields() 
-            else:
-                l = None
-                iface.messageBar().pushMessage("Error", "Failed to create collar layer", level=Qgis.Critical)
+            l = self.createCollarLayer(self.currentDb, self.currentCrs)
+#            l = QgsVectorLayer('PointZ?crs=EPSG:4326','Collar', 'memory')
+#            l.setCrs(self.currentCrs)
+#            
+#            options = QgsVectorFileWriter.SaveVectorOptions()
+#            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+#            options.layerName = 'Collar'
+#
+#            write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,self.currentDb,options)
+#            if write_result == QgsVectorFileWriter.NoError:
+#                l = QgsVectorLayer(self.currentDb + "|layername=Collar", 'Collar', 'ogr')
+#                atts = []
+#                atts.append(QgsField("Id",  QVariant.String, "string", 16))
+#                atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
+#                atts.append(QgsField("North",  QVariant.Double, "double", 12, 3))
+#                atts.append(QgsField("Elev",  QVariant.Double, "double", 8, 3))
+#                atts.append(QgsField("Depth",  QVariant.Double, "double", 8, 3))
+#                atts.append(QgsField("Az",  QVariant.Double, "double", 6, 2))
+#                atts.append(QgsField("Dip",  QVariant.Double, "double", 6, 2))
+#                
+#                # Add all the attributes to the new layer
+#                dp = l.dataProvider()
+#                dp.addAttributes(atts)
+#                
+#                # Tell the vector layer to fetch changes from the provider
+#                l.updateFields() 
+#            else:
+#                l = None
+#                iface.messageBar().pushMessage("Error", "Failed to create collar layer", level=Qgis.Critical)
 
         return l
         
+    def createCollarLayer(self, filePath, crs):
+        l = QgsVectorLayer('PointZ?crs=EPSG:4326','Collar', 'memory')
+        l.setCrs(crs)
+        
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = 'GPKG'
+#        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.layerName = 'Collar'
+    
+        write_result, error_message = QgsVectorFileWriter.writeAsVectorFormat(l,filePath,options)
+        if write_result == QgsVectorFileWriter.NoError:
+            l = QgsVectorLayer(filePath + "|layername=Collar", 'Collar', 'ogr')
+            atts = []
+            atts.append(QgsField("Id",  QVariant.String, "string", 16))
+            atts.append(QgsField("East",  QVariant.Double, "double", 12, 3))
+            atts.append(QgsField("North",  QVariant.Double, "double", 12, 3))
+            atts.append(QgsField("Elev",  QVariant.Double, "double", 8, 3))
+            atts.append(QgsField("Depth",  QVariant.Double, "double", 8, 3))
+            atts.append(QgsField("Az",  QVariant.Double, "double", 6, 2))
+            atts.append(QgsField("Dip",  QVariant.Double, "double", 6, 2))
+            
+            # Add all the attributes to the new layer
+            dp = l.dataProvider()
+            dp.addAttributes(atts)
+            
+            # Tell the vector layer to fetch changes from the provider
+            l.updateFields() 
+        else:
+            l = None
+            iface.messageBar().pushMessage("Error", "Failed to create collar layer", level=Qgis.Critical)
+
+        return l       
+    
     def getOrCreateSurveyLayer(self, clear = False):
         l = QgsVectorLayer(self.currentDb + "|layername=Survey", 'Survey', 'ogr')
         if l.isValid():
@@ -218,8 +278,8 @@ class dbManager:
     def createDrillholeTable(self):
         conn = self.getDbConnection()
         c = conn.cursor()
-        c.execute("drop table if exists 'gs_drillhole'")
-        c.execute("CREATE TABLE 'gs_drillhole' ('Id' TEXT NOT NULL UNIQUE, 'East' REAL, 'North' REAL, 'Elev' REAL, 'Depth' REAL, 'DesurveyLength' REAL, 'Surveys' BLOB, 'DesurveyPts' BLOB, PRIMARY KEY('Id'))")
+        c.execute("drop table if exists gs_drillhole")
+        c.execute("CREATE TABLE gs_drillhole (Id TEXT NOT NULL UNIQUE, East REAL, North REAL, Elev REAL, Depth REAL, DesurveyLength REAL, Surveys BLOB, DesurveyPts BLOB, PRIMARY KEY(Id))")
 
         conn.commit()
         conn.close()        
@@ -229,7 +289,7 @@ class dbManager:
 #            sdata = marshal.dumps(d._surveys)
             dsdata = pickle.dumps(d._desurveyPts, pickle.HIGHEST_PROTOCOL)
 #            dsdata = marshal.dumps(d._desurveyPts)
-            curr.execute("insert into gs_drillhole('Id', 'East', 'North', 'Elev', 'Depth', 'DesurveyLength', 'Surveys', 'DesurveyPts') values (?,?,?,?,?,?,?,?)", (d._collar._id, d._collar._east, d._collar._north, d._collar._elev, d._collar._depth, d._desurveyLength, sqlite3.Binary(sdata), sqlite3.Binary(dsdata)))
+            curr.execute("insert into gs_drillhole(Id, East, North, Elev, Depth, DesurveyLength, Surveys, DesurveyPts) values (?,?,?,?,?,?,?,?)", (d._collar._id, d._collar._east, d._collar._north, d._collar._elev, d._collar._depth, d._desurveyLength, sqlite3.Binary(sdata), sqlite3.Binary(dsdata)))
 #            curr.execute("insert into gs_drillhole('Id', 'East', 'North', 'Elev', 'Depth') values (?,?,?,?,?)", (collar._id, collar._east, collar._north, collar._elev, collar._depth))
 
         
@@ -249,20 +309,29 @@ class dbManager:
         return os.path.splitext(os.path.basename(self.currentDb))[0]
 
     def setParameter(self, name, val):
-        if self.currentParameterLayer is not None:
-            f = self.parameterFeature(name)
-            self.currentParameterLayer.startEditing()
-            if f is not None:
-                f["value"] = val
-                self.currentParameterLayer.updateFeature(f)
-            else:
-                f = QgsFeature(self.currentParameterLayer.fields())
+        conn = self.getDbConnection()
+        c = conn.cursor()
+        c.execute("INSERT OR IGNORE INTO Parameters (name, value) VALUES (?, ?)", (name, val) )
+        c.execute("UPDATE Parameters SET value = ? WHERE name=?", (val, name) )
+# INSERT OR IGNORE INTO my_table (name, age) VALUES ('Karen', 34)
+#UPDATE my_table SET age = 34 WHERE name='Karen'
+        conn.commit()
+        conn.close()        
 
-                # Set the attributes for the new feature
-                f.setAttribute('name', name)
-                f.setAttribute('value', val)
-                self.currentParameterLayer.dataProvider().addFeature(f)
-            self.currentParameterLayer.commitChanges()
+#        if self.currentParameterLayer is not None:
+#            f = self.parameterFeature(name)
+#            self.currentParameterLayer.startEditing()
+#            if f is not None:
+#                f["value"] = val
+#                self.currentParameterLayer.updateFeature(f)
+#            else:
+#                f = QgsFeature(self.currentParameterLayer.fields())
+#
+#                # Set the attributes for the new feature
+#                f.setAttribute('name', name)
+#                f.setAttribute('value', val)
+#                self.currentParameterLayer.dataProvider().addFeature(f)
+#            self.currentParameterLayer.commitChanges()
 
     def setParameterInt(self, name, val):
         self.setParameter(name, str(val))
@@ -274,14 +343,27 @@ class dbManager:
         self.setParameter(name, str(val))
         
     def parameter(self, name, default=''):
-        if self.currentParameterLayer is not None:
-            f = self.parameterFeature(name)
-            if f is not None:
-                return f.attributes()[2]
-            else:
-                return default
-        else:
-            return default
+        result = default
+        
+        conn = self.getDbConnection()
+        c = conn.cursor()
+        c.execute("SELECT value FROM Parameters WHERE name = ?", (name,))
+        results = c.fetchall()
+        if len(results) > 0:
+            result = results[0][0]
+        conn.commit()
+        conn.close()        
+        
+        return result
+
+#        if self.currentParameterLayer is not None:
+#            f = self.parameterFeature(name)
+#            if f is not None:
+#                return f.attributes()[2]
+#            else:
+#                return default
+#        else:
+#            return default
         
     def parameterInt(self, name, default):
         val = default
@@ -301,14 +383,14 @@ class dbManager:
             val = float(res)
         return val
 
-    def parameterFeature(self, name):
-        self.currentParameterLayer.selectByExpression( '"name"=\'%s\''%(name) )
-        sel = self.currentParameterLayer.selectedFeatures()
-        if sel is not None and len(sel)>0:
-            return sel[0]
-        else:
-            return None
-            
+#    def parameterFeature(self, name):
+#        self.currentParameterLayer.selectByExpression( '"name"=\'%s\''%(name) )
+#        sel = self.currentParameterLayer.selectedFeatures()
+#        if sel is not None and len(sel)>0:
+#            return sel[0]
+#        else:
+#            return None
+#            
     def dbRelPaths(self):
         rp = []
         projPath = projectPath()
