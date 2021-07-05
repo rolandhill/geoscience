@@ -457,6 +457,7 @@ class DrillManager:
                     s.az = float(attrs[idxSurveyAz])
                     s.dip = float(attrs[idxSurveyDip])
                 except:
+                    iface.messageBar().pushMessage("Warning", "HoleID %s   Depth %f"%(s.id, s.depth), level=Qgis.Warning)
                     floatConvError = True
                     
                 if (s.id==NULL) or (s.depth==NULL) or (s.az==NULL) or (s.dip==NULL):
@@ -498,7 +499,7 @@ class DrillManager:
             if len(arrSurvey) > 0:
                 # Harvest surveys for this collar from Survey layer list
                 for survey in arrSurvey:
-                    if survey.id == collar.id:
+                    if survey.id == collar.id and survey.depth <= collar.depth:
                         s = Surveys()
                         s.depth = survey.depth
                         s.az = survey.az
@@ -535,10 +536,10 @@ class DrillManager:
                 # If surveys exist, but there isn't one at 0.0, then replicate first survey at 0.0
                 if not surveys[0].depth == 0.0:
                     s = Surveys()
-                    surveys.insert(0, s)
                     s.depth = 0.0
                     surveys[0].az = surveys[1].az
                     surveys[0].dip = surveys[1].dip
+                    surveys.insert(0, s)
                     
                 # If the last survey isn't at the end of hole, then repeat the last one at eoh
                 if len(surveys) > 0 and surveys[-1].depth < collar.depth:
