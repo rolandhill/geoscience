@@ -13,6 +13,7 @@ from PyQt5 import QtWidgets
 import os.path
 import math
 import platform
+import numpy as np
 
 def refreshLayers():
     for layer in iface.mapCanvas().layers():
@@ -152,6 +153,26 @@ def interpPolyline(depth, segLength, polyline):
     else:
         p = p0
     return p, findex
+
+def coreVector(depth, segLength, polyline):
+    findex = float(depth) / float(segLength)
+    i0 = math.floor(findex)
+    # ratio = findex - float(i0)
+
+    # Check if we are at the end of hole. If so, we use the up vector of the last segment
+    if i0 == len(polyline) - 1:
+        i0 = i0 - 1
+    p0 = polyline[i0]
+    p1 = polyline[i0+1]
+
+    # Calculate up hole vector
+    v0 = np.array([p0.x(), p0.y(), p0.z()])
+    v1 = np.array([p1.x(), p1.y(), p1.z()])
+    v = v1 - v0
+
+    v = v/np.linalg.norm(v)
+   
+    return v
 
 # Process the url to provide a valid filename
 def uriToFile(url):

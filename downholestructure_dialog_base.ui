@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>downholeStructure_dialog</class>
+ <widget class="QDialog" name="downholeStructure_dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>679</width>
+    <height>540</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Downhole Structure</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="topMargin">
+      <number>8</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Desurveyed Hole Layer</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QgsMapLayerComboBox" name="lbDesurveyLayer">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupDownhole">
+     <property name="title">
+      <string>Downhole Data</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <layout class="QGridLayout" name="gridLayout">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="2">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Depth</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>HoleID</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QgsFieldComboBox" name="fbDataId"/>
+        </item>
+        <item row="1" column="2">
+         <widget class="QgsFieldComboBox" name="fbDataDepth"/>
+        </item>
+        <item row="1" column="3">
+         <widget class="QgsFieldComboBox" name="fbDataAlpha">
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="allowEmptyFieldName">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Alpha</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QgsMapLayerComboBox" name="lbDataLayer">
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="allowEmptyLayer">
+           <bool>true</bool>
+          </property>
+          <property name="showCrs">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Layer</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="4">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Beta</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="4">
+         <widget class="QgsFieldComboBox" name="fbDataBeta"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkSelectAll">
+        <property name="text">
+         <string>Select All / None</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QListWidget" name="listFields"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsFieldComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsfieldcombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsmaplayercombobox.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>downholeStructure_dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>downholeStructure_dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
