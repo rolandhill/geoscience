@@ -515,9 +515,42 @@ class DrillManager:
                 dipdir = 360 + dipdir
             dip = math.degrees(math.acos(np.dot(np.array([0.0, 0.0, 1.0]), n)))
 
+            # We need to calculate two more vectors so that we can draw symbols
+            # The strike vector is horizontal and the dip vector is vertical
+            vstrike = np.cross(n, dd)
+            vdip = np.cross(n, vstrike)
+
+            # qpstrike = QgsPoint(vstrike[0], vstrike[1], vstrike[2])
+            # qpdip = QgsPoint(vdip[0], vdip[1], vdip[2])
 
             # Set the geometry for the new downhole feature
-            feature.setGeometry(QgsGeometry(pDepth))
+            scale = 1.0
+            p0 = QgsPoint(pDepth.x() + vstrike[0] * scale + vdip[0] * scale, pDepth.y() + vstrike[1] * scale + vdip[1] * scale, pDepth.z() + vstrike[2] * scale + vdip[2] * scale)
+            p1 = QgsPoint(pDepth.x() - vstrike[0] * scale + vdip[0] * scale, pDepth.y() - vstrike[1] * scale + vdip[1] * scale, pDepth.z() - vstrike[2] * scale + vdip[2] * scale)
+            p2 = QgsPoint(pDepth.x() - vstrike[0] * scale - vdip[0] * scale, pDepth.y() - vstrike[1] * scale - vdip[1] * scale, pDepth.z() - vstrike[2] * scale - vdip[2] * scale)
+            p3 = QgsPoint(pDepth.x() + vstrike[0] * scale - vdip[0] * scale, pDepth.y() + vstrike[1] * scale - vdip[1] * scale, pDepth.z() + vstrike[2] * scale - vdip[2] * scale)
+            # pointList = [p0, p1, p2, p3, p0]
+
+            # poly = QgsPolygon()
+            # poly.insertVertex(QgsVertexId(0, 0, 0), p0)
+            # poly.insertVertex(QgsVertexId(0, 0, 1), p1)
+            # poly.insertVertex(QgsVertexId(0, 0, 2), p2)
+            # poly.insertVertex(QgsVertexId(0, 0, 3), p3)
+            # poly.insertVertex(QgsVertexId(0, 0, 4), p0)
+
+            wkt = 'POLYGONZ (('
+            wkt = wkt + '%f %f %f, '%(p0.x(), p0.y(), p0.z())
+            wkt = wkt + '%f %f %f, '%(p1.x(), p1.y(), p1.z())
+            wkt = wkt + '%f %f %f, '%(p2.x(), p2.y(), p2.z())
+            wkt = wkt + '%f %f %f, '%(p3.x(), p3.y(), p3.z())
+            wkt = wkt + '%f %f %f'%(p0.x(), p0.y(), p0.z())
+            wkt = wkt + '))'
+
+            # iface.messageBar().pushMessage("WKT: %s"%(wkt), level=Qgis.Info)
+
+            poly = QgsGeometry.fromWkt(wkt)
+
+            feature.setGeometry(QgsGeometry(poly))
 
             # Create a list of the attributes to be included in new file
             # These are just copied from the original down hole layer
@@ -974,7 +1007,7 @@ class DrillManager:
 
     def createDownholeStructureLayer(self):
         #Create a new memory layer
-        layer = QgsVectorLayer("PointZ?crs=EPSG:4326", "geoscience_Temp", "memory")
+        layer = QgsVectorLayer("PolygonZ?crs=EPSG:4326", "geoscience_Temp", "memory")
         layer.setCrs(self.desurveyLayer.crs())
         atts = []
         # Loop through the list of desired field names that the user checked
