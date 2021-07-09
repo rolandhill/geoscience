@@ -154,6 +154,7 @@ class DrillManager:
             self.structureDepth = dlg.fbDataDepth.currentField()
             self.structureAlpha = dlg.fbDataAlpha.currentField()
             self.structureBeta = dlg.fbDataBeta.currentField()
+            self.structureScale = dlg.sbSymbolSize.value()
             # Save the name of each checked attribute field in a list
             self.structureFields = []
             for index in range(dlg.listFields.count()):
@@ -423,6 +424,9 @@ class DrillManager:
             attrs = df.attributes()
             # Check all the data is valid
             dataId = str(attrs[idxId])
+            dataDepth = NULL
+            dataAlpha = NULL
+            dataBeta = NULL
             try:
                 dataDepth = float(attrs[idxDepth])
                 dataAlpha = float(attrs[idxAlpha])
@@ -489,30 +493,46 @@ class DrillManager:
                 continue
 
             # Create a quat to rotate an alpha = 0, beta = 0 plane normal into the measured plane normal
+            # We start with the measured plane being parallel with a vertical drill hole with the normal pointing north
             n = np.array([0.0, 1.0, 0.0])
+
+            # Rotate the plane according to the alpha angle
             q = Quaternion(axis=[1.0, 0.0, 0.0], degrees=dataAlpha)
             n = q.rotate(n)
 
-            q = Quaternion(axis=[0.0, 0.0, 1.0], degrees=dataBeta)
+            # Rotate the plane according to the beta angle
+            q = Quaternion(axis=[0.0, 0.0, -1.0], degrees=dataBeta)
             n = q.rotate(n)
 
+            # Calculate the dip angle of the desurveyed core by comparing its down vector with vertical
             a = math.acos(np.dot(np.array([0.0, 0.0, -1.0]), vCore))
+
+            # Rotate the measured plane to account for the core's dip
             q = Quaternion(axis=[1.0, 0.0, 0.0], radians=a)
-            # q = Quaternion(w=np.dot(np.array([0.0, 0.0, -1.0]), vCore), x=1.0, y=0.0, z=0.0)
             n = q.rotate(n)
 
+            # Calculate the dip direction (azimuth) of the core by setting the z component to 0
             dd = np.array([vCore[0], vCore[1], 0.0])
+            # and normalise
             dd = dd/np.linalg.norm(dd)
+
+            # Calculate the angle in the horizontal plane between the core azimuth and north
             a = math.acos(np.dot(np.array([0.0, 1.0, 0.0]), dd))
+            # Cos only covers 0 - 180 degrees, so check if should be in the -180 - 0 range
             if vCore[0] < 0:
                 a = -a
-            q = Quaternion(axis=[0.0, 0.0, -1.0], radians=a)
-            # q = Quaternion(w=np.dot(np.array([0.0, 1.0, 0.0]), np.array([vCore[0], vCore[1], 0.0])), x=0.0, y=0.0, z=1.0)
-            n = q.rotate(n)
 
+            # Rotate the measured plane by the core azimuth
+            q = Quaternion(axis=[0.0, 0.0, -1.0], radians=a)
+            n = q.rotate(n) # Final measured plane normal
+
+            # Calculate dip direction from the x & y components of the normal
             dipdir = math.degrees(math.atan2(n[0], n[1]))
+            # And make it 0 - 360 instead of -180 - 180
             if dipdir < 0:
                 dipdir = 360 + dipdir
+            
+            # The dip is the angle between the normal and up vector
             dip = math.degrees(math.acos(np.dot(np.array([0.0, 0.0, 1.0]), n)))
 
             # We need to calculate two more vectors so that we can draw symbols
@@ -524,7 +544,7 @@ class DrillManager:
             # qpdip = QgsPoint(vdip[0], vdip[1], vdip[2])
 
             # Set the geometry for the new downhole feature
-            scale = 1.0
+            scale = self.structureScale
             p0 = QgsPoint(pDepth.x() + vstrike[0] * scale + vdip[0] * scale, pDepth.y() + vstrike[1] * scale + vdip[1] * scale, pDepth.z() + vstrike[2] * scale + vdip[2] * scale)
             p1 = QgsPoint(pDepth.x() - vstrike[0] * scale + vdip[0] * scale, pDepth.y() - vstrike[1] * scale + vdip[1] * scale, pDepth.z() - vstrike[2] * scale + vdip[2] * scale)
             p2 = QgsPoint(pDepth.x() - vstrike[0] * scale - vdip[0] * scale, pDepth.y() - vstrike[1] * scale - vdip[1] * scale, pDepth.z() - vstrike[2] * scale - vdip[2] * scale)
@@ -1059,6 +1079,7 @@ class DrillManager:
         self.structureDepth = readProjectField("StructureDepth")
         self.structureAlpha = readProjectField("StructureAlpha")
         self.structureBeta = readProjectField("StructureBeta")
+        self.structureScale = readProjectNum("StructureScale", 1)
 #       Section Data
         self.sectionWEName = readProjectText("SectionWEName", '')
         self.sectionSNName = readProjectText("SectionSNName", '')
@@ -1106,6 +1127,7 @@ class DrillManager:
         writeProjectField("StructureDepth", self.structureDepth)
         writeProjectField("StructureAlpha", self.structureAlpha)
         writeProjectField("StructureBeta", self.structureBeta)
+        writeProjectData("StructureScale", self.structureScale)
 #       Section Dialog Data
         writeProjectData("SectionWEName", self.sectionWEName)
         writeProjectData("SectionSNName", self.sectionSNName)
