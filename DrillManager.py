@@ -497,7 +497,7 @@ class DrillManager:
             n = np.array([0.0, 1.0, 0.0])
 
             # Rotate the plane according to the alpha angle
-            q = Quaternion(axis=[1.0, 0.0, 0.0], degrees=dataAlpha)
+            q = Quaternion(axis=[-1.0, 0.0, 0.0], degrees=dataAlpha)
             n = q.rotate(n)
 
             # Rotate the plane according to the beta angle
@@ -525,6 +525,11 @@ class DrillManager:
             # Rotate the measured plane by the core azimuth
             q = Quaternion(axis=[0.0, 0.0, -1.0], radians=a)
             n = q.rotate(n) # Final measured plane normal
+
+            #Dips are always measured from 0-90 degrees downwards, so lets check if the rotations
+            # have turned the plane upside down and flip it over if it has.
+            if n[2] < 0:
+                n = -n
 
             # Calculate dip direction from the x & y components of the normal
             dipdir = math.degrees(math.atan2(n[0], n[1]))
@@ -580,12 +585,12 @@ class DrillManager:
                 attList.append(attrs[idx])
 
             # Also append the 3D desurveyed From, To and Mid points
-            # attList.append(pDepth.x())
-            # attList.append(pDepth.y())
-            # attList.append(pDepth.z())
-            attList.append(float(n[0]))
-            attList.append(float(n[1]))
-            attList.append(float(n[2]))
+            attList.append(pDepth.x())
+            attList.append(pDepth.y())
+            attList.append(pDepth.z())
+            # attList.append(float(n[0]))
+            # attList.append(float(n[1]))
+            # attList.append(float(n[2]))
             attList.append(dipdir)
             attList.append(dip)
 
