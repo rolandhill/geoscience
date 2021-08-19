@@ -2,11 +2,11 @@
 name=Geoscience
 qgisMinimumVersion=3.2
 description=Tools for Geoscience & Exploration
-version=1.4
+version=1.5
 author=Roland Hill
 email=roleyhill@gmail.com
 
-about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Drill hole sections</li><li>Vector tools</li><li>Raster tools</li><li>Local grids</li></ul> Send ideas & requests to roleyhill@gmail.com
+about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Drill hole sections</li><li>Convert alpha/beta structure data</li><li>Vector tools</li><li>Raster tools</li><li>Local grids</li></ul> Send ideas & requests to roleyhill@gmail.com
 
 tracker=https://github.com/rolandhill/geoscience/issues
 repository=https://github.com/rolandhill/geoscience
@@ -15,7 +15,10 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=1.4
+changelog=1.5
+    -Fix problem desurveying holes when no 0 depth value in survey file
+    -Ignore surveys if dip or azimuth are not valid numbers
+  1.4
     -Alpha and beta structural reading conversion to dip and dip direction
   1.3
 	-Fix problem with created filenames using decorated Uri of the original collar file

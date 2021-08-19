@@ -91,6 +91,15 @@ class Section:
         self.sourceElevation = elevationList
         self.planFeatureId = None
 
+        # We will also store the layer names in case the underlying layer is updated
+        self.sourceLayerNames = []
+        for l in self.sourceLayers:
+            self.sourceLayerNames.append(l.name())
+
+        self.sourceElevationNames = []
+        for l in self.sourceElevation:
+            self.sourceElevationNames.append(l.name())
+
         self.origin = np.array([self.startX, self.startY, 0.0])
         
         # Calculate angle of rotation around startPoint from +X axis
@@ -450,6 +459,10 @@ class Section:
         writeProjectData(key, len(self.sourceLayers))
         for li, layer in enumerate(self.sourceLayers):
             if layer != None:
+                try:
+                    name = layer.name()
+                except:
+                    layer = getLayerByName(self.sourceLayerNames[li])
                 key = 'S{:02d}_SourceLayer{:02d}'.format(index, li)
                 writeProjectData(key, layer.name())
             
@@ -457,6 +470,10 @@ class Section:
         writeProjectData(key, len(self.sourceElevation))
         for li, layer in enumerate(self.sourceElevation):
             if layer != None:
+                try:
+                    name = layer.name()
+                except:
+                    layer = getLayerByName(self.sourceElevationNames[li])
                 key = 'S{:02d}_ElevationLayer{:02d}'.format(index, li)
                 writeProjectData(key, layer.name())
         

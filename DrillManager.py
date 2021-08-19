@@ -732,9 +732,10 @@ class DrillManager:
             floatConvError = False
             nullDataError = False
             
-            #Loop through Survey layer and buils list of surveys
+            #Loop through Survey layer and build list of surveys
             for index, feature in enumerate(self.surveyLayer.getFeatures()):
                 pd.setValue(index)
+                ok = True
                 
                 # get the feature's attributes
                 attrs = feature.attributes()
@@ -745,14 +746,18 @@ class DrillManager:
                     s.az = float(attrs[idxSurveyAz])
                     s.dip = float(attrs[idxSurveyDip])
                 except:
+                    ok = False
                     iface.messageBar().pushMessage("Warning", "HoleID %s   Depth %f"%(s.id, s.depth), level=Qgis.Warning)
                     floatConvError = True
                     
                 if (s.id==NULL) or (s.depth==NULL) or (s.az==NULL) or (s.dip==NULL):
+                    ok = False
                     nullDataError = True
                     continue
-                s.id = s.id.strip()
-                arrSurvey.append(s)
+
+                if ok:
+                    s.id = s.id.strip()
+                    arrSurvey.append(s)
 
             if (floatConvError):
                 iface.messageBar().pushMessage("Warning", "Some survey 'Depth', 'Azimuth' or 'Dip' values are not numbers", level=Qgis.Warning)
@@ -784,6 +789,7 @@ class DrillManager:
             #Build array of surveys for this collar, including the top az and dip in collar layer. Repeat last survey at EOH.
             surveys = []
 
+            zeroDepth = False;
             if len(arrSurvey) > 0:
                 # Harvest surveys for this collar from Survey layer list
                 for survey in arrSurvey:
@@ -793,15 +799,18 @@ class DrillManager:
                         s.az = survey.az
                         s.dip = survey.dip
                         surveys.append(s)
+                        if s.depth == 0.0:
+                            zeroDepth = True;
 
-            # If the az and dip from the collar are to be used, then insert them at depth 0.0
-            # We only do this if there are no surveys from the Survey layer
-            if len(surveys) == 0 and useCollarAzDip:
-                s = Surveys()
-                s.depth = 0.0
-                s.az = collar.az
-                s.dip = collar.dip
-                surveys.append(s)
+            # If the az and dip from the collar are to be used, then append them at depth 0.0
+            # We only do this if there is no survey from 0 depth in the Survey layer
+            if zeroDepth == False and useCollarAzDip:
+                if (not collar.az == NULL) and (not collar.dip == NULL):
+                    s = Surveys()
+                    s.depth = 0.0
+                    s.az = collar.az
+                    s.dip = collar.dip
+                    surveys.append(s)
             
             # If there are no surveys, then the assume hole is vertical
             if len(surveys) == 0:
@@ -825,8 +834,8 @@ class DrillManager:
                 if not surveys[0].depth == 0.0:
                     s = Surveys()
                     s.depth = 0.0
-                    surveys[0].az = surveys[1].az
-                    surveys[0].dip = surveys[1].dip
+                    s.az = surveys[1].az
+                    s.dip = surveys[1].dip
                     surveys.insert(0, s)
                     
                 # If the last survey isn't at the end of hole, then repeat the last one at eoh
