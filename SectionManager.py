@@ -700,6 +700,8 @@ class SectionManager:
 
 #            msg = 'Creating Section: {:s}'.format(name)
 #            iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
+            if name == "" or len(layerList) == 0:
+                continue
             self.createSection(name, startx, starty, endx, endy, width, layerList, elevationList, False)
             
         if self.drillManager.sectionManagerDlg != None:
