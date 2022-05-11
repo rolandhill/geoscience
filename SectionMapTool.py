@@ -24,7 +24,7 @@ class SectionMapTool(QgsMapToolEmitPoint):
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.rubberBand = QgsRubberBand(self.canvas, True)
         self.rubberBand.setColor(QtCore.Qt.red)
-        self.rubberBand.setWidth(1.5)
+        self.rubberBand.setWidth(1)
         
         self.reset()
 
