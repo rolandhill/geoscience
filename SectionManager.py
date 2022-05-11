@@ -231,7 +231,13 @@ class Section:
         pd.setMaximum(100)
         pd.setValue(0)
         
-        for layer in layers:
+        for index, layer in enumerate(layers):
+            # Check if the layer still exists - the user may have reloaded it to update for example
+            try:
+                name = layer.name()
+            except:
+                layer = getLayerByName(self.sourceLayerNames[index])
+                
             #Try and match the layer to be created with one already under the section.group, else create a new layer
             newName = self.createSectionLayerName(layer, self.name)
             sectionLayer = self.matchLayer(newName)
@@ -686,6 +692,9 @@ class SectionManager:
                     layer = getLayerByName(layerName)
                     if layer != None:
                         layerList.append(layer)
+                    else:
+                        iface.messageBar().pushMessage("Failed to find layer: ", layerName, level=Qgis.Info)
+                        
 
             key = 'S{:02d}_ElevationLayers'.format(index)
             numLayers = readProjectNum(key, 0)
@@ -697,6 +706,8 @@ class SectionManager:
                     layer = getLayerByName(layerName)
                     if layer != None:
                         elevationList.append(layer)
+                    else:
+                        iface.messageBar().pushMessage("Failed to find layer: ", layerName, level=Qgis.Info)
 
 #            msg = 'Creating Section: {:s}'.format(name)
 #            iface.messageBar().pushMessage("Debug", msg, level=Qgis.Info)
