@@ -123,6 +123,13 @@ def readProjectNum(entry, default):
     else:
         return default
     
+def readProjectDouble(entry, default):
+    val, ok = QgsProject.instance().readDoubleEntry ("Geoscience", entry)
+    if ok:
+        return val
+    else:
+        return default
+    
 # Retrieve a bool from the QGIS project file with the supplied entry label
 def readProjectBool(entry, default):
     val, ok = QgsProject.instance().readBoolEntry ("Geoscience", entry)
@@ -134,6 +141,9 @@ def readProjectBool(entry, default):
 # Write the supplied value (number or bool) into the QGIS project file next to the supplied entry label
 def writeProjectData(entry, val):
     QgsProject.instance().writeEntry("Geoscience", entry, val)
+
+def writeProjectDataDouble(entry, val):
+    QgsProject.instance().writeEntryDouble("Geoscience", entry, val)
 
 def removeProjectEntry(entry):
     QgsProject.instance().removeEntry("Geoscience", entry)

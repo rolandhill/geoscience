@@ -1067,7 +1067,7 @@ class DrillManager:
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
 #       Desurvey & Downhole Data
-        self.desurveyLength = readProjectNum("DesurveyLength", 1)
+        self.desurveyLength = readProjectDouble("DesurveyLength", 1)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.desurveyLayer = readProjectLayer("DesurveyLayer")
         self.collarLayer = readProjectLayer("CollarLayer")
@@ -1093,19 +1093,19 @@ class DrillManager:
         self.structureDepth = readProjectField("StructureDepth")
         self.structureAlpha = readProjectField("StructureAlpha")
         self.structureBeta = readProjectField("StructureBeta")
-        self.structureScale = readProjectNum("StructureScale", 1)
+        self.structureScale = readProjectDouble("StructureScale", 1)
 #       Section Data
         self.sectionWEName = readProjectText("SectionWEName", '')
         self.sectionSNName = readProjectText("SectionSNName", '')
         self.sectionName = readProjectText("SectionName", '')
-        self.sectionWidth = readProjectNum("SectionWidth", 20)
-        self.sectionStep = readProjectNum("SectionStep", 50)
-        self.sectionNorth = readProjectNum("SectionNorth", 0)
-        self.sectionEast = readProjectNum("SectionEast", 0)
-        self.sectionLimitWest = readProjectNum("SectionLimitWest", 0)
-        self.sectionLimitEast = readProjectNum("SectionLimitEast", 1)
-        self.sectionLimitSouth = readProjectNum("SectionLimitSouth", 0)
-        self.sectionLimitNorth = readProjectNum("SectionLimitNorth", 1)
+        self.sectionWidth = readProjectDouble("SectionWidth", 20)
+        self.sectionStep = readProjectDouble("SectionStep", 50)
+        self.sectionNorth = readProjectDouble("SectionNorth", 0)
+        self.sectionEast = readProjectDouble("SectionEast", 0)
+        self.sectionLimitWest = readProjectDouble("SectionLimitWest", 0)
+        self.sectionLimitEast = readProjectDouble("SectionLimitEast", 1)
+        self.sectionLimitSouth = readProjectDouble("SectionLimitSouth", 0)
+        self.sectionLimitNorth = readProjectDouble("SectionLimitNorth", 1)
 
         self.sectionManager.readProjectData()        
 
@@ -1115,7 +1115,7 @@ class DrillManager:
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
 #       Desurvey & Downhole Data
-        writeProjectData("DesurveyLength", self.desurveyLength)
+        writeProjectDataDouble("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)
         writeProjectLayer("CollarLayer", self.collarLayer)
@@ -1141,19 +1141,19 @@ class DrillManager:
         writeProjectField("StructureDepth", self.structureDepth)
         writeProjectField("StructureAlpha", self.structureAlpha)
         writeProjectField("StructureBeta", self.structureBeta)
-        writeProjectData("StructureScale", self.structureScale)
+        writeProjectDataDouble("StructureScale", self.structureScale)
 #       Section Dialog Data
         writeProjectData("SectionWEName", self.sectionWEName)
         writeProjectData("SectionSNName", self.sectionSNName)
         writeProjectData("SectionName", self.sectionName)
-        writeProjectData("SectionWidth", self.sectionWidth)
-        writeProjectData("SectionStep", self.sectionStep)
-        writeProjectData("SectionNorth", self.sectionNorth)
-        writeProjectData("SectionEast", self.sectionEast)
-        writeProjectData("SectionLimitWest", self.sectionLimitWest)
-        writeProjectData("SectionLimitEast", self.sectionLimitEast)
-        writeProjectData("SectionLimitSouth", self.sectionLimitSouth)
-        writeProjectData("SectionLimitNorth", self.sectionLimitNorth)
+        writeProjectDataDouble("SectionWidth", self.sectionWidth)
+        writeProjectDataDouble("SectionStep", self.sectionStep)
+        writeProjectDataDouble("SectionNorth", self.sectionNorth)
+        writeProjectDataDouble("SectionEast", self.sectionEast)
+        writeProjectDataDouble("SectionLimitWest", self.sectionLimitWest)
+        writeProjectDataDouble("SectionLimitEast", self.sectionLimitEast)
+        writeProjectDataDouble("SectionLimitSouth", self.sectionLimitSouth)
+        writeProjectDataDouble("SectionLimitNorth", self.sectionLimitNorth)
 
 #       Sections
         self.sectionManager.writeProjectData()
