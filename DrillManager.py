@@ -316,7 +316,7 @@ class DrillManager:
                 # Add intervening points and last point if this is an interval
                 if (idxTo > -1):
                     # Add all the intermediate points (so a long interval accurately reflects the bend of the hole)
-                    if math.floor(iTo) - math.ceil(iFrom) > 1:
+                    if math.floor(iTo) - math.ceil(iFrom) > self.desurveyLength:
                         for i in range(math.ceil(iFrom), math.floor(iTo)):
                             pointList.append(currentTracePolyline[i])
                     # Add the last (To) point
