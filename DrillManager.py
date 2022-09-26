@@ -200,13 +200,11 @@ class DrillManager:
         pd.setMaximum(self.dataLayer.featureCount())
         pd.setValue(0)
 
-        # Create memory layer
-        layer = self.createDownholeLayer()
-
         # Get the fields from the data layer
         dp = self.dataLayer.dataProvider()
         idxId = dp.fieldNameIndex(self.dataId)
         idxFrom = dp.fieldNameIndex(self.dataFrom)
+        # idxTo will be -1 if no field was chosen (ie point rather than interval data)
         idxTo = dp.fieldNameIndex(self.dataTo)
         # Create a list of attribute indices from the desired attribute field names
         idxAttList = []
@@ -214,6 +212,12 @@ class DrillManager:
             idx = dp.fieldNameIndex(name)
             idxAttList.append(idx)
         
+        # Create memory layer
+        if(idxTo > -1):
+            layer = self.createDownholeIntervalLayer()
+        else:
+            layer = self.createDownholePointLayer()
+
         # Get the fields from the desurveyed trace layer
         tdp = self.desurveyLayer.dataProvider()
         idxTraceId = tdp.fieldNameIndex("CollarID")
@@ -246,11 +250,12 @@ class DrillManager:
             dataId = str(attrs[idxId])
             try:
                 dataFrom = float(attrs[idxFrom])
-                dataTo = float(attrs[idxTo])
+                if (idxTo > -1):
+                    dataTo = float(attrs[idxTo])
             except:
                 floatConvError = True
                 
-            if (dataId==NULL) or (dataFrom==NULL) or (dataTo==NULL):
+            if (dataId==NULL) or (dataFrom==NULL) or (idxTo > -1 and dataTo==NULL):
                 nullDataError = True
                 continue
             dataId = dataId.strip()
@@ -285,32 +290,41 @@ class DrillManager:
                 iface.messageBar().pushMessage("Warning", "Some 'HoleId', 'From' or 'To' values are NULL. These have been skipped", level=Qgis.Warning)
 
                 
-            # Create line representing the downhole value using From and To
-            pointList = []
             # Calculate indices spanning the from and to depths, then linearly interpolate a position
             try:
                 pFrom, iFrom = interpPolyline(dataFrom, currentTraceSegLength, currentTracePolyline)
             except:
                 self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataFrom, index))
                 continue
+            
+            if (idxTo > -1):
+                try:
+                    pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
+                except:
+                    self.logFile.write("Error interpolating from polyline for hole: %s To: %f in row: %d.\n" % (dataId, dataTo, index))
+                    continue
 
-            try:
-                pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
-            except:
-                self.logFile.write("Error interpolating from polyline for hole: %s To: %f in row: %d.\n" % (dataId, dataTo, index))
-                continue
-
-            # Add the first (From) point to the list
-            pointList.append(pFrom)
-            # Add all the intermediate points (so a long interval accurately reflects the bend of the hole)
-            if math.floor(iTo) - math.ceil(iFrom) > 1:
-                for i in range(math.ceil(iFrom), math.floor(iTo)):
-                    pointList.append(currentTracePolyline[i])
-            # Add the last (To) point
-            pointList.append(pTo)
             
             # Set the geometry for the new downhole feature
-            feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+            if (idxTo > -1):
+            # Create line representing the downhole value using From and To
+                pointList = []
+
+                # Add the first (From) point to the list
+                pointList.append(pFrom)
+
+                # Add intervening points and last point if this is an interval
+                if (idxTo > -1):
+                    # Add all the intermediate points (so a long interval accurately reflects the bend of the hole)
+                    if math.floor(iTo) - math.ceil(iFrom) > 1:
+                        for i in range(math.ceil(iFrom), math.floor(iTo)):
+                            pointList.append(currentTracePolyline[i])
+                    # Add the last (To) point
+                    pointList.append(pTo)
+
+                feature.setGeometry(QgsGeometry.fromPolyline(pointList))
+            else:
+                feature.setGeometry(QgsGeometry(QgsPoint(pFrom.x(), pFrom.y(), pFrom.z(), wkbType = QgsWkbTypes.PointZ)))
 
             # Create a list of the attributes to be included in new file
             # These are just copied from the original down hole layer
@@ -320,15 +334,21 @@ class DrillManager:
                 attList.append(attrs[idx])
 
             # Also append the 3D desurveyed From, To and Mid points
-            attList.append(pointList[0].x())
-            attList.append(pointList[0].y())
-            attList.append(pointList[0].z())
-            attList.append(pointList[1].x())
-            attList.append(pointList[1].y())
-            attList.append(pointList[1].z())
-            attList.append((pointList[0].x()+pointList[1].x())*0.5)
-            attList.append((pointList[0].y()+pointList[1].y())*0.5)
-            attList.append((pointList[0].z()+pointList[1].z())*0.5)
+            if (idxTo > -1):
+                idxLast = len(pointList) - 1
+                attList.append(pointList[0].x())
+                attList.append(pointList[0].y())
+                attList.append(pointList[0].z())
+                attList.append(pointList[idxLast].x())
+                attList.append(pointList[idxLast].y())
+                attList.append(pointList[idxLast].z())
+                attList.append((pointList[0].x()+pointList[idxLast].x())*0.5)
+                attList.append((pointList[0].y()+pointList[idxLast].y())*0.5)
+                attList.append((pointList[0].z()+pointList[idxLast].z())*0.5)
+            else:
+                attList.append(pFrom.x())
+                attList.append(pFrom.y())
+                attList.append(pFrom.z())
 
             # Set the attributes for the new feature
             feature.setAttributes(attList)
@@ -1010,7 +1030,7 @@ class DrillManager:
         layer.updateFields() # tell the vector layer to fetch changes from the provider
         self.desurveyLayer = layer
     
-    def createDownholeLayer(self):
+    def createDownholeIntervalLayer(self):
         #Create a new memory layer
         layer = QgsVectorLayer("LineStringZ?crs=EPSG:4326", "geoscience_Temp", "memory")
         layer.setCrs(self.desurveyLayer.crs())
@@ -1029,6 +1049,29 @@ class DrillManager:
         atts.append(QgsField("_Mid_x",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_Mid_y",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_Mid_z",  QVariant.Double, "double", 12, 3))
+        
+        # Add all the attributes to the new layer
+        dp = layer.dataProvider()
+        dp.addAttributes(atts)
+        
+        # Tell the vector layer to fetch changes from the provider
+        layer.updateFields() 
+
+        return layer
+
+    def createDownholePointLayer(self):
+        #Create a new memory layer
+        layer = QgsVectorLayer("PointZ?crs=EPSG:4326", "geoscience_Temp", "memory")
+        layer.setCrs(self.desurveyLayer.crs())
+        atts = []
+        # Loop through the list of desired field names that the user checked
+        for field in self.dataLayer.fields():
+            if field.name() in self.dataFields:
+                atts.append(field)
+        # Also add fields for the desurveyed coordinates
+        atts.append(QgsField("_Depth_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_z",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
