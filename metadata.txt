@@ -2,7 +2,7 @@
 name=Geoscience
 qgisMinimumVersion=3.2
 description=Tools for Geoscience & Exploration
-version=1.6
+version=1.7
 author=Roland Hill
 email=roleyhill@gmail.com
 
@@ -15,7 +15,11 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=1.6
+changelog=1.7
+    -Add ability to process downhole point data such as mugsusc, depth of oxidation etc.
+    -Fix bug where the last downhole interval can go past the end of hole
+    -Fix error when writing/reading project data (possibly only Linux)
+  1.6
     -Fix problem finding source data layer after the user updates their layer by recreating the it.
     -Prevent plugin trying to recreate sections and crashing when there are no source layers.
     -Eliminate warning about implicit conversion.
