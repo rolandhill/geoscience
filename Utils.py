@@ -154,9 +154,19 @@ def interpPolyline(depth, segLength, polyline):
     p = QgsPoint()
     findex = float(depth) / float(segLength)
     i0 = math.floor(findex)
-    ratio = findex - float(i0)
-
     p0 = polyline[i0]
+
+    # We need to check if this is the last segment because the last segment might not be segLength long
+    if(len(polyline) > 2 and i0 == len(polyline) - 2):
+        p1 = polyline[i0 + 1]
+        dx = p1.x() - p0.x();
+        dy = p1.y() - p0.y();
+        dz = p1.z() - p0.z();
+        segl = math.sqrt(dx * dx, dy * dy, dz * dz)
+        ratio = segl / (depth - i0 * segLength)
+    else:
+        ratio = findex - float(i0)
+
     if ratio > 0.0:
         p1 = polyline[i0 + 1]
         p = QgsPoint(p0.x() + (p1.x() - p0.x()) * ratio, p0.y() + (p1.y() - p0.y()) * ratio, p0.z() + (p1.z() - p0.z()) * ratio)
