@@ -1110,7 +1110,7 @@ class DrillManager:
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
 #       Desurvey & Downhole Data
-        self.desurveyLength = readProjectDouble("DesurveyLength", 1)
+        self.desurveyLength = readProjectNum("DesurveyLength", 1)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.desurveyLayer = readProjectLayer("DesurveyLayer")
         self.collarLayer = readProjectLayer("CollarLayer")
@@ -1158,7 +1158,7 @@ class DrillManager:
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
 #       Desurvey & Downhole Data
-        writeProjectDataDouble("DesurveyLength", self.desurveyLength)
+        writeProjectDataNum("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)
         writeProjectLayer("CollarLayer", self.collarLayer)
