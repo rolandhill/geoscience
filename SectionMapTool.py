@@ -89,6 +89,8 @@ class SectionMapTool(QgsMapToolEmitPoint):
         return name
         
     def showLine(self, startPoint, endPoint):
+        if startPoint == endPoint:
+            return
         start = np.array([startPoint.x(), startPoint.y(), 0.0])
         end = np.array([endPoint.x(), endPoint.y(), 0.0])
         v = end - start
