@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>679</width>
-    <height>439</height>
+    <height>510</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -349,19 +349,6 @@
       <string>Options</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="sbDesurveyLength">
-        <property name="suffix">
-         <string>m</string>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1">
        <widget class="QCheckBox" name="checkDownDipNegative">
         <property name="layoutDirection">
@@ -392,6 +379,16 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="leDesurveyLength">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
        </widget>
       </item>
@@ -436,7 +433,6 @@
   <tabstop>fbSurveyAz</tabstop>
   <tabstop>fbSurveyDip</tabstop>
   <tabstop>checkDownDipNegative</tabstop>
-  <tabstop>sbDesurveyLength</tabstop>
  </tabstops>
  <resources/>
  <connections>

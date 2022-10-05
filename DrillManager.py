@@ -90,7 +90,7 @@ class DrillManager:
         # If OK button clicked then retrieve and update values
         if result:
             self.downDipNegative = dlg.checkDownDipNegative.isChecked()
-            self.desurveyLength = dlg.sbDesurveyLength.value()
+            self.desurveyLength = float(dlg.leDesurveyLength.text())
 #            self.defaultSectionWidth = dlg.teDefaultSectionWidth.text()
 #            self.defaultSectionStep = dlg.teDefaultSectionStep.text()
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
@@ -1110,7 +1110,7 @@ class DrillManager:
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
 #       Desurvey & Downhole Data
-        self.desurveyLength = readProjectNum("DesurveyLength", 1)
+        self.desurveyLength = readProjectDouble("DesurveyLength", 1.0)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.desurveyLayer = readProjectLayer("DesurveyLayer")
         self.collarLayer = readProjectLayer("CollarLayer")
@@ -1158,7 +1158,7 @@ class DrillManager:
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
 #       Desurvey & Downhole Data
-        writeProjectData("DesurveyLength", self.desurveyLength)
+        writeProjectDataDouble("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)
         writeProjectLayer("CollarLayer", self.collarLayer)
