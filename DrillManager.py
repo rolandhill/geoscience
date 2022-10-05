@@ -1158,7 +1158,7 @@ class DrillManager:
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
 #       Desurvey & Downhole Data
-        writeProjectDataNum("DesurveyLength", self.desurveyLength)
+        writeProjectData("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)
         writeProjectLayer("CollarLayer", self.collarLayer)
