@@ -18,6 +18,7 @@ repository=https://github.com/rolandhill/geoscience
 changelog=1.8
     -Fix error with last segment length calculation
     -Convert desurvey length to float and replace spin box with line edit control
+    -Update deprecated writeAsVectorFormat to V3
   1.7
     -Add ability to process downhole point data such as mugsusc, depth of oxidation etc.
     -Fix bug where the last downhole interval can go past the end of hole
