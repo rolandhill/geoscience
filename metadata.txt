@@ -2,7 +2,7 @@
 name=Geoscience
 qgisMinimumVersion=3.2
 description=Tools for Geoscience & Exploration
-version=1.7
+version=1.8
 author=Roland Hill
 email=roleyhill@gmail.com
 
@@ -15,7 +15,11 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=1.7
+changelog=1.8
+    -Fix error with last segment length calculation
+    -Convert desurvey length to float and replace spin box with line edit control
+    -Update deprecated writeAsVectorFormat to V3
+  1.7
     -Add ability to process downhole point data such as mugsusc, depth of oxidation etc.
     -Fix bug where the last downhole interval can go past the end of hole
     -Fix error when writing/reading project data (possibly only Linux)

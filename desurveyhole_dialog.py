@@ -35,7 +35,7 @@ class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
 #        self.teDefaultSectionWidth.setText(str(self.drillManager.defaultSectionWidth))
 #        self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
-        self.sbDesurveyLength.setValue(self.drillManager.desurveyLength)
+        self.leDesurveyLength.setText(str(self.drillManager.desurveyLength))
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
         self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
     

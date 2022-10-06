@@ -90,7 +90,7 @@ class DrillManager:
         # If OK button clicked then retrieve and update values
         if result:
             self.downDipNegative = dlg.checkDownDipNegative.isChecked()
-            self.desurveyLength = dlg.sbDesurveyLength.value()
+            self.desurveyLength = float(dlg.leDesurveyLength.text())
 #            self.defaultSectionWidth = dlg.teDefaultSectionWidth.text()
 #            self.defaultSectionStep = dlg.teDefaultSectionStep.text()
             self.collarLayer = dlg.lbCollarLayer.currentLayer()
@@ -375,7 +375,14 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(oldLayer)
 
         #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        # options.includeZ = True
+        # options.overrideGeometryType = memLayer.wkbType()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        # error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -638,7 +645,14 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(oldLayer)
 
         #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        # options.includeZ = True
+        # options.overrideGeometryType = memLayer.wkbType()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        # error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -974,8 +988,15 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(layer)
         
         #Save memory layer to GeoPackage
-        error = QgsVectorFileWriter.writeAsVectorFormat(memLayer, fileBaseName, "CP1250", crs, 
-                layerOptions=['OVERWRITE=YES'], overrideGeometryType=memLayer.wkbType())
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        options.includeZ = True
+        options.overrideGeometryType = memLayer.wkbType()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(memLayer, fileBaseName, QgsProject.instance().transformContext(), options)
+        # error = QgsVectorFileWriter.writeAsVectorFormatV2(memLayer, fileBaseName, "CP1250", crs, 
+        #         layerOptions=['OVERWRITE=YES'], overrideGeometryType=memLayer.wkbType())
 
         # Load the layer we just saved so the user can manipulate a real layer
         fileLayer = QgsVectorLayer(path, label)
@@ -1110,7 +1131,7 @@ class DrillManager:
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
 #       Desurvey & Downhole Data
-        self.desurveyLength = readProjectNum("DesurveyLength", 1)
+        self.desurveyLength = readProjectDouble("DesurveyLength", 1.0)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.desurveyLayer = readProjectLayer("DesurveyLayer")
         self.collarLayer = readProjectLayer("CollarLayer")
@@ -1158,7 +1179,7 @@ class DrillManager:
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
 #       Desurvey & Downhole Data
-        writeProjectData("DesurveyLength", self.desurveyLength)
+        writeProjectDataDouble("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)
         writeProjectLayer("CollarLayer", self.collarLayer)
