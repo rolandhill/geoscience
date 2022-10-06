@@ -375,7 +375,14 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(oldLayer)
 
         #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        # options.includeZ = True
+        # options.overrideGeometryType = memLayer.wkbType()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        # error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -638,7 +645,14 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(oldLayer)
 
         #Save memory layer to Geopackage file
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        # options.includeZ = True
+        # options.overrideGeometryType = memLayer.wkbType()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        # error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -974,8 +988,15 @@ class DrillManager:
         QgsProject.instance().removeMapLayer(layer)
         
         #Save memory layer to GeoPackage
-        error = QgsVectorFileWriter.writeAsVectorFormat(memLayer, fileBaseName, "CP1250", crs, 
-                layerOptions=['OVERWRITE=YES'], overrideGeometryType=memLayer.wkbType())
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        options.includeZ = True
+        options.overrideGeometryType = memLayer.wkbType()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(memLayer, fileBaseName, QgsProject.instance().transformContext(), options)
+        # error = QgsVectorFileWriter.writeAsVectorFormatV2(memLayer, fileBaseName, "CP1250", crs, 
+        #         layerOptions=['OVERWRITE=YES'], overrideGeometryType=memLayer.wkbType())
 
         # Load the layer we just saved so the user can manipulate a real layer
         fileLayer = QgsVectorLayer(path, label)
