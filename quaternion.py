@@ -59,7 +59,7 @@ class Quaternion:
         
         """
         s = len(args)
-        if s is 0:
+        if s == 0:
             # No positional arguments supplied
             if len(kwargs) > 0:
                 # Keyword arguments provided
@@ -101,7 +101,7 @@ class Quaternion:
                 else:
                     keys = sorted(kwargs.keys())
                     elements = [kwargs[kw] for kw in keys]
-                    if len(elements) is 1:
+                    if len(elements) == 1:
                         r = float(elements[0])
                         self.q = np.array([r, 0.0, 0.0, 0.0])
                     else:
@@ -110,7 +110,7 @@ class Quaternion:
             else: 
                 # Default initialisation
                 self.q = np.array([1.0, 0.0, 0.0, 0.0])
-        elif s is 1:
+        elif s == 1:
             # Single positional argument supplied
             if isinstance(args[0], Quaternion):
                 self.q = args[0].q
@@ -146,7 +146,7 @@ class Quaternion:
                 raise ValueError("One or more elements in sequence <" + repr(seq) + "> cannot be interpreted as a real number")
             else:
                 return np.asarray(l)
-        elif len(seq) is 0:
+        elif len(seq) == 0:
             return np.zeros(n)
         else:
             raise ValueError("Unexpected number of elements in sequence. Got: " + str(len(seq)) + ", Expected: " + str(n) + ".")
