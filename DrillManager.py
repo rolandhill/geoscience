@@ -73,15 +73,15 @@ class DrillManager:
         # Maintain a log file in case of data errors
         if self.collarLayer and self.collarLayer.isValid():
             path=self.collarLayer.dataProvider().dataSourceUri()
-            fileName = uriToFile(os.path.join(os.path.split(path)[0], 'Geoscience_DrillManager_log.txt'))
-            self.logFile = open(fileName,'w')
-            if not self.logFile:
-                self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
-            self.logFile.write("Geoscience - DrillManager log file\n")
-            self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
-            self.logFile.write("  Make a copy if you want to keep the results.\n")
-            # We flush the buffers in case the plugin crashes without writing the message to the file
-            self.logFile.flush()
+            # fileName = uriToFile(os.path.join(os.path.split(path)[0], 'Geoscience_DrillManager_log.txt'))
+            # self.logFile = open(fileName,'w')
+            # if not self.logFile:
+            #     self.logFile = open(os.path.join(os.path.expanduser("~"), "Geoscience_DrillManager_log.txt"),'w')
+            # self.logFile.write("Geoscience - DrillManager log file\n")
+            # self.logFile.write("  Note: This file is overwritten each time you run Geoscience.\n")
+            # self.logFile.write("  Make a copy if you want to keep the results.\n")
+            # # We flush the buffers in case the plugin crashes without writing the message to the file
+            # self.logFile.flush()
 
     # Setup and run the Drill Setup dialog        
     def onDesurveyHole(self):
@@ -111,7 +111,7 @@ class DrillManager:
             self.writeProjectData()
             
             # The collar layer might have changed, so re-open log file
-            self.openLogFile()
+            # self.openLogFile()
         dlg.close()
 
         if result:
@@ -184,8 +184,8 @@ class DrillManager:
 
     # Create the down hole data (interval) traces    
     def createDownholeData(self):
-        self.logFile.write("\nCreating Downhole Data Layer.\n")
-        self.logFile.flush()
+        # self.logFile.write("\nCreating Downhole Data Layer.\n")
+        # self.logFile.flush()
         
         # Check that desurvey layer is available
         if not self.desurveyLayer.isValid() or not self.dataLayer.isValid():
@@ -294,14 +294,14 @@ class DrillManager:
             try:
                 pFrom, iFrom = interpPolyline(dataFrom, currentTraceSegLength, currentTracePolyline)
             except:
-                self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataFrom, index))
+                # self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataFrom, index))
                 continue
             
             if (idxTo > -1):
                 try:
                     pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
                 except:
-                    self.logFile.write("Error interpolating from polyline for hole: %s To: %f in row: %d.\n" % (dataId, dataTo, index))
+                    # self.logFile.write("Error interpolating from polyline for hole: %s To: %f in row: %d.\n" % (dataId, dataTo, index))
                     continue
 
             
@@ -359,7 +359,7 @@ class DrillManager:
             layer.commitChanges()
 
         # Flush the log file in case anything was written
-        self.logFile.flush()
+        # self.logFile.flush()
         
         # Build the new filename for saving to disk. We are using GeoPackages
         path=self.desurveyLayer.dataProvider().dataSourceUri()
@@ -390,8 +390,8 @@ class DrillManager:
         
     # Create the down hole data (interval) traces    
     def createDownholeStructure(self):
-        self.logFile.write("\nCreating Downhole Structure Layer.\n")
-        self.logFile.flush()
+        # self.logFile.write("\nCreating Downhole Structure Layer.\n")
+        # self.logFile.flush()
         
         # Check that desurvey layer is available
         if not self.desurveyLayer.isValid() or not self.structureLayer.isValid():
@@ -504,7 +504,7 @@ class DrillManager:
             try:
                 pDepth, iDepth = interpPolyline(dataDepth, currentTraceSegLength, currentTracePolyline)
             except:
-                self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataDepth, index))
+                # self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataDepth, index))
                 continue
 
             # Get the desurveyed core axis vector
@@ -512,7 +512,7 @@ class DrillManager:
             try:
                 vCore = coreVector(dataDepth, currentTraceSegLength, currentTracePolyline)
             except:
-                self.logFile.write("Error getting up vector: %s To: %f in row: %d.\n" % (dataId, dataDepth, index))
+                # self.logFile.write("Error getting up vector: %s To: %f in row: %d.\n" % (dataId, dataDepth, index))
                 continue
 
             # We can't work with vertical drill holes
@@ -630,7 +630,7 @@ class DrillManager:
             layer.commitChanges()
 
         # Flush the log file in case anything was written
-        self.logFile.flush()
+        # self.logFile.flush()
         
         # Build the new filename for saving to disk. We are using GeoPackages
         path=self.desurveyLayer.dataProvider().dataSourceUri()
@@ -660,8 +660,8 @@ class DrillManager:
         
     def desurveyHole(self):
         # Write to the log file
-        self.logFile.write("\nDesurveying data.\n")
-        self.logFile.flush()
+        # self.logFile.write("\nDesurveying data.\n")
+        # self.logFile.flush()
         
         # Set up a progress bar
         pd = QProgressDialog()
@@ -1174,7 +1174,7 @@ class DrillManager:
         self.sectionManager.readProjectData()        
 
         # Collar layer might have changed, so re-open the log file
-        self.openLogFile()
+        # self.openLogFile()
 
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
