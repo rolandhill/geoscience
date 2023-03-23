@@ -22,7 +22,7 @@ class SectionMapTool(QgsMapToolEmitPoint):
         self.sectionManagerDlg = parent
         self.drillManager = self.sectionManagerDlg.drillManager
         QgsMapToolEmitPoint.__init__(self, self.canvas)
-        self.rubberBand = QgsRubberBand(self.canvas, True)
+        self.rubberBand = QgsRubberBand(self.canvas)
         self.rubberBand.setColor(QtCore.Qt.red)
         self.rubberBand.setWidth(1)
         

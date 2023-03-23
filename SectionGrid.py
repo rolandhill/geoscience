@@ -6,7 +6,7 @@ Created on Tue May 21 17:16:49 2019
 """
 
 from PyQt5.QtCore import QVariant
-from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand, QgsMessageBar
+from qgis.gui import QgsMapToolEmitPoint, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes, QgsProject
 
 from PyQt5 import QtCore, Qt, QtGui
