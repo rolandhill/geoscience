@@ -154,7 +154,7 @@ class DrillManager:
             self.structureDepth = dlg.fbDataDepth.currentField()
             self.structureAlpha = dlg.fbDataAlpha.currentField()
             self.structureBeta = dlg.fbDataBeta.currentField()
-            self.structureScale = dlg.sbSymbolSize.value()
+            self.structureScale = float(dlg.leSymbolSize.text())
             # Save the name of each checked attribute field in a list
             self.structureFields = []
             for index in range(dlg.listFields.count()):

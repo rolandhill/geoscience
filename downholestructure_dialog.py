@@ -36,7 +36,7 @@ class DownholeStructureDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         self.initLayer(self.drillManager.structureLayer, self.lbDataLayer, ["struc"])
         self.checkSelectAll.setChecked(True)
 
-        self.sbSymbolSize.setValue(self.drillManager.structureScale)
+        self.leSymbolSize.setText(str(self.drillManager.structureScale))
 
         self.lbDataLayer.layerChanged.connect(self.onDataLayerChanged)
         self.checkSelectAll.toggled.connect(self.onSelectAllChecked)
