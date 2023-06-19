@@ -144,6 +144,13 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="2">
+         <widget class="QPushButton" name="pbExport">
+          <property name="text">
+           <string>Export</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
