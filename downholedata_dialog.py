@@ -16,7 +16,14 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class DownholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def __init__(self, manager, parent=None):
-        """Constructor."""
+        """
+        Constructor for the DownholeDataDialog class.
+
+        param manager: DrillManager object.
+        type manager: DrillManager
+        param parent: Parent widget (optional).
+        type parent: QWidget
+        """
         super(DownholeDataDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
@@ -28,31 +35,44 @@ class DownholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-    
+
+        # Initialise and set filters for layers lists.
         self.lbDesurveyLayer.setFilters(QgsMapLayerProxyModel.LineLayer)
         self.initLayer(self.drillManager.desurveyLayer, self.lbDesurveyLayer, ["desurvey"])
 
+        # Initialise layers and UI elements.
         self.lbDataLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
         self.initLayer(self.drillManager.dataLayer, self.lbDataLayer, ["lith", "geol"])
         self.checkSelectAll.setChecked(True)
-        
+
+        # Connect signals to slots.
         self.lbDataLayer.layerChanged.connect(self.onDataLayerChanged)
         self.checkSelectAll.toggled.connect(self.onSelectAllChecked)
 
+        # Trigger initial data and setup dialog based on the current data layer.
         self.onDataLayerChanged()
 
     def onDataLayerChanged(self):
+        """
+        Handle changes in the selected data layer.
+
+        This method is called when the user selects a different data layer.
+        """
         layer = self.lbDataLayer.currentLayer()
+
         if layer is not None and layer.isValid():
+            # Set up the data ID field combo box
             self.fbDataId.setLayer(layer)
             self.initField(self.drillManager.dataId, self.fbDataId, ["holeid", "id", "hole", "name"])
+            # Set up the data "from" field combo box
             self.fbDataFrom.setLayer(layer)
             self.initField(self.drillManager.dataFrom, self.fbDataFrom, ["from", "start", "depth"])
+            # Set up the data "to" field combo box
             self.fbDataTo.setLayer(layer)
             self.initField(self.drillManager.dataTo, self.fbDataTo, ["to","end"])
-            #Clear the Suffix text
+            # Clear the Suffix text
             self.teSuffix.clear()
-            #Load the list widget
+            # Load the list widget with fields from the selected layer
             self.listFields.clear()
             for field in layer.fields():
                 item = QtWidgets.QListWidgetItem()
@@ -68,9 +88,17 @@ class DownholeDataDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.listFields.clear()
 
     def onSelectAllChecked(self):
+        """
+        Handles the "Select All" checkbox state change.
+
+        This method is called when the user checks or unchecks the "Select All" checkbox.
+        """
         self.selectAll(self.listFields, self.checkSelectAll.isChecked())
             
     def setSuffix(self):
+        """
+        Set the Suffix text based on the selected data layer's name.
+        """
         str = self.lbDataLayer.currentLayer().name()
         loc = str.find("_")
         if loc > -1:
