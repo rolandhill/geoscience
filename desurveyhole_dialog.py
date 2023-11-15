@@ -9,13 +9,21 @@ from qgis.gui import *
 
 from .dialogBase import dialogBase
 
+# Load the UI file
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'desurveyhole_dialog_base.ui'))
 
 
 class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
+    """Dialog for managing desurveyed holes."""
     def __init__(self, manager, parent=None):
-        """Constructor."""
+        """
+        Constructor for DesurveyHoleDialog.
+
+        Args:
+            manager (DrillManager): Instance of DrillManager.
+            parent (QWidget): Parent widget (default is None).
+        """
         super(DesurveyHoleDialog, self).__init__(parent)
         
         # Keep a reference to the DrillManager
@@ -27,27 +35,31 @@ class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
         # Setup ComboBox filters
         self.lbCollarLayer.setFilters(QgsMapLayerProxyModel.PointLayer)
         self.lbSurveyLayer.setFilters(QgsMapLayerProxyModel.NoGeometry)
 
         # Initialise local variables and ComboBoxes
         self.checkDownDipNegative.setChecked(self.drillManager.downDipNegative)
-#        self.teDefaultSectionWidth.setText(str(self.drillManager.defaultSectionWidth))
-#        self.teDefaultSectionStep.setText(str(self.drillManager.defaultSectionStep))
         self.leDesurveyLength.setText(str(self.drillManager.desurveyLength))
         self.initLayer(self.drillManager.collarLayer, self.lbCollarLayer, ["collar", "hole"])
         self.initLayer(self.drillManager.surveyLayer, self.lbSurveyLayer, ["survey"])
-    
+
+        # Connect signals to slots
         self.lbCollarLayer.layerChanged.connect(self.onCollarLayerChanged)
         self.lbSurveyLayer.layerChanged.connect(self.onSurveyLayerChanged)
 
+        # Initialize configurations
         self.onCollarLayerChanged()
         self.onSurveyLayerChanged()
 
     def onCollarLayerChanged(self):
+        """Handle changes in the collar layer."""
         layer = self.lbCollarLayer.currentLayer()
+
         if layer is not None and layer.isValid():
+            # Set up fields for collar layer
             self.fbCollarId.setLayer(layer)
             self.initField(self.drillManager.collarId, self.fbCollarId, ["holeid", "bhid", "id", "hole", "name"])
             self.fbCollarDepth.setLayer(layer)
@@ -63,6 +75,7 @@ class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.fbCollarDip.setLayer(layer)
             self.initField(self.drillManager.collarDip, self.fbCollarDip, ["dip", "incl"])
         else:
+            # Reset configurations if no valid layer is selected
             self.fbCollarId.setCurrentIndex(-1)
             self.fbCollarEast.setCurrentIndex(-1)
             self.fbCollarNorth.setCurrentIndex(-1)
@@ -71,8 +84,10 @@ class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.fbCollarDip.setCurrentIndex(-1)
         
     def onSurveyLayerChanged(self):
+        """Handle changes in the survey layer."""
         layer = self.lbSurveyLayer.currentLayer()
         if layer is not None and layer.isValid():
+            # Set up fields for survey layer
             self.fbSurveyId.setLayer(layer)
             self.initField(self.drillManager.surveyId, self.fbSurveyId, ["holeid", "bhid", "id", "hole", "name"])
             self.fbSurveyDepth.setLayer(layer)
@@ -82,6 +97,7 @@ class DesurveyHoleDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             self.fbSurveyDip.setLayer(layer)
             self.initField(self.drillManager.surveyDip, self.fbSurveyDip, ["dip", "incl"])
         else:
+            # Reset configurations if no valid layer is selected
             self.fbSurveyId.setCurrentIndex(-1)
             self.fbSurveyDepth.setCurrentIndex(-1)
             self.fbSurveyAz.setCurrentIndex(-1)
