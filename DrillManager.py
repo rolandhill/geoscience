@@ -860,7 +860,7 @@ class DrillManager:
                 holeStraight = True
 
             # We only replicate survey to the beginning and end if the hole is not straight
-            if not holeStraight:
+            if holeStraight == False:
                 # Sort the surveys array by depth
                 surveys.sort(key = lambda x: x.depth)                        
             
@@ -903,7 +903,7 @@ class DrillManager:
                 
             #Build drill trace every desurveyLength to EOH
             xs = []
-            if not holeStraight:
+            if holeStraight == False:
                 sz = int(collar.depth / self.desurveyLength) + 1
                 depth = 0.0
                 for d in range(0, sz):
@@ -924,7 +924,7 @@ class DrillManager:
             # We start by adding the collar coordinates
             pointList.append(QgsPoint(collar.east, collar.north, collar.elev))
             # It's easier with a straight hole
-            if not holeStraight:
+            if holeStraight == False:
                 # We're going to keep iterating through the survey list looking for the bracketing surveys.
                 # We therefore record the start point of the iteration as it will only go up. Saves time.
                 idx0 = 0
@@ -932,7 +932,7 @@ class DrillManager:
                 for i in range(1, len(xs)):
                     q = Quaternion()
                     # Find the lowest survey equal or less than xs
-                    for j in range(idx0, len(surveys)):
+                    for j in range(idx0, len(surveys) - 1):
                         # Is there a survey exactly at this point?
                         if surveys[j].depth == xs[i]:
                             # Update the iteration start point
@@ -950,7 +950,7 @@ class DrillManager:
                             break
 
                     # Calculate the deviation of this segment of the hole
-                    offset = q.rotate(np.array([0.0, 1.0, 0.0])) * self.desurveyLength
+                    offset = q.rotate(np.array([0.0, 1.0, 0.0])) * (xs[i] - xs[i - 1])
                     # Calculate the new point by adding the offset to the old point
                     p0 = pointList[i-1]
                     pointList.append(QgsPoint(p0.x() + offset[0], p0.y() + offset[1], p0.z() + offset[2]))
