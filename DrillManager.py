@@ -23,6 +23,7 @@ from .quaternion import Quaternion
 # Initialize Qt resources from file resources.py
 from .resources import *
 from .desurveyhole_dialog import DesurveyHoleDialog
+from .downholepoints_dialog import DownholePointsDialog
 from .downholedata_dialog import DownholeDataDialog
 from .downholestructure_dialog import DownholeStructureDialog
 from .sectionmanager_dialog import SectionManagerDialog
@@ -142,6 +143,23 @@ class DrillManager:
         if result:
             # Create the down hole traces        
             self.createDownholeData()
+
+    def onDownholePoints(self):
+        dlg = DownholePointsDialog(self)
+        result = dlg.exec_()
+        if result:
+            self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
+            self.pointSeparation = float(dlg.lePointSeparation.text())
+            self.pointIncZero = dlg.cbIncZero.isChecked()
+            self.pointIncEOH = dlg.cbIncEOH.isChecked()
+                    
+            self.writeProjectData()
+
+        dlg.close()
+
+        if result:
+            # Create the down hole traces        
+            self.createDownholePoints()
 
     # Setup and run the Downhole Structure dialog
     def onDownholeStructure(self):
@@ -387,7 +405,159 @@ class DrillManager:
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
         QgsProject.instance().addMapLayer(layer)
+
+    # Create the down hole data (interval) traces    
+    def createDownholePoints(self):
+        # Check that desurvey layer is available
+        if not self.desurveyLayer.isValid() or not self.dataLayer.isValid():
+            return
         
+        # Set up a progress display
+        pd = QProgressDialog()
+        pd.setAutoReset(False)
+        pd.setWindowTitle("Build Downhole Points Layer")
+        pd.setMinimumWidth(500)
+        pd.setMinimum(0)
+        pd.setMaximum(self.desurveyLayer.featureCount())
+        pd.setValue(0)
+
+        #Create a new memory layer
+        layer = QgsVectorLayer("PointZ?crs=EPSG:4326", "geoscience_Temp", "memory")
+        layer.setCrs(self.desurveyLayer.crs())
+        atts = []
+        # Also add fields for the desurveyed coordinates
+        atts.append(QgsField("CollarID",  QVariant.String, "string", 16))
+        atts.append(QgsField("Depth",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("z",  QVariant.Double, "double", 12, 3))
+        
+        # Add all the attributes to the new layer
+        dp = layer.dataProvider()
+        dp.addAttributes(atts)
+        
+        # Tell the vector layer to fetch changes from the provider
+        layer.updateFields() 
+
+        # Get the fields from the desurveyed trace layer
+        tdp = self.desurveyLayer.dataProvider()
+        idxTraceId = tdp.fieldNameIndex("CollarID")
+        idxTraceSegLength = tdp.fieldNameIndex("SegLength")
+
+        updateInt = max(100, long(self.desurveyLayer.featureCount()/100))
+        for index, f in enumerate(self.desurveyLayer.getFeatures()):
+            # Update the Progress bar
+            if index%updateInt == 0:
+                pd.setValue(index)
+                qApp.processEvents()
+
+            # Is the feature valid?
+            if f.isValid():
+                collarId = str(f.attributes()[idxTraceId])
+                segLength = f.attributes()[idxTraceSegLength]
+                tracePolyline = []
+                vi = f.geometry().vertices()
+                while vi.hasNext():
+                    tracePolyline.append(vi.next())
+            else:
+                continue
+        
+            dist = 0.0
+            nodeDist = 0.0
+            node = 0
+            # Walk along the polyline
+            while node < len(tracePolyline) - 1:
+                p0 = tracePolyline[node]
+                p1 = tracePolyline[node + 1]
+                # Length of this segment. It can be different if it's the last segment
+                segl = segLength 
+                if node < len(tracePolyline) - 2:
+                    dx = p1.x() - p0.x();
+                    dy = p1.y() - p0.y();
+                    dz = p1.z() - p0.z();
+                    segl = math.sqrt(dx * dx + dy * dy + dz * dz)
+                
+                # What is the total distance along the line of the next node
+                nodeDist2 = nodeDist + segl
+                # If our required distance is less than the next node, then we need to insert points
+                # while dist < nodeDist2 or (self.pointIncEOH and (dist == nodeDist2)):
+                # while dist < nodeDist2 or (self.pointIncEOH and node == (len(tracePolyline) - 2) and dist == nodeDist2):
+                while dist < nodeDist2:
+                    if dist > 0.0 or self.pointIncZero:
+                        ratio = (dist - nodeDist) / segl
+                        p = QgsPoint(p0.x() + (p1.x() - p0.x()) * ratio, p0.y() + (p1.y() - p0.y()) * ratio, p0.z() + (p1.z() - p0.z()) * ratio, wkbType = QgsWkbTypes.PointZ)
+                        # insert the point
+                        feature = QgsFeature()
+                        feature.setGeometry(QgsGeometry(p))
+                        attList = []
+                        attList.append(collarId)
+                        attList.append(dist)
+                        attList.append(p.x())
+                        attList.append(p.y())
+                        attList.append(p.z())
+                        # Set the attributes for the new feature
+                        feature.setAttributes(attList)
+
+                        # Add the new feature to the new Trace_ layer
+                        layer.startEditing()
+                        layer.addFeature(feature)
+                        layer.commitChanges()
+
+                    # Increment the desired point distance
+                    dist = dist + self.pointSeparation
+
+                # There are no more points to go in this segment, so increment the segment
+                node = node + 1
+                nodeDist = nodeDist + segl
+
+            if self.pointIncEOH and dist > nodeDist:
+                p0 = tracePolyline[-1]
+                p = QgsPoint(p0.x(), p0.y(), p0.z(), wkbType = QgsWkbTypes.PointZ)
+                # insert the point
+                feature = QgsFeature()
+                feature.setGeometry(QgsGeometry(p))
+                attList = []
+                attList.append(collarId)
+                attList.append(nodeDist)
+                attList.append(p.x())
+                attList.append(p.y())
+                attList.append(p.z())
+                # Set the attributes for the new feature
+                feature.setAttributes(attList)
+
+                # Add the new feature to the new Trace_ layer
+                layer.startEditing()
+                layer.addFeature(feature)
+                layer.commitChanges()
+
+
+        # Build the new filename for saving to disk. We are using GeoPackages
+        path=self.desurveyLayer.dataProvider().dataSourceUri()
+        fileName=os.path.join(os.path.split(path)[0], self.desurveyLayer.name())
+        fileName = fileName.replace("_Desurvey","_DepthTicks")
+        fileName = uriToFile(fileName)
+
+        # Generate a layer label
+        label = os.path.splitext(os.path.basename(fileName))[0]
+
+        # Remove trace layer from project if it already exists
+        oldLayer = getLayerByName(label)
+        QgsProject.instance().removeMapLayer(oldLayer)
+
+        #Save memory layer to Geopackage file
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        options.includeZ = True
+        # options.overrideGeometryType = memLayer.wkbType()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+
+        # error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+            
+        # Load the one we just saved and add it to the map
+        layer = QgsVectorLayer(fileName+".gpkg", label)
+        QgsProject.instance().addMapLayer(layer)
+
     # Create the down hole data (interval) traces    
     def createDownholeStructure(self):
         # self.logFile.write("\nCreating Downhole Structure Layer.\n")
@@ -725,7 +895,7 @@ class DrillManager:
                     c.az = 0.0
                 c.dip = attrs[idxCollarDip]
                 if c.dip==NULL:
-                    c.dip = -90 if self.downDipNegative else 90
+                    c.dip = -90.0 if self.downDipNegative else 90.0
             arrCollar.append(c)
             
             #Create a new 3D point feature and copy the attributes
@@ -851,7 +1021,7 @@ class DrillManager:
                 s = Surveys()
                 s.depth = 0.0
                 s.az = 0.0
-                s.dip = -90 if self.downDipNegative else 90
+                s.dip = -90.0 if self.downDipNegative else 90.0
                 surveys.append(s)
                 
             # Is the hole straight? If so, we can take short cuts
@@ -884,10 +1054,10 @@ class DrillManager:
             quat = []
             for j, s in enumerate(surveys):
                 # Rotate about positive X axis by dip degrees (depends on downDipNegative flag)
-                qdip = Quaternion(axis=[1, 0, 0], degrees=(s.dip  if self.downDipNegative else -s.dip))
+                qdip = Quaternion(axis=[1.0, 0.0, 0.0], degrees=(s.dip  if self.downDipNegative else -s.dip))
 
                 # Rotate about positive Z axis by -Az degrees                        
-                qaz = Quaternion(axis=[0, 0, 1], degrees=-s.az)
+                qaz = Quaternion(axis=[0.0, 0.0, 1.0], degrees=-s.az)
                 
                 # Combine the dip and azimuth (order is important!)
                 q = qaz * qdip
@@ -1135,6 +1305,9 @@ class DrillManager:
     # Read all the saved DrillManager parameters from the QGIS project        
     def readProjectData(self):
 #       Desurvey & Downhole Data
+        self.pointIncZero = readProjectBool("PointIncZero", False)
+        self.pointIncEOH = readProjectBool("PointIncEOH", True)
+        self.pointSeparation = readProjectDouble("PointSeparation", 100.0)
         self.desurveyLength = readProjectDouble("DesurveyLength", 1.0)
         self.downDipNegative = readProjectBool("DownDipNegative", True)
         self.desurveyLayer = readProjectLayer("DesurveyLayer")
@@ -1183,6 +1356,9 @@ class DrillManager:
     # Write all DrillManager parameters to the QGIS project file
     def writeProjectData(self):
 #       Desurvey & Downhole Data
+        writeProjectData("PointIncZero", self.pointIncZero)
+        writeProjectData("PointIncEOH", self.pointIncEOH)
+        writeProjectDataDouble("PointSeparation", self.pointSeparation)
         writeProjectDataDouble("DesurveyLength", self.desurveyLength)
         writeProjectData("DownDepthNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)

@@ -112,6 +112,12 @@ class Geoscience:
         self.toolbar.addAction(action)
         self.actions.append(action)
         
+        action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillPoints.png"), "Downhole Points...")
+        action.triggered.connect(self.drillManager.onDownholePoints)
+        action.setEnabled(True)
+        self.toolbar.addAction(action)
+        self.actions.append(action)
+        
         action = self.menuDrill.addAction(QIcon(self.plugin_dir + "/icon/DrillStructure.png"), "Downhole Structure...")
         action.triggered.connect(self.drillManager.onDownholeStructure)
         action.setEnabled(True)
