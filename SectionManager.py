@@ -90,6 +90,7 @@ class Section:
         self.sourceLayers = layerList
         self.sourceElevation = elevationList
         self.planFeatureId = None
+        self.bearing = 0.0
 
         # We will also store the layer names in case the underlying layer is updated
         self.sourceLayerNames = []
@@ -111,6 +112,15 @@ class Section:
         # Now, let's create a quaternion to represent the rotation from the real life section back to +X axis
         self.quat = Quaternion(axis=[0, 0, 1], radians=-angle)
         
+        self.bearing = 90.0 - float(angle) / np.pi * 180.0
+        iface.messageBar().pushMessage("Debug", "Bearing 1: %f"%(self.bearing), level=Qgis.Info)
+        if self.bearing >= 360.0:
+            self.bearing = self.bearing - 360.0
+        if self.bearing < 0.0:
+            self.bearing = 360.0 - self.bearing
+        
+        iface.messageBar().pushMessage("Debug", "Bearing 2: %f"%(self.bearing), level=Qgis.Info)
+
         # These are different from the start and end variables as a section may be defined 'backwards'
         self.minX = min(self.startX, self.endX)
         self.maxX = max(self.startX, self.endX)
@@ -513,7 +523,8 @@ class SectionManager:
         f.setGeometry(QgsGeometry.fromPolyline(pointList))
         
         # Set the attributes for the new feature
-        f.setAttributes([name])
+        iface.messageBar().pushMessage("Debug", "Bearing 3: %f"%(s.bearing), level=Qgis.Info)
+        f.setAttributes([name, s.bearing])
 
         # Add the new feature to the new Trace_ layer
         layer.startEditing()
@@ -634,6 +645,7 @@ class SectionManager:
         atts = []
         # Loop through the list of desired field names that the user checked
         atts.append(QgsField("Name",  QVariant.String, "string", 80, 0))
+        atts.append(QgsField("Bearing",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
