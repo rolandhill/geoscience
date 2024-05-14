@@ -790,6 +790,8 @@ class DrillManager:
             # attList.append(float(n[2]))
             attList.append(dipdir)
             attList.append(dip)
+            # Placeholder for section dip
+            attList.append(0.0)
 
             # Set the attributes for the new feature
             feature.setAttributes(attList)
@@ -1292,6 +1294,7 @@ class DrillManager:
         atts.append(QgsField("_Depth_z",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_DipDir",  QVariant.Double, "double", 12, 3))
         atts.append(QgsField("_Dip",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Section_Dip",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()

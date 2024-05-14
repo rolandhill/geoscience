@@ -112,15 +112,12 @@ class Section:
         # Now, let's create a quaternion to represent the rotation from the real life section back to +X axis
         self.quat = Quaternion(axis=[0, 0, 1], radians=-angle)
         
-        self.bearing = 90.0 - float(angle) / np.pi * 180.0
-        iface.messageBar().pushMessage("Debug", "Bearing 1: %f"%(self.bearing), level=Qgis.Info)
+        self.bearing = 90.0 - np.degrees(angle)
         if self.bearing >= 360.0:
             self.bearing = self.bearing - 360.0
         if self.bearing < 0.0:
             self.bearing = 360.0 - self.bearing
         
-        iface.messageBar().pushMessage("Debug", "Bearing 2: %f"%(self.bearing), level=Qgis.Info)
-
         # These are different from the start and end variables as a section may be defined 'backwards'
         self.minX = min(self.startX, self.endX)
         self.maxX = max(self.startX, self.endX)
@@ -248,6 +245,15 @@ class Section:
             except:
                 layer = getLayerByName(self.sourceLayerNames[index])
                 
+            structureLayer = False
+            dp = layer.dataProvider()
+            idxSectionDip = dp.fieldNameIndex("_Section_Dip")
+            idxDip = dp.fieldNameIndex("_Dip")
+            idxDipDir = dp.fieldNameIndex("_DipDir")
+            if idxSectionDip > -1 and idxDip > -1 and idxDipDir > -1:
+                structureLayer = True
+                # iface.messageBar().pushMessage("Found structure layer: ", layer.name(), level=Qgis.Info)
+
             #Try and match the layer to be created with one already under the section.group, else create a new layer
             newName = self.createSectionLayerName(layer, self.name)
             sectionLayer = self.matchLayer(newName)
@@ -368,6 +374,15 @@ class Section:
                 if fvalid:                        
                     # Set the attributes for the new feature
                     feature.setAttributes(lf.attributes())
+
+                    # Calculate the apparent dip if this is a structure layer
+                    if structureLayer:
+                        dip = lf.attributes()[idxDip]
+                        dipdir = lf.attributes()[idxDipDir]
+                        if dip is not None and dipdir is not None:
+                            angle = np.radians(self.bearing - dipdir)
+                            appdip = dip * np.cos(angle)
+                            feature[idxSectionDip] = float(appdip)
             
                     # Add the new feature to the new Trace_ layer
                     sectionLayer.startEditing()
@@ -523,8 +538,8 @@ class SectionManager:
         f.setGeometry(QgsGeometry.fromPolyline(pointList))
         
         # Set the attributes for the new feature
-        iface.messageBar().pushMessage("Debug", "Bearing 3: %f"%(s.bearing), level=Qgis.Info)
-        f.setAttributes([name, s.bearing])
+        # iface.messageBar().pushMessage("Debug", "Bearing: %f"%(s.bearing), level=Qgis.Info)
+        f.setAttributes([name, float(s.bearing)])
 
         # Add the new feature to the new Trace_ layer
         layer.startEditing()
