@@ -518,7 +518,7 @@ class SectionManager:
     def createSection(self, name, startX, startY, endX, endY, width, layerList, elevationList, writeProjectData = True):
 #        iface.messageBar().pushMessage("Debug", "In CreateSection", level=Qgis.Warning)
         sectionGroup = self.sectionGroup()
-        
+
         s = Section(name, startX, startY, endX, endY, width, layerList, elevationList)
         # Re-assign the layerTreeGroup if a matching one already exists
         group = self.matchGroup(s)
@@ -531,6 +531,18 @@ class SectionManager:
         
         # Add section line to SectionPlan
         layer = self.sectionPlanLayer()
+
+        # Check that the Bearing field is in the layer and add it if needed
+        dp = layer.dataProvider()
+        idxBearing = dp.fieldNameIndex("Bearing")
+        if idxBearing == -1:
+            atts = []
+            atts.append(QgsField("Bearing",  QVariant.Double, "double", 12, 3))
+            dp.addAttributes(atts)
+
+            # Tell the vector layer to fetch changes from the provider
+            layer.updateFields() 
+        
         pointList = []
         pointList.append(QgsPoint(startX, startY, 0.0))
         pointList.append(QgsPoint(endX, endY, 0.0))
