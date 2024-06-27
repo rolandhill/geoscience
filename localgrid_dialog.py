@@ -38,10 +38,10 @@ def calcAffine(base, local):
         
     return a0, a1, a2, b0, b1, b2
 
-def createAffineLengthParameterWkt(label, val, epsg):
+def createAffineLengthParameterWkt(label, val, epsg, unit):
     txt = ',' \
     'PARAMETER["' + label + '",' + str(val) + ',' \
-    'LENGTHUNIT["metre",1],' \
+    'LENGTHUNIT["' + unit + '",1],' \
     'ID["EPSG",' + epsg + ']]'
     
     return txt
@@ -54,16 +54,16 @@ def createAffineScaleParameterWkt(label, val, epsg):
     
     return txt
     
-def createAffineWkt(a0, a1, a2, b0, b1, b2):
+def createAffineWkt(a0, a1, a2, b0, b1, b2, unit):
     txt = 'DERIVINGCONVERSION["Affine",' \
     'METHOD["Affine parametric transformation",' \
     'ID["EPSG",9624' \
     ']' \
     ']'
-    txt = txt + createAffineLengthParameterWkt("A0", a0, '8623')
+    txt = txt + createAffineLengthParameterWkt("A0", a0, '8623', unit)
     txt = txt + createAffineScaleParameterWkt("A1", a1, '8624')
     txt = txt + createAffineScaleParameterWkt("A2", a2, '8625')
-    txt = txt + createAffineLengthParameterWkt("B0", b0, '8639')
+    txt = txt + createAffineLengthParameterWkt("B0", b0, '8639', unit)
     txt = txt + createAffineScaleParameterWkt("B1", b1, '8640')
     txt = txt + createAffineScaleParameterWkt("B2", b2, '8641')
     
@@ -135,8 +135,20 @@ class LocalGridDialog(QtWidgets.QDialog, FORM_CLASS):
             return
 
         a0, a1, a2, b0, b1, b2 = calcAffine(base, local)
-        
-        wktAffine = createAffineWkt(a0, a1, a2, b0, b1, b2)
+
+        unit = "metre"
+
+        # If the base CRS is in feet, then we need to overscale the a1, a2, b1 & b2 parameters by 0.304800609601219
+        # See comment by Gabriel de Luca https://github.com/rolandhill/geoscience/issues/10#issuecomment-1045535220
+        if crs.mapUnits() == QgsUnitTypes.DistanceUnit.Feet:
+            a1 = a1 / 0.304800609601219
+            a2 = a2 / 0.304800609601219
+            b1 = b1 / 0.304800609601219
+            b2 = b2 / 0.304800609601219
+
+            unit = "feet"
+
+        wktAffine = createAffineWkt(a0, a1, a2, b0, b1, b2, unit)
         pos = wktBase.find(',CS[Cartesian')
         wkt = 'DERIVEDPROJCRS["' + name + '",BASE' + wktBase[:pos] + '],' + wktAffine + wktBase[pos:]
         # Trim the Usage paramter if it exists
