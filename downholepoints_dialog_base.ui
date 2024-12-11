@@ -126,7 +126,7 @@
      <item>
       <widget class="QCheckBox" name="cbIncZero">
        <property name="text">
-        <string>CheckBox</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -143,7 +143,7 @@
      <item>
       <widget class="QCheckBox" name="cbIncEOH">
        <property name="text">
-        <string>CheckBox</string>
+        <string/>
        </property>
       </widget>
      </item>

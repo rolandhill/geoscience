@@ -409,7 +409,7 @@ class DrillManager:
     # Create the down hole data (interval) traces    
     def createDownholePoints(self):
         # Check that desurvey layer is available
-        if not self.desurveyLayer.isValid() or not self.dataLayer.isValid():
+        if not self.desurveyLayer.isValid():
             return
         
         # Set up a progress display
