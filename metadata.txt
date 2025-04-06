@@ -15,7 +15,9 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=1.15
+changelog=1.16
+    - Fix redundant check for valid dataLayer when generating downhole points.
+  1.15
     - Upgrade local grid CRS creation to support base grids in feet.
   1.14
     -write section bearing to Section_Plan. Calculate _Section_Dip during section creation for structure layers
