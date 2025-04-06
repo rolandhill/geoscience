@@ -11,7 +11,7 @@
         email                : roland.hill@mmg.com
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QUrl
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QMetaType, QUrl
 from PyQt5.QtGui import QIcon, QDesktopServices
 from PyQt5.QtWidgets import QAction, QMenu, QDialog
 
