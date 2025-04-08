@@ -537,7 +537,7 @@ class SectionManager:
         idxBearing = dp.fieldNameIndex("Bearing")
         if idxBearing == -1:
             atts = []
-            atts.append(QgsField("Bearing",  QVariant.Double, "double", 12, 3))
+            atts.append(QgsField("Bearing",  QMetaType.Type.Double, "double", 12, 3))
             dp.addAttributes(atts)
 
             # Tell the vector layer to fetch changes from the provider
@@ -671,8 +671,8 @@ class SectionManager:
         layer.setCrs(crs)
         atts = []
         # Loop through the list of desired field names that the user checked
-        atts.append(QgsField("Name",  QVariant.String, "string", 80, 0))
-        atts.append(QgsField("Bearing",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("Name",  QMetaType.Type.QString, "string", 80, 0))
+        atts.append(QgsField("Bearing",  QMetaType.Type.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
