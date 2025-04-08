@@ -9,7 +9,7 @@
         email                : roland.hill@mmg.com
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QMetaType
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, qApp
 
@@ -426,11 +426,11 @@ class DrillManager:
         layer.setCrs(self.desurveyLayer.crs())
         atts = []
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("CollarID",  QMetaType.Type.QString, "string", 16))
-        atts.append(QgsField("Depth",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("x",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("y",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("z",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("CollarID",  QVariant.String, "string", 16))
+        atts.append(QgsField("Depth",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("z",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
@@ -1221,8 +1221,8 @@ class DrillManager:
         layer.setCrs(crs)
         dp = layer.dataProvider()
         dp.addAttributes([
-            QgsField("CollarID",  QMetaType.Type.QString, "string", 16),
-            QgsField("SegLength",  QMetaType.Type.Double, "double", 5, 2)
+            QgsField("CollarID",  QVariant.String, "string", 16),
+            QgsField("SegLength",  QVariant.Double, "double", 5, 2)
             ])
         layer.updateFields() # tell the vector layer to fetch changes from the provider
         self.desurveyLayer = layer
@@ -1237,15 +1237,15 @@ class DrillManager:
             if field.name() in self.dataFields:
                 atts.append(field)
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("_From_x",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_From_y",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_From_z",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_To_x",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_To_y",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_To_z",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Mid_x",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Mid_y",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Mid_z",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_From_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_From_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_From_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_To_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_To_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_To_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_z",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
@@ -1266,9 +1266,9 @@ class DrillManager:
             if field.name() in self.dataFields:
                 atts.append(field)
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("_Depth_x",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_y",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_z",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_z",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
@@ -1289,12 +1289,12 @@ class DrillManager:
             if field.name() in self.structureFields:
                 atts.append(field)
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("_Depth_x",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_y",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_z",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_DipDir",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Dip",  QMetaType.Type.Double, "double", 12, 3))
-        atts.append(QgsField("_Section_Dip",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_x",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_y",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_DipDir",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Dip",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Section_Dip",  QVariant.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()

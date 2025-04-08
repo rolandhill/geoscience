@@ -5,7 +5,7 @@ Created on Tue May 21 17:16:49 2019
 @author: HillR
 """
 
-from PyQt5.QtCore import QMetaType
+from PyQt5.QtCore import QVariant
 from qgis.gui import QgsMapToolEmitPoint, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes, QgsProject
 
@@ -238,7 +238,7 @@ class SectionGrid:
         layer.setCrs(crs)
         atts = []
         # Loop through the list of desired field names that the user checked
-        atts.append(QgsField("Label",  QMetaType.Type.Double, "double", 9, 3))
+        atts.append(QgsField("Label",  QVariant.Double, "double", 9, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
