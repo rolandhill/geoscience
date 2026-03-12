@@ -9,9 +9,9 @@
         email                : roland.hill@mmg.com
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QMetaType, QSettings, QTranslator, qVersion, QCoreApplication, QVariant, qApp
+from qgis.PyQt.QtCore import QMetaType, QSettings, QTranslator, qVersion, QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog
+from qgis.PyQt.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, QApplication
 
 from qgis.core import *
 from qgis.utils import *
@@ -257,7 +257,7 @@ class DrillManager:
             # Update the Progress bar
             if index%updateInt == 0:
                 pd.setValue(index)
-                qApp.processEvents()
+                QApplication.instance().processEvents()
             
             # Variable to hold a feature
             feature = QgsFeature()
@@ -449,7 +449,7 @@ class DrillManager:
             # Update the Progress bar
             if index%updateInt == 0:
                 pd.setValue(index)
-                qApp.processEvents()
+                QApplication.instance().processEvents()
 
             # Is the feature valid?
             if f.isValid():
@@ -612,7 +612,7 @@ class DrillManager:
             # Update the Progress bar
             if index%updateInt == 0:
                 pd.setValue(index)
-                qApp.processEvents()
+                QApplication.instance().processEvents()
             
             # Variable to hold a feature
             feature = QgsFeature()
@@ -986,7 +986,7 @@ class DrillManager:
             pd.setValue(index)
             # Force update the progress bar visualisation every 1% as it normally only happens in idle time
             if index%updateInt == 0:
-                qApp.processEvents()
+                QApplication.instance().processEvents()
 
             # Check the id exists                
             if not collar.id:

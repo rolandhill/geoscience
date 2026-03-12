@@ -5,8 +5,7 @@ Created on Thu Mar 28 17:41:08 2019
 @author: HillR
 """
 
-from qgis.PyQt.QtCore import qApp
-from qgis.PyQt.QtWidgets import QProgressDialog
+from qgis.PyQt.QtWidgets import QProgressDialog, QApplication
 
 from qgis.core import *
 from qgis.utils import *
@@ -272,7 +271,7 @@ class Section:
                     pdVal = pdVal + 1
                     pdCount = 0
                     pd.setValue(pdVal)
-                    qApp.processEvents()
+                    QApplication.instance().processEvents()
                     
                 # Variable to hold a feature
                 feature = QgsFeature()
