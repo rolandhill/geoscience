@@ -212,7 +212,7 @@ def addLayerToListWidget(layer, listWidget):
     item.setText(layer.name())
     item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
     item.setCheckState(QtCore.Qt.CheckState.Checked)
-    item.setData(QtCore.Qt.UserRole, layer)
+    item.setData(QtCore.Qt.ItemDataRole.UserRole, layer)
     listWidget.addItem(item)
         
 def fillVectorLayersForSection(listWidget):
@@ -244,8 +244,8 @@ def fillRasterLayersForSection(listWidget):
 def getCheckedLayers(listWidget):
     layers = []
     for index in range(listWidget.count()):
-        if listWidget.item(index).checkState():
-            layers.append(listWidget.item(index).data(QtCore.Qt.UserRole))
+        if listWidget.item(index).checkState() == QtCore.Qt.CheckState.Checked:
+            layers.append(listWidget.item(index).data(QtCore.Qt.ItemDataRole.UserRole))
     return layers
 
 def layersExtent(layers):

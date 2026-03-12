@@ -133,7 +133,7 @@ class DrillManager:
             # Save the name of each checked attribute field in a list
             self.dataFields = []
             for index in range(dlg.listFields.count()):
-                if dlg.listFields.item(index).checkState():
+                if dlg.listFields.item(index).checkState() == QtCore.Qt.CheckState.Checked:
                     self.dataFields.append(dlg.listFields.item(index).text())
                     
             self.writeProjectData()
@@ -176,7 +176,7 @@ class DrillManager:
             # Save the name of each checked attribute field in a list
             self.structureFields = []
             for index in range(dlg.listFields.count()):
-                if dlg.listFields.item(index).checkState():
+                if dlg.listFields.item(index).checkState() == QtCore.Qt.CheckState.Checked:
                     self.structureFields.append(dlg.listFields.item(index).text())
                     
             self.writeProjectData()

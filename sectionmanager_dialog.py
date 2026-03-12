@@ -56,8 +56,8 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
                 item = QtWidgets.QListWidgetItem()
                 item.setText(s.name)
                 item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
-                item.setCheckState(QtCore.Qt.Unchecked)
-                item.setData(QtCore.Qt.UserRole, s)
+                item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+                item.setData(QtCore.Qt.ItemDataRole.UserRole, s)
                 self.listSection.addItem(item)
         
     def onMapCanvasPressed(self):
@@ -171,15 +171,15 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         cs = None
         item = self.listSection.currentItem()
         if item is not None:
-            cs = item.data(QtCore.Qt.UserRole)
+            cs = item.data(QtCore.Qt.ItemDataRole.UserRole)
         
         return cs
         
     def checkedSections(self):
         sList = []
         for index in range(self.listSection.count()):
-            if self.listSection.item(index).checkState():
-                s = self.listSection.item(index).data(QtCore.Qt.UserRole)
+            if self.listSection.item(index).checkState() == QtCore.Qt.CheckState.Checked:
+                s = self.listSection.item(index).data(QtCore.Qt.ItemDataRole.UserRole)
                 sList.append(s)
         return sList
     

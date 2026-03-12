@@ -53,5 +53,5 @@ class dialogBase():
                 listWidget.item(index).setCheckState(QtCore.Qt.CheckState.Checked)
         else:
             for index in range(listWidget.count()):
-                listWidget.item(index).setCheckState(QtCore.Qt.Unchecked)
+                listWidget.item(index).setCheckState(QtCore.Qt.CheckState.Unchecked)
             
