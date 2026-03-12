@@ -133,12 +133,6 @@ class Geoscience:
         # Create Vector menu.
         self.menuVector = self.menu.addMenu("Vector")
 
-        action = self.menuVector.addAction(QIcon(self.plugin_dir + "/icon/ReverseLine.png"), "Reverse Line Direction")
-        action.triggered.connect(self.onReverseLine)
-        action.setEnabled(True)
-        self.toolbar.addAction(action)
-        self.actions.append(action)
-        
         # Create Raster menu.
         self.menuRaster = self.menu.addMenu("Raster")
 
@@ -179,34 +173,6 @@ class Geoscience:
         Read project data.
         """
         self.drillManager.readProjectData()
-
-    def onReverseLine(self):
-        """
-        Reverse the node sequence in all selected lines on the current layer.
-        Useful if you are using a non-symmetric line style (eg Normal Fault).
-        """
-        # Get the currently selected layer
-        layer = self.iface.mapCanvas().currentLayer()
-        
-        # Loop through all selected features
-        for feature in layer.selectedFeatures():
-            geom = feature.geometry()
-            wkbType = geom.wkbType()
-            if wkbType == QgsWkbTypes.MultiLineString:
-                for nodes in geom.asMultiPolygon():
-                    nodes.reverse()
-            else:
-                # Get the geometry as a Polyline. This is 2D only
-                # ToDo: Convert to 3D
-                nodes = geom.asPolyline()
-                nodes.reverse() 
-                newgeom = QgsGeometry.fromPolylineXY(nodes)
-
-                # Put the new geometry into the feature
-                layer.changeGeometry(feature.id(),newgeom)
-            
-            # Refresh the screen
-            layer.triggerRepaint()
 
     def onRasterTransparentWhite(self):
         """
