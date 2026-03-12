@@ -130,9 +130,6 @@ class Geoscience:
         self.actions.append(action)
         self.toolbar.addSeparator()
         
-        # Create Vector menu.
-        self.menuVector = self.menu.addMenu("Vector")
-
         # Create Raster menu.
         self.menuRaster = self.menu.addMenu("Raster")
 
