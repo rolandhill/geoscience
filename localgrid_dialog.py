@@ -5,8 +5,9 @@ Created on March 30 2020
 @author: Roland Hill
 """
 
-from PyQt5 import QtCore, uic
-from PyQt5 import QtWidgets
+from qgis.PyQt import QtCore, uic
+from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtGui import QClipboard
 
 from qgis.core import *
 from qgis.utils import *
@@ -98,9 +99,9 @@ class LocalGridDialog(QtWidgets.QDialog, FORM_CLASS):
 
 # Copy text from the text box into the clipboard        
     def onCopyPressed(self):
-        cb = QtWidgets.QApplication.clipboard()
-        cb.clear(mode=cb.Clipboard )
-        cb.setText(self.pteWkt.toPlainText(), mode=cb.Clipboard)
+        cb = QtWidgets.QApplication.instance().clipboard()
+        # cb.clear(mode=cb.Clipboard )
+        cb.setText(self.pteWkt.toPlainText(), QClipboard.Mode.Clipboard)
 
 # Retrieve input data, calcualte affine parameters, prepare WKT and write results into text box
     def onCalculatePressed(self):

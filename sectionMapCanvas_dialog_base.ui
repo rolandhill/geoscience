@@ -25,14 +25,14 @@
         <string>Name:</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
        </property>
       </widget>
      </item>
      <item row="0" column="2">
       <spacer name="horizontalSpacer_8">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -66,7 +66,7 @@
       <item>
        <widget class="QListWidget" name="listLayers">
         <property name="selectionMode">
-         <enum>QAbstractItemView::MultiSelection</enum>
+         <enum>QAbstractItemView::SelectionMode::MultiSelection</enum>
         </property>
        </widget>
       </item>
@@ -98,10 +98,10 @@
       <item>
        <widget class="QDialogButtonBox" name="buttonBox">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="standardButtons">
-         <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+         <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
         </property>
        </widget>
       </item>

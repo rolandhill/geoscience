@@ -4,7 +4,7 @@ Created on Thu Jul 05 07:55:31 2018
 
 @author: HillR
 """
-from PyQt5 import QtCore
+from qgis.PyQt import QtCore
 from qgis.gui import QgsFieldComboBox
 
 # Dialog functions shared by mutliple dialogs, s oput them in a base class
@@ -31,7 +31,7 @@ class dialogBase():
     def initField(self, inField, cb, guessList):
         index = -1
         if inField:
-            index = cb.findText(inField, QtCore.Qt.MatchContains)
+            index = cb.findText(inField, QtCore.Qt.MatchFlag.MatchContains)
             
         if index > -1:
             cb.setCurrentIndex(index)
@@ -42,7 +42,7 @@ class dialogBase():
     def guessName(self, cb, list):
         cb.setCurrentIndex(-1)
         for str in list:
-            index = cb.findText(str, QtCore.Qt.MatchContains)
+            index = cb.findText(str, QtCore.Qt.MatchFlag.MatchContains)
             if index > -1:
                 cb.setCurrentIndex(index)
                 break
@@ -50,8 +50,8 @@ class dialogBase():
     def selectAll(self, listWidget, state):
         if state == True:
             for index in range(listWidget.count()):
-                listWidget.item(index).setCheckState(QtCore.Qt.Checked)
+                listWidget.item(index).setCheckState(QtCore.Qt.CheckState.Checked)
         else:
             for index in range(listWidget.count()):
-                listWidget.item(index).setCheckState(QtCore.Qt.Unchecked)
+                listWidget.item(index).setCheckState(QtCore.Qt.CheckState.Unchecked)
             

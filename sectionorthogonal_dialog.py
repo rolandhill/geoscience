@@ -1,9 +1,9 @@
 import os
 
-from PyQt5 import QtCore, uic
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QDoubleValidator
-#from PyQt5 import QtGui
+from qgis.PyQt import QtCore, uic
+from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtGui import QDoubleValidator
+#from qgis.PyQt import QtGui
 
 from qgis.core import *
 from qgis.utils import *

@@ -8,7 +8,8 @@ from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes
 from qgis.utils import iface
 
-from PyQt5 import QtCore, Qt
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtGui import QColorConstants
 
 import numpy as np
 
@@ -23,7 +24,7 @@ class SectionMapTool(QgsMapToolEmitPoint):
         self.drillManager = self.sectionManagerDlg.drillManager
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.rubberBand = QgsRubberBand(self.canvas)
-        self.rubberBand.setColor(QtCore.Qt.red)
+        self.rubberBand.setColor(QColorConstants.Red)
         self.rubberBand.setWidth(1)
         
         self.reset()
@@ -46,7 +47,7 @@ class SectionMapTool(QgsMapToolEmitPoint):
         # Get the layers to incude in the section from a dlg
         dlg = SectionMapCanvasDialog()
         dlg.leName.setText(self.suggestName())
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.drillManager.sectionName = dlg.leName.text()
 #            self.drillManager.sectionWidth = float(dlg.leSectionWidth.text())

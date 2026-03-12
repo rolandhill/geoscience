@@ -1,8 +1,8 @@
 import os
 
-from PyQt5 import QtCore, uic
-from PyQt5 import QtWidgets
-#from PyQt5 import QtGui
+from qgis.PyQt import QtCore, uic
+from qgis.PyQt import QtWidgets
+#from qgis.PyQt import QtGui
 
 from qgis.core import *
 from qgis.utils import *
@@ -55,9 +55,9 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             for s in self.sectionManager.sectionReg:
                 item = QtWidgets.QListWidgetItem()
                 item.setText(s.name)
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                item.setCheckState(QtCore.Qt.Unchecked)
-                item.setData(QtCore.Qt.UserRole, s)
+                item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+                item.setData(QtCore.Qt.ItemDataRole.UserRole, s)
                 self.listSection.addItem(item)
         
     def onMapCanvasPressed(self):
@@ -69,7 +69,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def onWestEastPressed(self):
         self.drillManager.sectionWidth = float(self.leSectionWidth.text())
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.drillManager.sectionNorth = float(dlg.leCenter.text())
             self.drillManager.sectionLimitWest = float(dlg.leLimitMin.text())
@@ -96,7 +96,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def onSouthNorthPressed(self):
         self.drillManager.sectionWidth = float(self.leSectionWidth.text())
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.drillManager.sectionEast = float(dlg.leCenter.text())
             self.drillManager.sectionLimitSouth = float(dlg.leLimitMin.text())
@@ -171,15 +171,15 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
         cs = None
         item = self.listSection.currentItem()
         if item is not None:
-            cs = item.data(QtCore.Qt.UserRole)
+            cs = item.data(QtCore.Qt.ItemDataRole.UserRole)
         
         return cs
         
     def checkedSections(self):
         sList = []
         for index in range(self.listSection.count()):
-            if self.listSection.item(index).checkState():
-                s = self.listSection.item(index).data(QtCore.Qt.UserRole)
+            if self.listSection.item(index).checkState() == QtCore.Qt.CheckState.Checked:
+                s = self.listSection.item(index).data(QtCore.Qt.ItemDataRole.UserRole)
                 sList.append(s)
         return sList
     

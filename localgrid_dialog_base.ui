@@ -42,7 +42,7 @@
         <string>Base Projected CRS</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
        </property>
       </widget>
      </item>
@@ -60,7 +60,7 @@
       </sizepolicy>
      </property>
      <property name="sizeAdjustPolicy">
-      <enum>QAbstractScrollArea::AdjustIgnored</enum>
+      <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
      </property>
      <property name="rowCount">
       <number>3</number>
@@ -81,7 +81,7 @@
       <bool>true</bool>
      </attribute>
      <attribute name="verticalHeaderDefaultSectionSize">
-      <number>25</number>
+      <number>30</number>
      </attribute>
      <row/>
      <row/>
@@ -119,7 +119,7 @@
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -132,7 +132,7 @@
      <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="standardButtons">
-        <set>QDialogButtonBox::Close</set>
+        <set>QDialogButtonBox::StandardButton::Close</set>
        </property>
       </widget>
      </item>

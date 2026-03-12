@@ -9,9 +9,9 @@
         email                : roland.hill@mmg.com
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, qApp
+from qgis.PyQt.QtCore import QMetaType, QSettings, QTranslator, qVersion, QCoreApplication, QVariant
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, QApplication
 
 from qgis.core import *
 from qgis.utils import *
@@ -87,7 +87,7 @@ class DrillManager:
     # Setup and run the Drill Setup dialog        
     def onDesurveyHole(self):
         dlg = DesurveyHoleDialog(self)
-        result = dlg.exec_()
+        result = dlg.exec()
         # If OK button clicked then retrieve and update values
         if result:
             self.downDipNegative = dlg.checkDownDipNegative.isChecked()
@@ -122,7 +122,7 @@ class DrillManager:
     # Setup and run the Downhole Data dialog
     def onDownholeData(self):
         dlg = DownholeDataDialog(self)
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
             self.dataLayer = dlg.lbDataLayer.currentLayer()
@@ -133,7 +133,7 @@ class DrillManager:
             # Save the name of each checked attribute field in a list
             self.dataFields = []
             for index in range(dlg.listFields.count()):
-                if dlg.listFields.item(index).checkState():
+                if dlg.listFields.item(index).checkState() == QtCore.Qt.CheckState.Checked:
                     self.dataFields.append(dlg.listFields.item(index).text())
                     
             self.writeProjectData()
@@ -146,7 +146,7 @@ class DrillManager:
 
     def onDownholePoints(self):
         dlg = DownholePointsDialog(self)
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
             self.pointSeparation = float(dlg.lePointSeparation.text())
@@ -164,7 +164,7 @@ class DrillManager:
     # Setup and run the Downhole Structure dialog
     def onDownholeStructure(self):
         dlg = DownholeStructureDialog(self)
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.desurveyLayer = dlg.lbDesurveyLayer.currentLayer()
             self.structureLayer = dlg.lbDataLayer.currentLayer()
@@ -176,7 +176,7 @@ class DrillManager:
             # Save the name of each checked attribute field in a list
             self.structureFields = []
             for index in range(dlg.listFields.count()):
-                if dlg.listFields.item(index).checkState():
+                if dlg.listFields.item(index).checkState() == QtCore.Qt.CheckState.Checked:
                     self.structureFields.append(dlg.listFields.item(index).text())
                     
             self.writeProjectData()
@@ -257,7 +257,7 @@ class DrillManager:
             # Update the Progress bar
             if index%updateInt == 0:
                 pd.setValue(index)
-                qApp.processEvents()
+                QApplication.instance().processEvents()
             
             # Variable to hold a feature
             feature = QgsFeature()
@@ -398,9 +398,10 @@ class DrillManager:
         options.includeZ = True
         # options.overrideGeometryType = memLayer.wkbType()
         options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.fileEncoding = "CP1250"
+        options.destCRS = self.desurveyLayer.crs()
 
-        # error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -426,11 +427,11 @@ class DrillManager:
         layer.setCrs(self.desurveyLayer.crs())
         atts = []
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("CollarID",  QVariant.String, "string", 16))
-        atts.append(QgsField("Depth",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("x",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("y",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("CollarID", QMetaType.Type.QString, "string", 16))
+        atts.append(QgsField("Depth",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("x",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("y",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("z",  QMetaType.Type.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
@@ -449,7 +450,7 @@ class DrillManager:
             # Update the Progress bar
             if index%updateInt == 0:
                 pd.setValue(index)
-                qApp.processEvents()
+                QApplication.instance().processEvents()
 
             # Is the feature valid?
             if f.isValid():
@@ -550,9 +551,10 @@ class DrillManager:
         options.includeZ = True
         # options.overrideGeometryType = memLayer.wkbType()
         options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.fileEncoding = "CP1250"
+        options.destCRS = self.desurveyLayer.crs()
 
-        # error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -612,7 +614,7 @@ class DrillManager:
             # Update the Progress bar
             if index%updateInt == 0:
                 pd.setValue(index)
-                qApp.processEvents()
+                QApplication.instance().processEvents()
             
             # Variable to hold a feature
             feature = QgsFeature()
@@ -820,11 +822,12 @@ class DrillManager:
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.driverName = "GPKG"
         options.includeZ = True
+        options.fileEncoding = "CP1250"
         # options.overrideGeometryType = memLayer.wkbType()
         options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.destCRS = self.desurveyLayer.crs()
 
-        # error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer, fileName, "CP1250", self.desurveyLayer.crs(), layerOptions=['OVERWRITE=YES'])
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
             
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
@@ -986,7 +989,7 @@ class DrillManager:
             pd.setValue(index)
             # Force update the progress bar visualisation every 1% as it normally only happens in idle time
             if index%updateInt == 0:
-                qApp.processEvents()
+                QApplication.instance().processEvents()
 
             # Check the id exists                
             if not collar.id:
@@ -1163,16 +1166,12 @@ class DrillManager:
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.driverName = "GPKG"
         options.includeZ = True
+        options.fileEncoding = "CP1250"
         options.overrideGeometryType = memLayer.wkbType()
         options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.destCRS = self.desurveyLayer.crs()
 
-        # error = QgsVectorFileWriter.writeAsVectorFormatV3(memLayer, path, QgsProject.instance().transformContext(), options)
-        # iface.messageBar().pushMessage("Debug", "Error code %d File: %s"%(error[0], path), level=Qgis.Warning)
-        # error = QgsVectorFileWriter.writeAsVectorFormatV2(memLayer, fileBaseName, "CP1250", crs, 
-        #         layerOptions=['OVERWRITE=YES'], overrideGeometryType=memLayer.wkbType())
-
-        error = QgsVectorFileWriter.writeAsVectorFormat(memLayer, fileBaseName, "CP1250", crs, 
-                layerOptions=['OVERWRITE=YES'], overrideGeometryType=memLayer.wkbType())
+        error = QgsVectorFileWriter.writeAsVectorFormatV3(memLayer, fileBaseName, QgsProject.instance().transformContext(), options)
 
         # Load the layer we just saved so the user can manipulate a real layer
         fileLayer = QgsVectorLayer(path, label)
@@ -1221,8 +1220,8 @@ class DrillManager:
         layer.setCrs(crs)
         dp = layer.dataProvider()
         dp.addAttributes([
-            QgsField("CollarID",  QVariant.String, "string", 16),
-            QgsField("SegLength",  QVariant.Double, "double", 5, 2)
+            QgsField("CollarID", QMetaType.Type.QString, "string", 16),
+            QgsField("SegLength",  QMetaType.Type.Double, "double", 5, 2)
             ])
         layer.updateFields() # tell the vector layer to fetch changes from the provider
         self.desurveyLayer = layer
@@ -1237,15 +1236,15 @@ class DrillManager:
             if field.name() in self.dataFields:
                 atts.append(field)
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("_From_x",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_From_y",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_From_z",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_To_x",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_To_y",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_To_z",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Mid_x",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Mid_y",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Mid_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_From_x",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_From_y",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_From_z",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_To_x",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_To_y",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_To_z",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_x",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_y",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Mid_z",  QMetaType.Type.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
@@ -1266,9 +1265,9 @@ class DrillManager:
             if field.name() in self.dataFields:
                 atts.append(field)
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("_Depth_x",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_y",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_z",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_x",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_y",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_z",  QMetaType.Type.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
@@ -1289,12 +1288,12 @@ class DrillManager:
             if field.name() in self.structureFields:
                 atts.append(field)
         # Also add fields for the desurveyed coordinates
-        atts.append(QgsField("_Depth_x",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_y",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Depth_z",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_DipDir",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Dip",  QVariant.Double, "double", 12, 3))
-        atts.append(QgsField("_Section_Dip",  QVariant.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_x",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_y",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Depth_z",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_DipDir",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Dip",  QMetaType.Type.Double, "double", 12, 3))
+        atts.append(QgsField("_Section_Dip",  QMetaType.Type.Double, "double", 12, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()
