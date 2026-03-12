@@ -47,7 +47,7 @@
       <item>
        <widget class="QLabel" name="label_8">
         <property name="inputMethodHints">
-         <set>Qt::ImhMultiLine</set>
+         <set>Qt::InputMethodHint::ImhMultiLine</set>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Works for:&lt;br/&gt;1) Orientation line on the bottom of the core&lt;br/&gt;2) Beta measured clockwise looking down the hole to the long ellipse down the hole&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -146,7 +146,7 @@
         <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -174,10 +174,10 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>
