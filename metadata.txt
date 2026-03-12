@@ -1,6 +1,6 @@
 [general]
 name=Geoscience
-qgisMinimumVersion=3.2
+qgisMinimumVersion=4.0
 qgisMaximumVersion=4.99
 description=Tools for Geoscience & Exploration
 version=1.20
