@@ -8,7 +8,7 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
-from PyQt5 import QtWidgets
+from qgis.PyQt import QtWidgets
 
 import os.path
 import math

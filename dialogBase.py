@@ -4,7 +4,7 @@ Created on Thu Jul 05 07:55:31 2018
 
 @author: HillR
 """
-from PyQt5 import QtCore
+from qgis.PyQt import QtCore
 from qgis.gui import QgsFieldComboBox
 
 # Dialog functions shared by mutliple dialogs, s oput them in a base class

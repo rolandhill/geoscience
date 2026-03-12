@@ -5,8 +5,8 @@ Created on Thu May 10 17:13:18 2018
 @author: Roland Hill
 """
 
-from PyQt5 import QtCore, uic
-from PyQt5 import QtWidgets
+from qgis.PyQt import QtCore, uic
+from qgis.PyQt import QtWidgets
 
 from qgis.core import *
 from qgis.utils import *

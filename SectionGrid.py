@@ -9,7 +9,7 @@ from PyQt5.QtCore import QVariant
 from qgis.gui import QgsMapToolEmitPoint, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes, QgsProject
 
-from PyQt5 import QtCore, Qt, QtGui
+from qgis.PyQt import QtCore, Qt, QtGui
 
 from .Utils import *
 from .SectionManager import *

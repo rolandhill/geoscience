@@ -5,8 +5,8 @@ Created on Wed May  8 17:45:45 2019
 @author: HillR
 """
 
-from PyQt5 import QtCore, uic
-from PyQt5 import QtWidgets
+from qgis.PyQt import QtCore, uic
+from qgis.PyQt import QtWidgets
 
 from .Utils import *
 from .dialogBase import dialogBase

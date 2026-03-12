@@ -8,7 +8,7 @@ from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes
 from qgis.utils import iface
 
-from PyQt5 import QtCore, Qt
+from qgis.PyQt import QtCore, Qt
 
 import numpy as np
 
