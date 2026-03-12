@@ -2,7 +2,7 @@ import os
 
 from qgis.PyQt import QtCore, uic
 from qgis.PyQt import QtWidgets
-from PyQt5.QtGui import QDoubleValidator
+from qgis.PyQt.QtGui import QDoubleValidator
 #from qgis.PyQt import QtGui
 
 from qgis.core import *

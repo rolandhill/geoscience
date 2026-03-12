@@ -11,9 +11,9 @@
         email                : roland.hill@mmg.com
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QUrl
-from PyQt5.QtGui import QIcon, QDesktopServices
-from PyQt5.QtWidgets import QAction, QMenu, QDialog
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QUrl
+from qgis.PyQt.QtGui import QIcon, QDesktopServices
+from qgis.PyQt.QtWidgets import QAction, QMenu, QDialog
 
 from qgis.core import *
 from qgis.utils import *

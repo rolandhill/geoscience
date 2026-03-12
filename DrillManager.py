@@ -9,9 +9,9 @@
         email                : roland.hill@mmg.com
  ***************************************************************************/
 """
-from PyQt5.QtCore import QMetaType, QSettings, QTranslator, qVersion, QCoreApplication, QVariant
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, qApp
+from qgis.PyQt.QtCore import QMetaType, QSettings, QTranslator, qVersion, QCoreApplication, QVariant
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, qApp
 
 from qgis.core import *
 from qgis.utils import *

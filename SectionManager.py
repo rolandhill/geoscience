@@ -5,7 +5,7 @@ Created on Thu Mar 28 17:41:08 2019
 @author: HillR
 """
 
-from PyQt5.QtWidgets import QProgressDialog, qApp
+from qgis.PyQt.QtWidgets import QProgressDialog, qApp
 
 from qgis.core import *
 from qgis.utils import *
