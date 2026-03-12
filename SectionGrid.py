@@ -9,7 +9,7 @@ from qgis.PyQt.QtCore import QMetaType, QVariant
 from qgis.gui import QgsMapToolEmitPoint, QgsMessageBar
 from qgis.core import Qgis, QgsWkbTypes, QgsProject
 
-from qgis.PyQt import QtCore, Qt, QtGui
+from qgis.PyQt import QtCore, QtGui
 
 from .Utils import *
 from .SectionManager import *
@@ -238,7 +238,7 @@ class SectionGrid:
         layer.setCrs(crs)
         atts = []
         # Loop through the list of desired field names that the user checked
-        atts.append(QgsField("Label",  QMetaType.QDouble, "double", 9, 3))
+        atts.append(QgsField("Label",  QMetaType.Type.Double, "double", 9, 3))
         
         # Add all the attributes to the new layer
         dp = layer.dataProvider()

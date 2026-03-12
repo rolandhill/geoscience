@@ -70,8 +70,8 @@ class DownholeStructureDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             for field in layer.fields():
                 item = QtWidgets.QListWidgetItem()
                 item.setText(field.name())
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                item.setCheckState(QtCore.Qt.Checked)
+                item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(QtCore.Qt.CheckState.Checked)
                 self.listFields.addItem(item)
         else:
             self.fbDataId.setCurrentIndex(-1)

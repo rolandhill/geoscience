@@ -210,8 +210,8 @@ def uriToFile(url):
 def addLayerToListWidget(layer, listWidget):
     item = QtWidgets.QListWidgetItem()
     item.setText(layer.name())
-    item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-    item.setCheckState(QtCore.Qt.Checked)
+    item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+    item.setCheckState(QtCore.Qt.CheckState.Checked)
     item.setData(QtCore.Qt.UserRole, layer)
     listWidget.addItem(item)
         

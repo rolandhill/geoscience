@@ -230,7 +230,7 @@ class Geoscience:
         Create a local Coordinate Reference System (CRS).
         """
         dlg = LocalGridDialog(self)
-        dlg.exec_()
+        dlg.exec()
         dlg.close()
 
     def readProjectData(self):

@@ -55,7 +55,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
             for s in self.sectionManager.sectionReg:
                 item = QtWidgets.QListWidgetItem()
                 item.setText(s.name)
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(QtCore.Qt.Unchecked)
                 item.setData(QtCore.Qt.UserRole, s)
                 self.listSection.addItem(item)
@@ -69,7 +69,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def onWestEastPressed(self):
         self.drillManager.sectionWidth = float(self.leSectionWidth.text())
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=True)
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.drillManager.sectionNorth = float(dlg.leCenter.text())
             self.drillManager.sectionLimitWest = float(dlg.leLimitMin.text())
@@ -96,7 +96,7 @@ class SectionManagerDialog(QtWidgets.QDialog, dialogBase, FORM_CLASS):
     def onSouthNorthPressed(self):
         self.drillManager.sectionWidth = float(self.leSectionWidth.text())
         dlg = SectionOrthogonalDialog(self.drillManager, dirWestEast=False)
-        result = dlg.exec_()
+        result = dlg.exec()
         if result:
             self.drillManager.sectionEast = float(dlg.leCenter.text())
             self.drillManager.sectionLimitSouth = float(dlg.leLimitMin.text())
