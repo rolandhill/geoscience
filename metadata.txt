@@ -11,8 +11,6 @@ about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole 
 
 tracker=https://github.com/rolandhill/geoscience/issues
 repository=https://github.com/rolandhill/geoscience
-# homepage= https://www.spatialintegration.com
-# icon=icon/Geoscience.png
 
 # End of mandatory metadata
 
