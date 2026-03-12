@@ -1,21 +1,27 @@
 [general]
 name=Geoscience
 qgisMinimumVersion=3.2
+qgisMaximumVersion=4.99
 description=Tools for Geoscience & Exploration
-version=1.17
+version=1.20
 author=Roland Hill
-email=roleyhill@gmail.com
+email=rhill@fourwindstechnology.com
 
 about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Drill hole sections</li><li>Convert alpha/beta structure data</li><li>Vector tools</li><li>Raster tools</li><li>Local grids</li></ul> Send ideas & requests to roleyhill@gmail.com
 
 tracker=https://github.com/rolandhill/geoscience/issues
 repository=https://github.com/rolandhill/geoscience
+homepage= https://www.spatialintegration.com
+icon=icon/Geosceince.png
+
 # End of mandatory metadata
 
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=1.17
+changelog=1.20
+    - Converted for QGIS 4
+  1.17
     - Roll back updating deprecated QgsField constructor to use QMetaType because it requires QGIS 3.38, which is higher than many users current version.
   1.16
     - Update QgsField to use QMetaType
