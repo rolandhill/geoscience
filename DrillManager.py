@@ -390,22 +390,35 @@ class DrillManager:
 
         # Remove trace layer from project if it already exists
         oldLayer = getLayerByName(label)
-        QgsProject.instance().removeMapLayer(oldLayer)
+        if oldLayer:
+            QgsProject.instance().removeMapLayer(oldLayer)
+            oldLayer = None
 
         #Save memory layer to Geopackage file
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.driverName = "GPKG"
         options.includeZ = True
         # options.overrideGeometryType = memLayer.wkbType()
-        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
         options.fileEncoding = "CP1250"
         options.destCRS = self.desurveyLayer.crs()
 
-        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        error_code, error_msg, path, layer_id = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
             
+        # Check the Error Code
+        if error_code != QgsVectorFileWriter.WriterError.NoError:
+            # Use the error_msg string to tell the user EXACTLY what happened
+            iface.messageBar().pushMessage("Error", f"Export Failed (Code {error_code}): {error_msg}", level=Qgis.Critical)
+            return None
+
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label)
-        QgsProject.instance().addMapLayer(layer)
+        if layer.isValid():
+            QgsProject.instance().addMapLayer(layer)
+            return layer
+        else:
+            iface.messageBar().pushMessage("Error", "Failed to load the new layer after export.", level=Qgis.Critical)
+            return None
 
     # Create the down hole data (interval) traces    
     def createDownholePoints(self):
@@ -1174,16 +1187,13 @@ class DrillManager:
         options.destCRS = self.desurveyLayer.crs()
 
         # Show debug message bar with fileBaseName and path
-        iface.messageBar().pushMessage("Debug", "FileBaseName: %s"%(fileBaseName), level=Qgis.Warning)
-        iface.messageBar().pushMessage("Debug", "Saving layer to: %s"%(path), level=Qgis.Warning)
         error_code, error_msg, path, layer_id = QgsVectorFileWriter.writeAsVectorFormatV3(memLayer, path, QgsProject.instance().transformContext(), options)
 
         # Check the Error Code
-        if error_code == QgsVectorFileWriter.WriterError.NoError:
-            iface.messageBar().pushMessage("Debug", "Layer saved successfully to: %s"%(path), level=Qgis.Info)
-        else:
+        if error_code != QgsVectorFileWriter.WriterError.NoError:
             # Use the error_msg string to tell the user EXACTLY what happened
             iface.messageBar().pushMessage("Error", f"Export Failed (Code {error_code}): {error_msg}", level=Qgis.Critical)
+            return None
     
         # Load the layer we just saved so the user can manipulate a real layer
         fileLayer = QgsVectorLayer(path, label, "ogr")
@@ -1197,12 +1207,7 @@ class DrillManager:
     def createCollarFilename(self):
         # Build the new filename
         path=self.collarLayer.dataProvider().dataSourceUri()
-        # Print the path for debugging
-        iface.messageBar().pushMessage("Debug", "Collar layer: %s" % path, level=Qgis.Warning)
         fileName = uriToFile(os.path.join(os.path.split(path)[0], self.collarLayer.name()+'_3D'))
-        # Print the filename for debugging
-        iface.messageBar().pushMessage("Debug", "Collar output filename: %s" % fileName, level=Qgis.Warning)
-        print("Collar output filename:", fileName)
         return fileName
     
     def createDesurveyFilename(self):
