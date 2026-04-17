@@ -3,7 +3,7 @@ name=Geoscience
 qgisMinimumVersion=4.0
 qgisMaximumVersion=4.99
 description=Tools for Geoscience & Exploration
-version=1.22
+version=1.23
 author=Roland Hill
 email=rhill@fourwindstechnology.com
 
@@ -17,7 +17,9 @@ repository=https://github.com/rolandhill/geoscience
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=1.22
+changelog=1.23
+    - Update functions to save downhole points and structure data to file
+  1.22
     - replace missing file in repository package
   1.21
     - More robust layer handling and writing vector layers from memory when desurveying holes etc.
