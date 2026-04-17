@@ -563,15 +563,27 @@ class DrillManager:
         options.driverName = "GPKG"
         options.includeZ = True
         # options.overrideGeometryType = memLayer.wkbType()
-        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
         options.fileEncoding = "CP1250"
         options.destCRS = self.desurveyLayer.crs()
 
-        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        error_code, error_msg, path, layer_id = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
             
+        # Check the Error Code
+        if error_code != QgsVectorFileWriter.WriterError.NoError:
+            # Use the error_msg string to tell the user EXACTLY what happened
+            iface.messageBar().pushMessage("Error", f"Export Failed (Code {error_code}): {error_msg}", level=Qgis.Critical)
+            return None
+
         # Load the one we just saved and add it to the map
-        layer = QgsVectorLayer(fileName+".gpkg", label)
-        QgsProject.instance().addMapLayer(layer)
+        layer = QgsVectorLayer(fileName+".gpkg", label, "ogr")
+        if layer.isValid():
+            QgsProject.instance().addMapLayer(layer)
+            return layer
+        else:
+            iface.messageBar().pushMessage("Error", f"Failed to load the layer we just saved: {path}", level=Qgis.Critical)
+            return None
+
 
     # Create the down hole data (interval) traces    
     def createDownholeStructure(self):
@@ -837,15 +849,20 @@ class DrillManager:
         options.includeZ = True
         options.fileEncoding = "CP1250"
         # options.overrideGeometryType = memLayer.wkbType()
-        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
         options.destCRS = self.desurveyLayer.crs()
 
-        error = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
+        error_code, error_msg, path, layer_id = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
             
         # Load the one we just saved and add it to the map
-        layer = QgsVectorLayer(fileName+".gpkg", label)
-        QgsProject.instance().addMapLayer(layer)
-        
+        layer = QgsVectorLayer(fileName+".gpkg", label, "ogr")
+        if layer.isValid():
+            QgsProject.instance().addMapLayer(layer)
+            return layer
+        else:
+            iface.messageBar().pushMessage("Error", f"Failed to load the layer we just saved: {path}", level=Qgis.Critical)
+            return None
+       
     def desurveyHole(self):
         # Write to the log file
         # self.logFile.write("\nDesurveying data.\n")
