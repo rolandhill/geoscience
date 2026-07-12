@@ -854,6 +854,12 @@ class DrillManager:
 
         error_code, error_msg, path, layer_id = QgsVectorFileWriter.writeAsVectorFormatV3(layer, fileName, QgsProject.instance().transformContext(), options)
             
+        # Check the Error Code
+        if error_code != QgsVectorFileWriter.WriterError.NoError:
+            # Use the error_msg string to tell the user EXACTLY what happened
+            iface.messageBar().pushMessage("Error", f"Export Failed (Code {error_code}): {error_msg}", level=Qgis.Critical)
+            return None
+
         # Load the one we just saved and add it to the map
         layer = QgsVectorLayer(fileName+".gpkg", label, "ogr")
         if layer.isValid():
@@ -1176,7 +1182,12 @@ class DrillManager:
             self.desurveyLayer.addFeature(feature)
             self.desurveyLayer.commitChanges()
 
-        self.desurveyLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.crs())
+        desurveyFileLayer = self.writeVectorLayerFromMemory(self.desurveyLayer, self.createDesurveyFilename(), self.collarLayer.crs())
+        if desurveyFileLayer is None:
+            # The save failed and writeVectorLayerFromMemory has already reported the error,
+            # so keep the memory layer rather than clobbering self.desurveyLayer with None.
+            return
+        self.desurveyLayer = desurveyFileLayer
         self.writeVectorLayerFromMemory(collar3D, self.createCollarFilename(), self.collarLayer.crs())
 #        QgsProject.instance().addMapLayer(collar3D)
 
@@ -1201,7 +1212,7 @@ class DrillManager:
         options.fileEncoding = "CP1250"
         options.overrideGeometryType = memLayer.wkbType()
         options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
-        options.destCRS = self.desurveyLayer.crs()
+        options.destCRS = crs
 
         # Show debug message bar with fileBaseName and path
         error_code, error_msg, path, layer_id = QgsVectorFileWriter.writeAsVectorFormatV3(memLayer, path, QgsProject.instance().transformContext(), options)
