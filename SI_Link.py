@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- Geoscience - TileServer
+ Geoscience - SI_Link
                                  A QGIS plugin
  Serves the live QGIS project as XYZ tiles over HTTP on localhost, so that an
  external application can display it as an ordinary XYZ tile source:
@@ -69,7 +69,7 @@ def log(message, level=Qgis.MessageLevel.Info):
     QgsMessageLog.logMessage(message, "Geoscience", level)
 
 
-class TileServer(QObject):
+class SI_Link(QObject):
     """Serves the live project as XYZ tiles on 127.0.0.1."""
 
     def __init__(self, layersProvider, parent=None):
@@ -124,7 +124,7 @@ class TileServer(QObject):
         server.newConnection.connect(self._onNewConnection)
         self._server = server
         self._port = server.serverPort()
-        log("Tile server listening on {}".format(self.urlTemplate()))
+        log("Spatial Integration link listening on {}".format(self.urlTemplate()))
 
     def stop(self):
         """Stop listening, drop pending work and cancel in-flight renders."""
@@ -150,7 +150,7 @@ class TileServer(QObject):
             self._closeSocket(socket)
         self._buffers.clear()
         self._port = 0
-        log("Tile server stopped")
+        log("Spatial Integration link stopped")
 
     # ------------------------------------------------------------------ revision
 

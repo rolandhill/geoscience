@@ -25,7 +25,7 @@ from .resources import *
 # from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 from .DrillManager import *
 from .localgrid_dialog import LocalGridDialog
-from .TileServer import TileServer, DEFAULT_PORT
+from .SI_Link import SI_Link, DEFAULT_PORT
 
 import os
 
@@ -68,12 +68,12 @@ class Geoscience:
         self.toolbar = self.iface.addToolBar(u'Geoscience')
         self.toolbar.setObjectName(u'Geoscience')
 
-        # XYZ tile server. Created on first use so that merely loading the plugin
+        # Spatial Integration link. Created on first use so that merely loading the plugin
         # never opens a socket.
-        self.tileServer = None
+        self.silink = None
 
         # Canvas layers whose change signals are currently connected. Only populated
-        # while the tile server runs, since nothing else needs the notifications.
+        # while the Spatial Integration link runs, since nothing else needs the notifications.
         self._watchedLayers = []
 
     def tr(self, message):
@@ -154,18 +154,18 @@ class Geoscience:
         self.toolbar.addAction(action)
         self.actions.append(action)
         
-        # Create Tile Server menu.
-        self.menuTileServer = self.menu.addMenu("Tile Server")
+        # Create Spatial Integration link menu.
+        self.menuTileServer = self.menu.addMenu("Spatial Integration Link")
 
-        self.actionTileServerStart = self.menuTileServer.addAction("Start Tile Server")
+        self.actionTileServerStart = self.menuTileServer.addAction("Start Link")
         self.actionTileServerStart.triggered.connect(self.onStartTileServer)
         self.actions.append(self.actionTileServerStart)
 
-        self.actionTileServerStop = self.menuTileServer.addAction("Stop Tile Server")
+        self.actionTileServerStop = self.menuTileServer.addAction("Stop Link")
         self.actionTileServerStop.triggered.connect(self.onStopTileServer)
         self.actions.append(self.actionTileServerStop)
 
-        self.actionTileServerCopyUrl = self.menuTileServer.addAction("Copy Tile URL")
+        self.actionTileServerCopyUrl = self.menuTileServer.addAction("Copy Connection String")
         self.actionTileServerCopyUrl.triggered.connect(self.onCopyTileServerUrl)
         self.actions.append(self.actionTileServerCopyUrl)
 
@@ -193,13 +193,13 @@ class Geoscience:
 
     def isTileServerRunning(self):
         """
-        Returns True if the XYZ tile server is currently listening.
+        Returns True if the Spatial Integration link is currently listening.
         """
-        return self.tileServer is not None and self.tileServer.isRunning()
+        return self.silink is not None and self.silink.isRunning()
 
     def updateTileServerActions(self):
         """
-        Enable only the tile server actions that make sense for the current state.
+        Enable only the server actions that make sense for the current state.
         """
         running = self.isTileServerRunning()
         self.actionTileServerStart.setEnabled(not running)
@@ -210,30 +210,30 @@ class Geoscience:
         """
         Start serving the visible canvas layers as XYZ tiles on localhost.
         """
-        if self.tileServer is None:
+        if self.silink is None:
             # Serve exactly what the canvas shows: already filtered by visibility and
             # in render order, so tiles match what the user sees.
-            self.tileServer = TileServer(lambda: self.iface.mapCanvas().layers())
+            self.silink = SI_Link(lambda: self.iface.mapCanvas().layers())
 
         port = readProjectNum("TileServerPort", DEFAULT_PORT)
         try:
-            self.tileServer.start(port)
+            self.silink.start(port)
         except RuntimeError as e:
             self.iface.messageBar().pushCritical("Geoscience", str(e))
             return
 
         writeProjectData("TileServerPort", port)
         self._connectTileServerWatches()
-        self.iface.messageBar().pushSuccess("Geoscience", "Tile server running at %s" % self.tileServer.urlTemplate())
+        self.iface.messageBar().pushSuccess("Geoscience", "Spatial Integration link running at %s" % self.silink.urlTemplate())
         self.updateTileServerActions()
 
     def onStopTileServer(self):
         """
-        Stop the XYZ tile server.
+        Stop the Spatial Integration link.
         """
         self._disconnectTileServerWatches()
-        if self.tileServer is not None:
-            self.tileServer.stop()
+        if self.silink is not None:
+            self.silink.stop()
         self.updateTileServerActions()
 
     def onCopyTileServerUrl(self):
@@ -243,7 +243,7 @@ class Geoscience:
         """
         if not self.isTileServerRunning():
             return
-        url = self.tileServer.urlTemplate()
+        url = self.silink.urlTemplate()
         QApplication.clipboard().setText(url)
         self.iface.messageBar().pushInfo("Geoscience", "Copied %s" % url)
 
@@ -305,10 +305,10 @@ class Geoscience:
 
     def onTileSourceChanged(self):
         """
-        Something that affects the rendered map changed. Tell the tile server.
+        Something that affects the rendered map changed. Tell the Spatial Integration link.
         """
-        if self.tileServer is not None:
-            self.tileServer.bump()
+        if self.silink is not None:
+            self.silink.bump()
 
     def onReadProject(self):
         """
@@ -393,9 +393,9 @@ class Geoscience:
         """
         # Release the listening socket, or a reload leaves the port bound.
         self._disconnectTileServerWatches()
-        if self.tileServer is not None:
-            self.tileServer.stop()
-            self.tileServer = None
+        if self.silink is not None:
+            self.silink.stop()
+            self.silink = None
 
         # Undo the connection made in initGui(), otherwise a reload stacks a duplicate
         # connection and keeps this instance alive.
