@@ -84,6 +84,7 @@ class TileServer(QObject):
         self._layersProvider = layersProvider
         self._server = None
         self._port = 0
+        self._revision = 0
         # Shared between jobs; QgsMapRendererCache is the one documented thread-safe
         # piece here, and setCache() does not take ownership, so hold a reference.
         self._cache = QgsMapRendererCache()
@@ -150,6 +151,25 @@ class TileServer(QObject):
         self._buffers.clear()
         self._port = 0
         log("Tile server stopped")
+
+    # ------------------------------------------------------------------ revision
+
+    def revision(self):
+        """A counter the client polls to learn that the rendered map has changed.
+
+        Bumping is left to the caller, which owns the QGIS signals: this class takes its
+        layers through a callable so it can be driven headlessly, and reaching for iface
+        here would undo that.
+        """
+        return self._revision
+
+    def bump(self):
+        """Record that something affecting the rendered map has changed."""
+        self._revision += 1
+        # QgsMapRendererCache drops a layer's image on repaintRequested but not on
+        # styleChanged, so a symbology change that does not also repaint would go on
+        # serving the image rendered before it.
+        self._cache.clear()
 
     # ------------------------------------------------------------------ connections
 
@@ -380,6 +400,8 @@ class TileServer(QObject):
                 "layers": [layer.name() for layer in layers],
                 "qgis": Qgis.QGIS_VERSION,
                 "url": self.urlTemplate(),
+                # Polled by the client to decide when to re-request its tiles.
+                "revision": self._revision,
             }
         ).encode("utf-8")
         self._send(socket, 200, "application/json", body)

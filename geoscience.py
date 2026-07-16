@@ -72,6 +72,10 @@ class Geoscience:
         # never opens a socket.
         self.tileServer = None
 
+        # Canvas layers whose change signals are currently connected. Only populated
+        # while the tile server runs, since nothing else needs the notifications.
+        self._watchedLayers = []
+
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
 
@@ -219,6 +223,7 @@ class Geoscience:
             return
 
         writeProjectData("TileServerPort", port)
+        self._connectTileServerWatches()
         self.iface.messageBar().pushSuccess("Geoscience", "Tile server running at %s" % self.tileServer.urlTemplate())
         self.updateTileServerActions()
 
@@ -226,6 +231,7 @@ class Geoscience:
         """
         Stop the XYZ tile server.
         """
+        self._disconnectTileServerWatches()
         if self.tileServer is not None:
             self.tileServer.stop()
         self.updateTileServerActions()
@@ -240,6 +246,69 @@ class Geoscience:
         url = self.tileServer.urlTemplate()
         QApplication.clipboard().setText(url)
         self.iface.messageBar().pushInfo("Geoscience", "Copied %s" % url)
+
+    def _connectTileServerWatches(self):
+        """
+        Watch the canvas for anything that changes what the tiles should look like, so
+        the client can notice and re-request them.
+        """
+        self.iface.mapCanvas().layersChanged.connect(self.onCanvasLayersChanged)
+        self._rewireLayerWatches()
+
+    def _disconnectTileServerWatches(self):
+        """
+        Drop the canvas watches. Safe to call when they were never connected.
+        """
+        try:
+            self.iface.mapCanvas().layersChanged.disconnect(self.onCanvasLayersChanged)
+        except (TypeError, RuntimeError):
+            pass
+        self._clearLayerWatches()
+
+    def _clearLayerWatches(self):
+        """
+        Disconnect the per-layer watches and forget the layers.
+        """
+        for layer in self._watchedLayers:
+            try:
+                layer.repaintRequested.disconnect(self.onTileSourceChanged)
+                layer.styleChanged.disconnect(self.onTileSourceChanged)
+            except (TypeError, RuntimeError):
+                # Never connected, or the layer has been removed and its C++ object
+                # already deleted. Either way there is nothing left to disconnect.
+                pass
+        self._watchedLayers = []
+
+    def _rewireLayerWatches(self):
+        """
+        Re-attach the per-layer watches to the current canvas layers.
+
+        The layers are watched individually rather than through the canvas as a whole:
+        the canvas repaints on pan and zoom too, which changes no tile and would have
+        the client refreshing constantly for nothing.
+        """
+        self._clearLayerWatches()
+
+        for layer in self.iface.mapCanvas().layers():
+            # repaintRequested covers edits and most symbology; styleChanged catches the
+            # rest, including labeling.
+            layer.repaintRequested.connect(self.onTileSourceChanged)
+            layer.styleChanged.connect(self.onTileSourceChanged)
+            self._watchedLayers.append(layer)
+
+    def onCanvasLayersChanged(self):
+        """
+        The canvas layer set changed: a layer was added, removed or toggled.
+        """
+        self._rewireLayerWatches()
+        self.onTileSourceChanged()
+
+    def onTileSourceChanged(self):
+        """
+        Something that affects the rendered map changed. Tell the tile server.
+        """
+        if self.tileServer is not None:
+            self.tileServer.bump()
 
     def onReadProject(self):
         """
@@ -323,6 +392,7 @@ class Geoscience:
         Remove interface items when the plugin closes.
         """
         # Release the listening socket, or a reload leaves the port bound.
+        self._disconnectTileServerWatches()
         if self.tileServer is not None:
             self.tileServer.stop()
             self.tileServer = None
