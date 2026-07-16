@@ -13,7 +13,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QUrl
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
-from qgis.PyQt.QtWidgets import QAction, QMenu, QDialog
+from qgis.PyQt.QtWidgets import QAction, QMenu, QDialog, QApplication
 
 from qgis.core import *
 from qgis.utils import *
@@ -25,6 +25,7 @@ from .resources import *
 # from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 from .DrillManager import *
 from .localgrid_dialog import LocalGridDialog
+from .TileServer import TileServer, DEFAULT_PORT
 
 import os
 
@@ -66,6 +67,10 @@ class Geoscience:
         self.actions = []
         self.toolbar = self.iface.addToolBar(u'Geoscience')
         self.toolbar.setObjectName(u'Geoscience')
+
+        # XYZ tile server. Created on first use so that merely loading the plugin
+        # never opens a socket.
+        self.tileServer = None
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -145,6 +150,23 @@ class Geoscience:
         self.toolbar.addAction(action)
         self.actions.append(action)
         
+        # Create Tile Server menu.
+        self.menuTileServer = self.menu.addMenu("Tile Server")
+
+        self.actionTileServerStart = self.menuTileServer.addAction("Start Tile Server")
+        self.actionTileServerStart.triggered.connect(self.onStartTileServer)
+        self.actions.append(self.actionTileServerStart)
+
+        self.actionTileServerStop = self.menuTileServer.addAction("Stop Tile Server")
+        self.actionTileServerStop.triggered.connect(self.onStopTileServer)
+        self.actions.append(self.actionTileServerStop)
+
+        self.actionTileServerCopyUrl = self.menuTileServer.addAction("Copy Tile URL")
+        self.actionTileServerCopyUrl.triggered.connect(self.onCopyTileServerUrl)
+        self.actions.append(self.actionTileServerCopyUrl)
+
+        self.updateTileServerActions()
+
         # Other choices.
         action = self.menu.addAction(QIcon(self.plugin_dir + "/icon/LocalGrid.png"), "Create Local CRS...")
         action.triggered.connect(self.onCreateLocalCRS)
@@ -164,6 +186,60 @@ class Geoscience:
         """
         docDir = "https://www.spatialintegration.com/"
         QDesktopServices.openUrl(QUrl(docDir))
+
+    def isTileServerRunning(self):
+        """
+        Returns True if the XYZ tile server is currently listening.
+        """
+        return self.tileServer is not None and self.tileServer.isRunning()
+
+    def updateTileServerActions(self):
+        """
+        Enable only the tile server actions that make sense for the current state.
+        """
+        running = self.isTileServerRunning()
+        self.actionTileServerStart.setEnabled(not running)
+        self.actionTileServerStop.setEnabled(running)
+        self.actionTileServerCopyUrl.setEnabled(running)
+
+    def onStartTileServer(self):
+        """
+        Start serving the visible canvas layers as XYZ tiles on localhost.
+        """
+        if self.tileServer is None:
+            # Serve exactly what the canvas shows: already filtered by visibility and
+            # in render order, so tiles match what the user sees.
+            self.tileServer = TileServer(lambda: self.iface.mapCanvas().layers())
+
+        port = readProjectNum("TileServerPort", DEFAULT_PORT)
+        try:
+            self.tileServer.start(port)
+        except RuntimeError as e:
+            self.iface.messageBar().pushCritical("Geoscience", str(e))
+            return
+
+        writeProjectData("TileServerPort", port)
+        self.iface.messageBar().pushSuccess("Geoscience", "Tile server running at %s" % self.tileServer.urlTemplate())
+        self.updateTileServerActions()
+
+    def onStopTileServer(self):
+        """
+        Stop the XYZ tile server.
+        """
+        if self.tileServer is not None:
+            self.tileServer.stop()
+        self.updateTileServerActions()
+
+    def onCopyTileServerUrl(self):
+        """
+        Put the XYZ URL template on the clipboard, ready to paste into the client
+        application as a tile source.
+        """
+        if not self.isTileServerRunning():
+            return
+        url = self.tileServer.urlTemplate()
+        QApplication.clipboard().setText(url)
+        self.iface.messageBar().pushInfo("Geoscience", "Copied %s" % url)
 
     def onReadProject(self):
         """
@@ -246,6 +322,18 @@ class Geoscience:
         """
         Remove interface items when the plugin closes.
         """
+        # Release the listening socket, or a reload leaves the port bound.
+        if self.tileServer is not None:
+            self.tileServer.stop()
+            self.tileServer = None
+
+        # Undo the connection made in initGui(), otherwise a reload stacks a duplicate
+        # connection and keeps this instance alive.
+        try:
+            QgsProject.instance().readProject.disconnect(self.onReadProject)
+        except TypeError:
+            pass
+
         self.iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
         del self.menu
 
