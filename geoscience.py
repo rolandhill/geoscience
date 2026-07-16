@@ -13,7 +13,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QUrl
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
-from qgis.PyQt.QtWidgets import QAction, QMenu, QDialog, QApplication
+from qgis.PyQt.QtWidgets import QAction, QMenu, QDialog, QApplication, QInputDialog
 
 from qgis.core import *
 from qgis.utils import *
@@ -169,6 +169,12 @@ class Geoscience:
         self.actionTileServerCopyUrl.triggered.connect(self.onCopyTileServerUrl)
         self.actions.append(self.actionTileServerCopyUrl)
 
+        self.menuTileServer.addSeparator()
+
+        self.actionTileServerPort = self.menuTileServer.addAction("Set Port...")
+        self.actionTileServerPort.triggered.connect(self.onSetTileServerPort)
+        self.actions.append(self.actionTileServerPort)
+
         self.updateTileServerActions()
 
         # Other choices.
@@ -190,6 +196,12 @@ class Geoscience:
         """
         docDir = "https://www.spatialintegration.com/"
         QDesktopServices.openUrl(QUrl(docDir))
+
+    def tileServerPort(self):
+        """
+        The port the Spatial Integration link should listen on, as saved with the project.
+        """
+        return readProjectNum("TileServerPort", DEFAULT_PORT)
 
     def isTileServerRunning(self):
         """
@@ -215,7 +227,7 @@ class Geoscience:
             # in render order, so tiles match what the user sees.
             self.silink = SI_Link(lambda: self.iface.mapCanvas().layers())
 
-        port = readProjectNum("TileServerPort", DEFAULT_PORT)
+        port = self.tileServerPort()
         try:
             self.silink.start(port)
         except RuntimeError as e:
@@ -246,6 +258,28 @@ class Geoscience:
         url = self.silink.urlTemplate()
         QApplication.clipboard().setText(url)
         self.iface.messageBar().pushInfo("Geoscience", "Copied %s" % url)
+
+    def onSetTileServerPort(self):
+        """
+        Ask for the port the Spatial Integration link should listen on and save it with
+        the project. A running link is restarted so that the new port takes effect now
+        rather than at the next start.
+        """
+        current = self.tileServerPort()
+        # Ports below 1024 are privileged, so they would fail to bind rather than be
+        # merely a poor choice.
+        port, ok = QInputDialog.getInt(self.iface.mainWindow(), "Spatial Integration Link",
+                                       "Listen on 127.0.0.1 port:", current, 1024, 65535)
+        if not ok or port == current:
+            return
+
+        writeProjectData("TileServerPort", port)
+
+        if self.isTileServerRunning():
+            self.onStopTileServer()
+            self.onStartTileServer()
+        else:
+            self.iface.messageBar().pushInfo("Geoscience", "Spatial Integration link port set to %d" % port)
 
     def _connectTileServerWatches(self):
         """
