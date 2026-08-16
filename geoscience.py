@@ -13,7 +13,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, QUrl
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
-from qgis.PyQt.QtWidgets import QAction, QMenu, QDialog
+from qgis.PyQt.QtWidgets import QAction, QMenu, QDialog, QApplication, QInputDialog
 
 from qgis.core import *
 from qgis.utils import *
@@ -25,6 +25,7 @@ from .resources import *
 # from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 from .DrillManager import *
 from .localgrid_dialog import LocalGridDialog
+from .SI_Link import SI_Link, DEFAULT_PORT
 
 import os
 
@@ -66,6 +67,14 @@ class Geoscience:
         self.actions = []
         self.toolbar = self.iface.addToolBar(u'Geoscience')
         self.toolbar.setObjectName(u'Geoscience')
+
+        # Spatial Integration link. Created on first use so that merely loading the plugin
+        # never opens a socket.
+        self.silink = None
+
+        # Canvas layers whose change signals are currently connected. Only populated
+        # while the Spatial Integration link runs, since nothing else needs the notifications.
+        self._watchedLayers = []
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -145,6 +154,29 @@ class Geoscience:
         self.toolbar.addAction(action)
         self.actions.append(action)
         
+        # Create Spatial Integration link menu.
+        self.menuTileServer = self.menu.addMenu("Spatial Integration Link")
+
+        self.actionTileServerStart = self.menuTileServer.addAction("Start Link")
+        self.actionTileServerStart.triggered.connect(self.onStartTileServer)
+        self.actions.append(self.actionTileServerStart)
+
+        self.actionTileServerStop = self.menuTileServer.addAction("Stop Link")
+        self.actionTileServerStop.triggered.connect(self.onStopTileServer)
+        self.actions.append(self.actionTileServerStop)
+
+        self.actionTileServerCopyUrl = self.menuTileServer.addAction("Copy Connection String")
+        self.actionTileServerCopyUrl.triggered.connect(self.onCopyTileServerUrl)
+        self.actions.append(self.actionTileServerCopyUrl)
+
+        self.menuTileServer.addSeparator()
+
+        self.actionTileServerPort = self.menuTileServer.addAction("Set Port...")
+        self.actionTileServerPort.triggered.connect(self.onSetTileServerPort)
+        self.actions.append(self.actionTileServerPort)
+
+        self.updateTileServerActions()
+
         # Other choices.
         action = self.menu.addAction(QIcon(self.plugin_dir + "/icon/LocalGrid.png"), "Create Local CRS...")
         action.triggered.connect(self.onCreateLocalCRS)
@@ -164,6 +196,153 @@ class Geoscience:
         """
         docDir = "https://www.spatialintegration.com/"
         QDesktopServices.openUrl(QUrl(docDir))
+
+    def tileServerPort(self):
+        """
+        The port the Spatial Integration link should listen on, as saved with the project.
+        """
+        return readProjectNum("TileServerPort", DEFAULT_PORT)
+
+    def isTileServerRunning(self):
+        """
+        Returns True if the Spatial Integration link is currently listening.
+        """
+        return self.silink is not None and self.silink.isRunning()
+
+    def updateTileServerActions(self):
+        """
+        Enable only the server actions that make sense for the current state.
+        """
+        running = self.isTileServerRunning()
+        self.actionTileServerStart.setEnabled(not running)
+        self.actionTileServerStop.setEnabled(running)
+        self.actionTileServerCopyUrl.setEnabled(running)
+
+    def onStartTileServer(self):
+        """
+        Start serving the visible canvas layers as XYZ tiles on localhost.
+        """
+        if self.silink is None:
+            # Serve exactly what the canvas shows: already filtered by visibility and
+            # in render order, so tiles match what the user sees.
+            self.silink = SI_Link(lambda: self.iface.mapCanvas().layers())
+
+        port = self.tileServerPort()
+        try:
+            self.silink.start(port)
+        except RuntimeError as e:
+            self.iface.messageBar().pushCritical("Geoscience", str(e))
+            return
+
+        writeProjectData("TileServerPort", port)
+        self._connectTileServerWatches()
+        self.iface.messageBar().pushSuccess("Geoscience", "Spatial Integration link running at %s" % self.silink.urlTemplate())
+        self.updateTileServerActions()
+
+    def onStopTileServer(self):
+        """
+        Stop the Spatial Integration link.
+        """
+        self._disconnectTileServerWatches()
+        if self.silink is not None:
+            self.silink.stop()
+        self.updateTileServerActions()
+
+    def onCopyTileServerUrl(self):
+        """
+        Put the XYZ URL template on the clipboard, ready to paste into the client
+        application as a tile source.
+        """
+        if not self.isTileServerRunning():
+            return
+        url = self.silink.urlTemplate()
+        QApplication.clipboard().setText(url)
+        self.iface.messageBar().pushInfo("Geoscience", "Copied %s" % url)
+
+    def onSetTileServerPort(self):
+        """
+        Ask for the port the Spatial Integration link should listen on and save it with
+        the project. A running link is restarted so that the new port takes effect now
+        rather than at the next start.
+        """
+        current = self.tileServerPort()
+        # Ports below 1024 are privileged, so they would fail to bind rather than be
+        # merely a poor choice.
+        port, ok = QInputDialog.getInt(self.iface.mainWindow(), "Spatial Integration Link",
+                                       "Listen on 127.0.0.1 port:", current, 1024, 65535)
+        if not ok or port == current:
+            return
+
+        writeProjectData("TileServerPort", port)
+
+        if self.isTileServerRunning():
+            self.onStopTileServer()
+            self.onStartTileServer()
+        else:
+            self.iface.messageBar().pushInfo("Geoscience", "Spatial Integration link port set to %d" % port)
+
+    def _connectTileServerWatches(self):
+        """
+        Watch the canvas for anything that changes what the tiles should look like, so
+        the client can notice and re-request them.
+        """
+        self.iface.mapCanvas().layersChanged.connect(self.onCanvasLayersChanged)
+        self._rewireLayerWatches()
+
+    def _disconnectTileServerWatches(self):
+        """
+        Drop the canvas watches. Safe to call when they were never connected.
+        """
+        try:
+            self.iface.mapCanvas().layersChanged.disconnect(self.onCanvasLayersChanged)
+        except (TypeError, RuntimeError):
+            pass
+        self._clearLayerWatches()
+
+    def _clearLayerWatches(self):
+        """
+        Disconnect the per-layer watches and forget the layers.
+        """
+        for layer in self._watchedLayers:
+            try:
+                layer.repaintRequested.disconnect(self.onTileSourceChanged)
+                layer.styleChanged.disconnect(self.onTileSourceChanged)
+            except (TypeError, RuntimeError):
+                # Never connected, or the layer has been removed and its C++ object
+                # already deleted. Either way there is nothing left to disconnect.
+                pass
+        self._watchedLayers = []
+
+    def _rewireLayerWatches(self):
+        """
+        Re-attach the per-layer watches to the current canvas layers.
+
+        The layers are watched individually rather than through the canvas as a whole:
+        the canvas repaints on pan and zoom too, which changes no tile and would have
+        the client refreshing constantly for nothing.
+        """
+        self._clearLayerWatches()
+
+        for layer in self.iface.mapCanvas().layers():
+            # repaintRequested covers edits and most symbology; styleChanged catches the
+            # rest, including labeling.
+            layer.repaintRequested.connect(self.onTileSourceChanged)
+            layer.styleChanged.connect(self.onTileSourceChanged)
+            self._watchedLayers.append(layer)
+
+    def onCanvasLayersChanged(self):
+        """
+        The canvas layer set changed: a layer was added, removed or toggled.
+        """
+        self._rewireLayerWatches()
+        self.onTileSourceChanged()
+
+    def onTileSourceChanged(self):
+        """
+        Something that affects the rendered map changed. Tell the Spatial Integration link.
+        """
+        if self.silink is not None:
+            self.silink.bump()
 
     def onReadProject(self):
         """
@@ -246,6 +425,19 @@ class Geoscience:
         """
         Remove interface items when the plugin closes.
         """
+        # Release the listening socket, or a reload leaves the port bound.
+        self._disconnectTileServerWatches()
+        if self.silink is not None:
+            self.silink.stop()
+            self.silink = None
+
+        # Undo the connection made in initGui(), otherwise a reload stacks a duplicate
+        # connection and keeps this instance alive.
+        try:
+            QgsProject.instance().readProject.disconnect(self.onReadProject)
+        except TypeError:
+            pass
+
         self.iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
         del self.menu
 
