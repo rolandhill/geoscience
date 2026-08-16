@@ -8,6 +8,7 @@ Created on Thu Mar 28 17:41:08 2019
 from qgis.PyQt.QtWidgets import QProgressDialog, QApplication
 
 from qgis.core import *
+from qgis.core import Qgis, QgsMessageLog
 from qgis.utils import *
 from qgis.gui import *
 import numpy as np
@@ -629,9 +630,9 @@ class SectionManager:
             if section.group != None:
                 section.group.removeAllChildren()
                 self.sectionGroup().removeChildNode(section.group)
-        except:
+        except (RuntimeError, AttributeError):
             # The user probably already removed the section group
-            pass
+            QgsMessageLog.logMessage("Section group already removed: %s" % (section.name), "Geoscience", Qgis.Info)
         
         self.removeSection(section)
         self.drillManager.writeProjectData()

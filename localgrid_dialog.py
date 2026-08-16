@@ -173,7 +173,8 @@ class LocalGridDialog(QtWidgets.QDialog, FORM_CLASS):
                 try:
                     # float() is reported to have issues with long strings so use Decimal
                     val = float(Decimal(strval))
-                except:
+                except (ArithmeticError, ValueError, TypeError):
+                    # Not a valid number: leave val as None
                     pass
         return val
             

@@ -14,6 +14,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDialog, QProgressBar, QProgressDialog, QApplication
 
 from qgis.core import *
+from qgis.core import Qgis, QgsMessageLog
 from qgis.utils import *
 from qgis.gui import *
 import numpy as np
@@ -311,15 +312,15 @@ class DrillManager:
             # Calculate indices spanning the from and to depths, then linearly interpolate a position
             try:
                 pFrom, iFrom = interpPolyline(dataFrom, currentTraceSegLength, currentTracePolyline)
-            except:
-                # self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataFrom, index))
+            except (IndexError, ValueError, TypeError, ZeroDivisionError):
+                QgsMessageLog.logMessage("Error interpolating from polyline for hole: %s From: %f in row: %d. Skipped." % (dataId, dataFrom, index), "Geoscience", Qgis.Warning)
                 continue
-            
+
             if (idxTo > -1):
                 try:
                     pTo, iTo = interpPolyline(dataTo, currentTraceSegLength, currentTracePolyline)
-                except:
-                    # self.logFile.write("Error interpolating from polyline for hole: %s To: %f in row: %d.\n" % (dataId, dataTo, index))
+                except (IndexError, ValueError, TypeError, ZeroDivisionError):
+                    QgsMessageLog.logMessage("Error interpolating from polyline for hole: %s To: %f in row: %d. Skipped." % (dataId, dataTo, index), "Geoscience", Qgis.Warning)
                     continue
 
             
@@ -700,16 +701,16 @@ class DrillManager:
             # Calculate indices spanning the from and to depths, then linearly interpolate a position
             try:
                 pDepth, iDepth = interpPolyline(dataDepth, currentTraceSegLength, currentTracePolyline)
-            except:
-                # self.logFile.write("Error interpolating from polyline for hole: %s From: %f in row: %d.\n" % (dataId, dataDepth, index))
+            except (IndexError, ValueError, TypeError, ZeroDivisionError):
+                QgsMessageLog.logMessage("Error interpolating from polyline for hole: %s Depth: %f in row: %d. Skipped." % (dataId, dataDepth, index), "Geoscience", Qgis.Warning)
                 continue
 
             # Get the desurveyed core axis vector
             vCore = np.array([0.0, 0.0, 1.0])
             try:
                 vCore = coreVector(dataDepth, currentTraceSegLength, currentTracePolyline)
-            except:
-                # self.logFile.write("Error getting up vector: %s To: %f in row: %d.\n" % (dataId, dataDepth, index))
+            except (IndexError, ValueError, TypeError, ZeroDivisionError):
+                QgsMessageLog.logMessage("Error getting core vector for hole: %s Depth: %f in row: %d. Skipped." % (dataId, dataDepth, index), "Geoscience", Qgis.Warning)
                 continue
 
             # We can't work with vertical drill holes
