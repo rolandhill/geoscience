@@ -19,7 +19,7 @@ import json
 import re
 from urllib.parse import parse_qs
 
-from qgis.PyQt.QtCore import QBuffer, QByteArray, QIODevice, QObject, QSize, Qt
+from qgis.PyQt.QtCore import QBuffer, QByteArray, QIODevice, QObject, QSize, Qt, QTimer
 from qgis.PyQt.QtGui import QColor, QImage
 from qgis.PyQt.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer
 
@@ -43,6 +43,12 @@ MAX_ZOOM = 24
 # concurrent jobs contend rather than help. Clients routinely open ~6 connections, so
 # queue them and keep only a couple of renders in flight.
 MAX_IN_FLIGHT = 2
+
+# A render that runs longer than this is abandoned, so a layer that is stuck (a broken or
+# unreachable data source, a pathological renderer) cannot hold an in-flight slot forever
+# and take the whole server down with it. Generous, so a legitimately heavy tile still
+# completes. The abandoned tile returns 503; the rest of the live map keeps working.
+RENDER_TIMEOUT_MS = 15000
 
 # Rendered (not clipped) margin around each tile, so symbols straddling a tile edge are
 # not cut in half. QgsMapSettings.setExtentBuffer() takes map units, so this is scaled
@@ -91,6 +97,7 @@ class SI_Link(QObject):
         self._buffers = {}   # socket -> bytearray of the request bytes so far
         self._queue = []     # (socket, z, x, y, layerNames) awaiting a free render slot
         self._jobs = {}      # in-flight QgsMapRendererParallelJob -> socket
+        self._timers = {}    # in-flight job -> its watchdog QTimer
         self._draining = False
 
     # ------------------------------------------------------------------ lifecycle
@@ -139,12 +146,17 @@ class SI_Link(QObject):
         # finished() has already been emitted by the time it returns, so leaving the
         # slot connected would call back into a server we are tearing down.
         for job in list(self._jobs):
+            self._clearTimer(job)
             try:
                 job.finished.disconnect()
             except (TypeError, RuntimeError):
                 pass
             job.cancel()
         self._jobs.clear()
+
+        # Any timers not paired with a live job (belt and braces).
+        for job in list(self._timers):
+            self._clearTimer(job)
 
         for socket in list(self._buffers):
             self._closeSocket(socket)
@@ -300,7 +312,23 @@ class SI_Link(QObject):
         # Connect before start(): if the settings are invalid, QgsMapRendererJob::start()
         # emits finished() synchronously rather than after a round of the event loop.
         job.finished.connect(lambda j=job: self._onJobFinished(j))
+
+        # Watchdog: reclaim the slot if this render overruns. It fires on the GUI thread's
+        # event loop, which keeps running while the render worker threads are busy, so it
+        # still triggers even when a render is stuck.
+        timer = QTimer(self)
+        timer.setSingleShot(True)
+        timer.timeout.connect(lambda j=job: self._onJobTimeout(j))
+        self._timers[job] = timer
+        timer.start(RENDER_TIMEOUT_MS)
+
         job.start()
+
+    def _clearTimer(self, job):
+        timer = self._timers.pop(job, None)
+        if timer is not None:
+            timer.stop()
+            timer.deleteLater()
 
     def _mapSettings(self, z, x, y, names):
         matrix = QgsTileMatrix.fromWebMercator(z)
@@ -340,6 +368,15 @@ class SI_Link(QObject):
         return layers
 
     def _onJobFinished(self, job):
+        self._clearTimer(job)
+
+        # The watchdog may have already abandoned this job and freed its slot (the render
+        # ran long, then finished after all). If so, just dispose of it: the socket was
+        # answered and the slot drained when it timed out.
+        if job not in self._jobs:
+            job.deleteLater()
+            return
+
         socket = self._jobs.pop(job, None)
         try:
             if not self._isLive(socket):
@@ -352,6 +389,38 @@ class SI_Link(QObject):
         finally:
             job.deleteLater()
             self._drain()
+
+    def _onJobTimeout(self, job):
+        self._clearTimer(job)
+
+        socket = self._jobs.pop(job, None)
+        if socket is None:
+            # Finished in the instant between the timer firing and this running.
+            return
+
+        log(
+            "Tile render exceeded {} s and was abandoned - a layer is rendering very "
+            "slowly or is stuck. The live map stays responsive; other tiles continue."
+            .format(RENDER_TIMEOUT_MS // 1000),
+            Qgis.MessageLevel.Warning,
+        )
+        self._sendError(socket, 503)
+
+        # Free the slot now rather than waiting for a render that may never finish.
+        # cancelWithoutBlocking(), never cancel(): cancel() blocks the GUI thread until the
+        # worker stops, which for a genuinely stuck render is forever. finished() still
+        # arrives afterwards, and _onJobFinished() then disposes of the job.
+        try:
+            job.cancelWithoutBlocking()
+        except AttributeError:
+            # Older QGIS without a non-blocking cancel: drop our handle and let it run out.
+            try:
+                job.finished.disconnect()
+            except (TypeError, RuntimeError):
+                pass
+            job.deleteLater()
+
+        self._drain()
 
     def _encodePng(self, image):
         if image is None or image.isNull():
