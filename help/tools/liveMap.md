@@ -13,11 +13,11 @@ The **QGIS Live Map** shows your current QGIS map draped over a surface in [Spat
 ![Start Link in QGIS](help://tools/image/Geoscience_Link.png) &nbsp; &nbsp; &nbsp; &nbsp;
 ![QGIS Live Map button in the Spatial Integration Surface dialog](help://tools/image/dlgImage.png)
 
-The map appears on the surface within a few seconds. It is drawn with the layers visible on the QGIS map canvas, in the same order, so turn on in QGIS exactly what you want to see in 3D. The QGIS map CRS does not matter: the map is served in Web Mercator and Spatial Integration reprojects it to your project.
+The map appears on the surface within a few seconds. It is drawn with the layers visible on the QGIS map canvas, in the same order, so turn on exactly what you want to see in 3D. The CRS of the QGIS map doesn't matter: the map is served in Web Mercator and Spatial Integration reprojects it to suit your project.
 
 ## Keeping in Step with QGIS
 
-In Spatial Integration, open the **Configure** dialog, choose the **Streaming** tab and select **QGIS Live Map** in the list of servers. Tick **Refresh automatically when the QGIS map changes**. Turning layers on and off, editing or restyling in QGIS then updates the surface within a second or so, without a manual refresh.
+In Spatial Integration, open the **Configure** dialog, choose the **Streaming** tab and select **QGIS Live Map** in the list of servers. Tick **Refresh automatically when the QGIS map changes**. The surface then updates within a second or so whenever you turn layers on or off, edit or restyle in QGIS, with no need to refresh it yourself.
 
 ## Changing the Port
 

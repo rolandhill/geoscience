@@ -1,14 +1,14 @@
 # Desurveying Drill Holes
 
-Drill holes are not straight! You would be surprised at just how much a drill hole can bend. If we want to know where our downhole samples are taken from in 3D space, we need to map the curvature of the hole. To do this, we measure the dip and azimuth of the drill hole at a number of depths down the hole, then "desurvey" the hole to track its path through the ground.
+Drill holes are not straight! You would be surprised at just how much a drill hole can bend. To know where our downhole samples come from in 3D space, we need to map the curve of the hole. We measure the dip and azimuth of the hole at a number of depths, then "desurvey" the hole to track its path through the ground.
 
-We build up the drill hole path with a series of straight line segments. Each segment has a length and a direction. We start at the collar coordinate and calculate the 3D position of the first line segment. The second line segment starts at the end of the first, then we calculate the end of the second segment using an updated direction. This is all very simple, but the tricky bit is calculating the rotation of each line segment.
+We build the drill hole path from a series of straight line segments, each with a length and a direction. The first segment starts at the collar. The second starts at the end of the first and heads off in an updated direction, and so on down the hole. That part is simple. The tricky bit is working out the direction of each segment.
 
 ![Desurveyed drill holes](help://drill/image/Desurvey-1.png)
 
 ## Survey Data
 
-We know the hole direction at one or more points, and usually one of these points is the collar. If this is the only directional information we have, Geoscience will assume the hole is straight. The collar direction can be included as dip and azimuth columns in the *collar* file, or as a line in the optional *survey* file at 0 depth. Below is an example of a CSV survey file.
+We know the hole direction at one or more depths, and usually one of these is the collar. If the collar is the only direction we have, Geoscience assumes the hole is straight. The collar direction can be given as dip and azimuth columns in the *collar* file, or as a row at 0 depth in the optional *survey* file. Below is an example of a CSV survey file.
 
 ```
 HoleID, Depth, Az, Dip
@@ -20,30 +20,30 @@ DDHXX, 0, 10, -80
 DDHXX, 50, 170, -80
 ```
 
-This is from the `testdata` directory under your Geoscience plugin installation.
+This example is in the `testdata` directory of your Geoscience plugin installation.
 
-It's also possible to put a tool down the hole and measure the dip and azimuth at different depths. This allows us to track the path of the hole more thoroughly. Data sampling rules still apply, and you need to have your survey readings close enough to adequately represent the curvature of the hole.
+A survey tool run down the hole measures the dip and azimuth at many depths, which tracks the path of the hole more closely. The usual sampling rules apply: the readings must be close enough together to capture the curve of the hole.
 
-Survey measurements are put in the *survey* file with columns for HoleID, Depth, Dip and Azimuth. These are combined with any dip and azimuth readings in the collar file, then sorted by depth. Geoscience needs a survey defined for the top (collar) and bottom of the hole, so if you don't already have one the plugin will repeat the nearest available.
+Survey readings go in the *survey* file, with columns for HoleID, Depth, Dip and Azimuth. Geoscience combines them with any dip and azimuth in the collar file and sorts them by depth. It needs a reading at both the top (collar) and the bottom of the hole, so if either is missing it copies the nearest reading.
 
 > [!NOTE]
 > If there are no surveys for a hole, it is assumed to be vertical.
 
 ## Interpolating the Rotation
 
-We can define the dip and azimuth of drill hole segments at known survey points as a rotation from a horizontal line pointing north (ie 0 azimuth and 0 dip). This rotation is represented as a [quaternion](https://en.wikipedia.org/wiki/Quaternion).
+The dip and azimuth at each survey point can be described as a rotation away from a horizontal line pointing north (i.e. 0 azimuth and 0 dip). Geoscience stores this rotation as a [quaternion](https://en.wikipedia.org/wiki/Quaternion).
 
-So, we now have a quaternion to describe the rotation (dip and azimuth) for each drill hole segment at a known downhole survey point, including the top and bottom of the hole. We still need to know the rotation for all the segments in between. We could maintain the same rotation until we hit a new known point, but that doesn't seem very realistic. Holes don't go straight and then kink. It's much more likely that the rotation changes smoothly from one known point to the next.
+So we now have a quaternion for the rotation at each survey point, including the top and bottom of the hole. We still need the rotation of every segment in between. We could keep the same rotation until we reach the next survey point, but that isn't realistic: holes don't go straight and then kink. It is much more likely that the direction changes smoothly from one survey point to the next.
 
-Quaternions have a very useful feature in that they can be linearly interpolated between two values. This is known as Spherical Linear Interpolation, or SLERP. Geoscience uses this to work out the rotation (dip and azimuth) of each drill hole segment in between the known points.
+Quaternions have a very useful property: you can interpolate smoothly between two of them, turning at a constant rate. This is called Spherical Linear Interpolation, or SLERP. Geoscience uses it to work out the rotation (dip and azimuth) of each segment between the survey points.
 
 > [!IMPORTANT]
-> It is not the position of the segments that is interpolated. It is a linear interpolation of the **rotation**.
+> It is not the position of the segments that is interpolated. It is the **rotation**.
 
-Once we know the length (set by the **Desurvey Length** parameter in the Desurvey dialog) and rotation of each line segment, it is a simple matter to calculate the offset of that segment and add it on to the end of the previous segment. All you need to supply is the collar location and the depth, dip and azimuth of your known points.
+Once we know the length (the **Desurvey length** in the Desurvey Hole dialog) and rotation of each segment, it is simple to calculate where it ends and attach it to the end of the previous one. All you need to supply is the collar location and the depth, dip and azimuth of your survey points.
 
 ## 3D Coordinates
 
-Desurveying in Geoscience is done with full 3D coordinates. The `CollarName_Desurvey.gpkg` file generated by this process contains a single row for each drill hole, and the geometry for that row is a polyline. Each node of the polyline is one of the calculated points discussed above and is a 3D coordinate. When the polyline is displayed in plan, the Z coordinate is ignored and the polyline is projected to surface.
+Geoscience desurveys in full 3D. The `CollarLayerName_Desurvey.gpkg` file it creates has one row for each drill hole, and the geometry of each row is a polyline. Each node of the polyline is one of the 3D points calculated above. When the polyline is displayed in plan, the Z coordinate is ignored and the hole is projected to the surface.
 
-When we come to process our downhole data (assays, lithology etc), Geoscience does a linear interpolation between desurveyed nodes, based on the sample depth, to calculate the sample 3D coordinates. Likewise, when it comes to cutting sections through the data, we can use the full 3D coordinates to work out what needs to be shown in the section.
+When you process downhole data (assays, lithology etc.), Geoscience calculates the 3D position of each sample by interpolating between the desurveyed nodes on either side of its depth. Sections use the same 3D coordinates to work out what to show.

@@ -1,36 +1,39 @@
 # Processing Drill Holes
 
-The Geoscience plugin includes tools to display drill holes, downhole data and [sections](help://drill/sections.md) in QGIS. This includes desurveying the holes using collar azimuth and dip and/or survey data.
+Geoscience includes tools to display drill holes, downhole data and [sections](help://drill/sections.md) in QGIS. Holes are desurveyed using the collar azimuth and dip, survey data, or both.
 
-Prior to using the drill tools you need to open the collar, survey (optional) and downhole data (optional) tables in QGIS. You can use any format supported by QGIS, including shapefiles, MapInfo Tab files or CSV files. To open CSV files, use the existing Delimited Text tool ![Delimited Text](help://drill/image/csv.png).
+Before using the drill tools, open the collar table in QGIS, plus any survey and downhole data tables you have. You can use any format supported by QGIS, including shapefiles, MapInfo Tab files or CSV files. To open CSV files, use the existing Delimited Text tool ![Delimited Text](help://drill/image/csv.png).
 
 > [!NOTE]
 > Geoscience doesn't support database layers. If your data is in a database, first export your layers as GeoPackage, Shapefile, CSV etc.
 
 > [!IMPORTANT]
-> The drill tools only work with projected coordinate systems (ie not latitude and longitude).
+> The drill tools only work with projected coordinate systems (e.g. UTM), not latitude and longitude.
 
-Geoscience will create new layers with names based on the original file names. It's suggested to give your original files short, simple names (eg. `Collar.shp`, `Assay.csv`). Once Geoscience has created a file name you shouldn't change it, because Geoscience might not be able to identify the file again.
+Geoscience names the layers it creates after your original layers, so give your files short, simple names (e.g. `Collar.shp`, `Assay.csv`). Don't rename the layers and files that Geoscience creates, or it may not be able to find them again.
 
 > [!TIP]
-> There are collar, survey and assay CSV files, plus a raster DEM, in the `testdata` directory under the plugin installation directory, in case you just want to try the drill hole functions.
+> There are collar, survey and assay CSV files, plus a raster DEM, in the `testdata` directory under the plugin installation directory, if you just want to try out the drill hole tools.
 
-The workflow to display the surface projection of drill traces follows. You will also need to do this if you want to display sections.
+The steps below display the drill traces in plan. You need to follow them before you can create sections.
 
 ## Load Data
 
 ![Delimited Text import of a collar file](help://drill/image/csv_importer.png)
 
-1. Open the **Collar** layer. If using the Delimited Text tool in QGIS, select **Point Geometry** and the appropriate columns for **Easting** and **Northing**, followed by the Coordinate Reference System. Do not put anything in the Z or M fields, because Geoscience expects this to be a 2D layer.
+1. Open the **Collar** layer. If using the Delimited Text tool in QGIS, select **Point Coordinates**, choose the **Easting** and **Northing** columns, then set the Coordinate Reference System. Leave the Z and M fields empty, because Geoscience expects a 2D layer.
 2. (Optional) Open the **Survey** layer. If using the Delimited Text tool in QGIS, select **No Geometry** to just import the data columns.
-3. (Optional) Open the **Downhole data** layers. You can use multiple layers (eg. lithology and assay). If you are using the Delimited Text tool in QGIS, select **No Geometry** to just import the data columns.
+3. (Optional) Open the **Downhole data** layers. You can use multiple layers (e.g. lithology and assay). If you are using the Delimited Text tool in QGIS, select **No Geometry** to just import the data columns.
 
 ## Desurvey Holes
 
 1. Choose **Geoscience > Drilling > Desurvey Holes...** or click the ![Desurvey](help://../icon/Desurvey.png) button on the toolbar.
-2. Select the appropriate fields. All fields are guessed by Geoscience if sensible names have been used.
-3. Choose the **Desurvey Length**. Drill holes are reconstructed using straight line segments of this length.
-4. Click **OK**. A new layer is created and loaded in QGIS, and you can now see the surface projection of the drill holes.
+2. Select the **Collar Layer** and its fields, then the **Survey Layer** and its fields if you have one. Geoscience fills in the fields for you if they have sensible names.
+3. Leave **Down dip is negative** checked if downward dips are negative (e.g. -60 for a hole dipping 60° down). Uncheck it if downward dips are positive.
+4. Enter the **Desurvey length**. Each hole is rebuilt from straight line segments of this length.
+5. Click **OK**. A new layer named `CollarLayerName_Desurvey` is created and loaded in QGIS, showing the drill traces in plan.
+
+![Desurvey Hole dialog](help://drill/image/DesurveyDlg.png)
 
 Want to know more about [desurveying drill holes](help://drill/desurvey.md)?
 
@@ -38,15 +41,14 @@ Want to know more about [desurveying drill holes](help://drill/desurvey.md)?
 
 ![Downhole Data dialog](help://drill/image/DownholeDlg-1.png)
 
-Choose **Geoscience > Drilling > Downhole Data...** or click the ![Downhole Data](help://../icon/DrillPlan.png) button on the toolbar.
-
-1. Select the desurveyed hole layer. You can have multiple sets of drill hole data loaded at once, or you might want to use a desurveyed layer in a different QGIS project.
-2. Choose the source downhole data layer and the appropriate attribute fields for **HoleID**, **From** and **To**. These are chosen automatically if sensible names are used.
-3. Check all the attribute fields that you want to include in the downhole data layer to be created. You will use these for symbology on the line segments, so be sure to include any attributes that you will need.
-4. **Provide a brief descriptive name** to be appended to the layer name. A default is provided, but this will depend on how your layers are named.
-5. The downhole data layer is created with the name `CollarLayerName_Downhole_Name`, using the name from the step above, then loaded into QGIS. It contains one polyline for each From-To interval in the source layer.
-6. Symbolise the new layer to display the attributes as you desire.
+1. Choose **Geoscience > Drilling > Downhole Data...** or click the ![Downhole Data](help://../icon/DrillPlan.png) button on the toolbar.
+2. Select the **Desurveyed Hole Layer**. You can have several sets of drill holes loaded at once, so make sure you pick the right one.
+3. Choose the downhole data **Layer** and its **HoleID**, **From/Depth** and **To** fields. Geoscience fills in the fields for you if they have sensible names.
+4. Enter a short **Filename suffix** that describes the data (e.g. `Lith`, `Assay`, `MagSusc`).
+5. Check the attribute fields to include in the new layer. You will use these to style the drill traces, so include everything you need.
+6. Click **OK**. A new layer named `CollarLayerName_Downhole_Suffix` is created and loaded into QGIS. It contains one line for each From-To interval in the data layer.
+7. Style the new layer to display the attributes the way you want.
 
 ![Downhole data displayed in plan](help://drill/image/DrillTrace.png)
 
-You are now ready to [create sections](help://drill/sections.md).
+To mark depths along the holes, see [Downhole Points](help://drill/points.md). You are now ready to [create sections](help://drill/sections.md).
