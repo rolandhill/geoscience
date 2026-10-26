@@ -21,8 +21,6 @@ import numpy as np
 
 from .quaternion import Quaternion
 
-# Initialize Qt resources from file resources.py
-from .resources import *
 from .desurveyhole_dialog import DesurveyHoleDialog
 from .downholepoints_dialog import DownholePointsDialog
 from .downholedata_dialog import DownholeDataDialog

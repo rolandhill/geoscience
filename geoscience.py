@@ -19,8 +19,6 @@ from qgis.core import *
 from qgis.utils import *
 from qgis.gui import *
 
-# Initialize Qt resources from file resources.py
-from .resources import *
 
 # from .ChangeDriveLetter_dialog import ChangeDriveLetterDialog
 from .DrillManager import *
