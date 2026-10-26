@@ -5,7 +5,7 @@
 
 **Geoscience** provides useful tools to geoscientists. This includes drill hole processing, display of downhole data in plan. Version 1.0 also brings creation and display of drill sections with downhole data and elevation layers. Other utilities help with raster and vector manipulation.
 
-See https://www.spatialintegration.com/geoscience-plugin-for-qgis/ for detailed instructions.
+See https://spatialintegration.com/help/geoscience/ for detailed instructions.
 
 ## Drill Tools 
 

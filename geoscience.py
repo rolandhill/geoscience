@@ -194,7 +194,7 @@ class Geoscience:
         """
         Open the help documentation in a web browser.
         """
-        docDir = "https://www.spatialintegration.com/"
+        docDir = "https://spatialintegration.com/help/geoscience/"
         QDesktopServices.openUrl(QUrl(docDir))
 
     def tileServerPort(self):
