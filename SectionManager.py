@@ -382,7 +382,8 @@ class Section:
                         dipdir = lf.attributes()[idxDipDir]
                         if dip is not None and dipdir is not None:
                             angle = np.radians(self.bearing - dipdir)
-                            appdip = dip * np.cos(angle)
+                            # tan(apparent dip) = tan(dip) * cos(angle). atan2 keeps a vertical dip finite
+                            appdip = np.degrees(np.arctan2(np.sin(np.radians(dip)) * np.cos(angle), np.cos(np.radians(dip))))
                             feature[idxSectionDip] = float(appdip)
             
                     # Add the new feature to the new Trace_ layer

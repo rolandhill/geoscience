@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Downhole Data</string>
+   <string>Downhole Points</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

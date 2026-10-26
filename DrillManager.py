@@ -1417,7 +1417,7 @@ class DrillManager:
         writeProjectData("PointIncEOH", self.pointIncEOH)
         writeProjectDataDouble("PointSeparation", self.pointSeparation)
         writeProjectDataDouble("DesurveyLength", self.desurveyLength)
-        writeProjectData("DownDepthNegative", self.downDipNegative)
+        writeProjectData("DownDipNegative", self.downDipNegative)
         writeProjectLayer("DesurveyLayer", self.desurveyLayer)
         writeProjectLayer("CollarLayer", self.collarLayer)
         writeProjectLayer("SurveyLayer", self.surveyLayer)
