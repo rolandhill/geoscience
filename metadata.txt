@@ -7,7 +7,7 @@ version=2.1
 author=Roland Hill
 email=rhill@fourwindstechnology.com
 
-about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Drill hole display</li><li>Drill hole sections</li><li>Convert alpha/beta structure data</li><li>Raster tools</li><li>Local grids</li><li>Live map link to Spatial Integration</li></ul> Send ideas & requests to roleyhill@gmail.com
+about=Geoscience: <b>Tools for Geoscience and Exploration</b><ul><li>Desurvey drill holes from collar and survey data</li><li>Display downhole data, depth ticks and structural measurements in plan</li><li>Create and manage drill sections with downhole data and elevation rasters</li><li>Convert oriented core alpha/beta angles to dip and dip direction, with apparent dip on sections</li><li>Create local grid coordinate systems</li><li>Stream your live QGIS map into Spatial Integration in 3D</li><li>Make white or black transparent on raster images</li></ul> Drill tools require a projected CRS. Choose Geoscience > Help for full instructions. Send ideas & requests to rhill@fourwindstechnology.com
 
 tracker=https://github.com/rolandhill/geoscience/issues
 repository=https://github.com/rolandhill/geoscience

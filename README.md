@@ -1,38 +1,53 @@
-# QGIS Geoscience Plugin
-## Now with drill sections!
+# Geoscience for QGIS
 
-*Author: Roland Hill - Please contribute and make this a better, more comprehensive geoscience tool.*
+*Author: Roland Hill*
 
-**Geoscience** provides useful tools to geoscientists. This includes drill hole processing, display of downhole data in plan. Version 1.0 also brings creation and display of drill sections with downhole data and elevation layers. Other utilities help with raster and vector manipulation.
+**Geoscience** is a free plugin that adds drill hole and other geoscience tools to QGIS. With it you can:
 
-See https://spatialintegration.com/help/geoscience/ for detailed instructions.
+- Desurvey drill holes from collar and survey data
+- Display downhole data, depth ticks and structural measurements in plan
+- Create and manage drill sections with downhole data and elevation rasters
+- Convert oriented core alpha and beta angles to dip and dip direction
+- Create local grid coordinate systems
+- Stream your live QGIS map into [Spatial Integration](https://spatialintegration.com/) in 3D
+- Make white or black transparent on raster images
 
-## Drill Tools 
+All commands are on the **Geoscience** menu and toolbar. Choose **Geoscience > Help** for full instructions, or see https://spatialintegration.com/help/geoscience/.
 
-Tools to display drill holes, down hole data and sections in QGIS. This includes de-surveying the holes using collar azimuth and dip or a survey table if available. Prior to using Drill Tools you need to open the collar, survey (optional) and down hole data (optional) tables in QGIS. You can use any local format supported by QGIS including shapefiles, MapInfo Tab files or CSV files. To open data using CSV, use the existing Delimited Text tool 
+Version 2 requires QGIS 4. Older versions of the plugin work with QGIS 3.
 
-**Drill Tools will only work with projected coordinate systems (ie not latitude and longitude)**
+## Drill Tools
 
-## Vector Tools
+The drill tools desurvey holes using the collar azimuth and dip, survey data, or both, then display the holes, downhole data and sections in QGIS. Before using them, open your collar table in QGIS, plus any survey and downhole data tables you have. You can use any file format QGIS supports, including GeoPackage, shapefiles, MapInfo TAB and CSV. Open CSV files with the QGIS Delimited Text tool.
 
-![https://rolandhill.github.io/geoscience/icon/ReverseLine.png](https://rolandhill.github.io/geoscience/icon/ReverseLine.png)
+**The drill tools only work with projected coordinate systems (e.g. UTM), not latitude and longitude.**
 
-Reverses the order of all the nodes in the selected line features, in effect reversing the direction of the line. This is necessary when using asymmetric line styles such as reverse and normal fault symbols. Note that the layer must be editable before using the tool.
+![Desurvey](https://rolandhill.github.io/geoscience/icon/Desurvey.png) **Desurvey Holes** builds a 3D trace of each hole from its collar and survey data.
+
+![Downhole Data](https://rolandhill.github.io/geoscience/icon/DrillPlan.png) **Downhole Data** turns From-To interval data, such as assays and lithology, into 3D lines along the drill traces, ready to style.
+
+![Downhole Points](https://rolandhill.github.io/geoscience/icon/DrillPoints.png) **Downhole Points** places points at regular depths down each hole, for depth ticks and labels.
+
+![Downhole Structure](https://rolandhill.github.io/geoscience/icon/DrillStructure.png) **Downhole Structure** converts alpha and beta angles into dip and dip direction and draws each measurement as an oriented 3D plane. On sections, Geoscience also calculates the apparent dip.
+
+![Section Manager](https://rolandhill.github.io/geoscience/icon/DrillSection.png) **Section Manager** creates, displays, recreates and deletes drill sections. Draw a section line on the map, or enter a west-east or south-north line. Sections are saved with your QGIS project and include grids and an elevation profile from any raster you choose.
+
+There are collar, survey, assay and structure CSV files and a DEM in the `testdata` directory of the plugin, if you want to try the drill tools.
+
+## Spatial Integration Link
+
+The Spatial Integration Link serves your live QGIS map to [Spatial Integration](https://spatialintegration.com/), which drapes it over a surface in 3D. Whatever the QGIS map canvas shows appears in Spatial Integration and updates as you change it. The link runs only on your own computer (`127.0.0.1`), so nothing is shared with your network. Start it from **Geoscience > Spatial Integration Link > Start Link**.
+
+## Local Grids
+
+![Local Grid](https://rolandhill.github.io/geoscience/icon/LocalGrid.png) **Create Local CRS** calculates a WKT definition of a local grid from two or more points with known coordinates in both the local grid and a projected base CRS (e.g. WGS 84 / UTM 55S, GDA94 / MGA 55). With three or more points the definition is three dimensional, so make sure the points have a spread of Z values as well. If the coordinates contain errors, a best fit is used. Paste the result into a custom CRS in QGIS, then use it like any other CRS: reproject on the fly, convert data and so on.
 
 ## Raster Tools
 
-![https://rolandhill.github.io/geoscience/icon/WhiteTransparent.png](https://rolandhill.github.io/geoscience/icon/WhiteTransparent.png)
+![Transparent White](https://rolandhill.github.io/geoscience/icon/WhiteTransparent.png) **Transparent White** and ![Transparent Black](https://rolandhill.github.io/geoscience/icon/BlackTransparent.png) **Transparent Black** set the transparent colour to white or black for every raster selected in the Layers panel. They are ideal for sets of images such as EM channels or hyperspectral bands.
 
-Sets the transparent colour to **white** for all the raster images selected in the project tree. To use, first select all the rasters you wish to process using control and shift left clicks, then choose this menu entry or
-toolbar button. Ideal for image sets such as EM channels or hyperspectral images.
+## Contributing
 
-![https://rolandhill.github.io/geoscience/icon/BlackTransparent.png](https://rolandhill.github.io/geoscience/icon/BlackTransparent.png)
+Ideas, bug reports and contributions are welcome. Please use the [issue tracker](https://github.com/rolandhill/geoscience/issues).
 
-Sets the transparent colour to **black** for all the raster images selected in the project tree. To use, first select all the rasters you wish to process using control and shift left clicks, then choose this menu entry or toolbar button. Ideal for image sets such as EM channels or hyperspectral images.
-
-## Local Grid
-Calculates the WKT representation of a local grid from 2 or more coordinates known in both the local and recognised base projected coordinate system (eg WGS84 UTM55S, GDA94 MGA55 etc). If you have 3 or more points then the local grid definition will be 3 dimensional (make sure there is separation in Z value a well). If the coordinate pairs have error in them then a best fit will be used. The generated local grid CRS must then be manually pasted into a Custom CRS definition. A local CRS can be re-projected on the fly, converted etc like any other CRS.
-
-## No longer in development due to funded OpenLog development by Oslandia
-
-* Released under GPL license.
+Released under the GPL licence.
